@@ -58,6 +58,8 @@ public class LoansFileConfiguration extends FileConfiguration {
 	 *             if a required key is missing
 	 */
 	public void load() throws IOException, NullPointerException {
+		super.load();
+		
 		databaseInfo = loadProperties(Paths.get(DATABASE_INFO_FILE).toFile(), "url", "username", "password");
 		successfulLoan = loadReplyString(Paths.get(SUCCESSFUL_LOAN).toFile());
 		noLoansToRepay = loadReplyString(Paths.get(NO_LOANS_TO_REPAY).toFile());
