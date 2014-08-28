@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
+import me.timothy.bots.LoansFileConfiguration;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -61,7 +62,8 @@ public class ConfirmSummon extends Summon {
 	}
 
 	@Override
-	public String applyChanges(FileConfiguration config, Database db) {
+	public String applyChanges(FileConfiguration con, Database db) {
+		LoansFileConfiguration config = (LoansFileConfiguration) con;
 		if(config.getBannedUsers().contains(doneTo.toLowerCase())) {
 			logger.info("Someone is attempting to $confirm a banned user");
 			return config.getActionToBanned();

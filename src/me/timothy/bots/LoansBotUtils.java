@@ -19,7 +19,7 @@ public class LoansBotUtils {
 	 * @param config the configuration options to use
 	 * @return a string representing a human-readable version of the list of loans. Potentially truncated
 	 */
-	public static String getLoansString(List<Loan> loans, String relevantUser, FileConfiguration config) {
+	public static String getLoansString(List<Loan> loans, String relevantUser, LoansFileConfiguration config) {
 		if(loans == null || loans.size() == 0) {
 			return "No History\n\n";
 		}
@@ -95,7 +95,7 @@ public class LoansBotUtils {
 	 * @return a somewhat human-readable version of loans
 	 */
 	public static String getLoansStringRaw(List<Loan> loans,
-			FileConfiguration config) {
+			LoansFileConfiguration config) {
 		if(loans == null || loans.size() == 0) {
 			return "No History\n\n";
 		}
@@ -112,7 +112,7 @@ public class LoansBotUtils {
 	 * @param config the configuration options to use
 	 * @return a human-readable version of the loan
 	 */
-	public static String getLoanString(Loan l, FileConfiguration config) {
+	public static String getLoanString(Loan l, LoansFileConfiguration config) {
 		String thisLoanString = config.getLoanFormat();
 		thisLoanString = thisLoanString.replace("<borrower>", l.getBorrower());
 		thisLoanString = thisLoanString.replace("<lender>", l.getLender());

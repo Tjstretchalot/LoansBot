@@ -18,6 +18,7 @@ import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.Loan;
 import me.timothy.bots.LoansBotUtils;
+import me.timothy.bots.LoansFileConfiguration;
 
 public class CheckSummon extends Summon {
 	/**
@@ -81,7 +82,8 @@ public class CheckSummon extends Summon {
 	}
 	
 	@Override
-	public String applyChanges(FileConfiguration config, Database db) {
+	public String applyChanges(FileConfiguration con, Database db) {
+		LoansFileConfiguration config = (LoansFileConfiguration) con;
 		LoansDatabase database = (LoansDatabase) db;
 		try {
 			if(config.getBannedUsers().contains(doneTo.toLowerCase())) {

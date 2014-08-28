@@ -16,6 +16,7 @@ import me.timothy.bots.Database;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.Loan;
+import me.timothy.bots.LoansFileConfiguration;
 
 public class AdvancedLoanSummon extends Summon {
 	/**
@@ -71,7 +72,8 @@ public class AdvancedLoanSummon extends Summon {
 
 
 	@Override
-	public String applyChanges(FileConfiguration config, Database database) {
+	public String applyChanges(FileConfiguration con, Database database) {
+		LoansFileConfiguration config = (LoansFileConfiguration) con;
 		try {
 			Loan loan = new Loan(amountPennies, doer, doneTo, 0, false, System.currentTimeMillis(), 0);
 			logger.printf(Level.INFO, "%s just lent %s to %s", doer, BotUtils.getCostString(amountPennies / 100.), doneTo);

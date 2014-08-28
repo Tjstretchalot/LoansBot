@@ -37,7 +37,7 @@ public class LoansBotMain {
 		loansBot.setRestClient(restClient);
 		
 		logger.debug("Loading config..");
-		FileConfiguration config = new FileConfiguration();
+		LoansFileConfiguration config = new LoansFileConfiguration();
 		try {
 			config.load();
 		} catch (NullPointerException | IOException e) {
