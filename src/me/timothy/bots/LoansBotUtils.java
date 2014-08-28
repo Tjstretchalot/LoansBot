@@ -1,9 +1,6 @@
 package me.timothy.bots;
 
-import java.text.DateFormat;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
