@@ -1,7 +1,6 @@
 package me.timothy.bots.summon;
 
 import java.sql.SQLException;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -23,51 +22,41 @@ public class UnpaidSummon extends Summon {
 	 * $unpaid /u/Asdf_Jkl
 	 */
 	private static final Pattern UNPAID_PATTERN = Pattern.compile("\\s*\\$unpaid\\s/u/\\S+");
-	
+
 	private Logger logger;
-	
+
 	private String doer;
 	private String doneTo;
-	
+
 	public UnpaidSummon() {
-		super(SummonType.UNPAID, UNPAID_PATTERN);
-		
 		logger = LogManager.getLogger();
 	}
-	
-	@Override
-	public void parse(String doer, String doneTo, String url, String text)
-			throws ParseException {
-		this.doer = doer;
-
-		if (doer == null)
-			throw new IllegalArgumentException("Unpaid summons require a doer");
-
-		this.doneTo = getUser(text.split("\\s")[1]);
-	}
 
 	@Override
-	public String applyChanges(FileConfiguration config, Database database)
-			throws SQLException {
-		if(config.getBannedUsers().contains(doneTo.toLowerCase())) {
-			logger.info("Someone is attempting to $unpaid a banned user");
-			return config.getActionToBanned();
-		}
-		
-		List<Loan> relevantLoans = database.getLoansWith(doer, doneTo);
-		List<Loan> changed = new ArrayList<>();
-		
-		for(Loan l : relevantLoans) {
-			if(l.getAmountPaidPennies() != l.getAmountPennies()) {
-				database.setLoanUnpaid(l.getId(), true);
-				l.setUnpaid(true);
-				changed.add(l);
+	public String applyChanges(FileConfiguration config, Database database) {
+		try {
+			if(config.getBannedUsers().contains(doneTo.toLowerCase())) {
+				logger.info("Someone is attempting to $unpaid a banned user");
+				return config.getActionToBanned();
 			}
+
+			List<Loan> relevantLoans = database.getLoansWith(doer, doneTo);
+			List<Loan> changed = new ArrayList<>();
+
+			for(Loan l : relevantLoans) {
+				if(l.getAmountPaidPennies() != l.getAmountPennies()) {
+					database.setLoanUnpaid(l.getId(), true);
+					l.setUnpaid(true);
+					changed.add(l);
+				}
+			}
+
+			logger.printf(Level.INFO, "%s has defaulted on %d loans from %s", doneTo, changed.size(), doer);
+
+			return config.getUnpaid().replace("<lender>", doer).replace("<borrower>", doneTo).replace("<loans>", LoansBotUtils.getLoansStringRaw(changed, config));
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
 		}
-		
-		logger.printf(Level.INFO, "%s has defaulted on %d loans from %s", doneTo, changed.size(), doer);
-		
-		return config.getUnpaid().replace("<lender>", doer).replace("<borrower>", doneTo).replace("<loans>", LoansBotUtils.getLoansStringRaw(changed, config));
 	}
 
 	/**

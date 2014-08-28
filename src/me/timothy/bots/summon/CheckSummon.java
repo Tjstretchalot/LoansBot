@@ -1,7 +1,6 @@
 package me.timothy.bots.summon;
 
 import java.sql.SQLException;
-import java.text.ParseException;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -28,26 +27,8 @@ public class CheckSummon extends Summon {
 	private String doneTo;
 
 	public CheckSummon() {
-		super(SummonType.CHECK, CHECK_PATTERN);
-		
 		logger = LogManager.getLogger();
 	}
-
-	@Override
-	public void parse(String doer, String doneTo, String url, String text)
-			throws ParseException {
-		this.doer = doer;
-
-		if (doer == null)
-			throw new IllegalArgumentException("Check summons require a doer");
-
-		if(text == null) {
-			this.doneTo = doneTo;
-		}else {
-			this.doneTo = getUser(text.split("\\s")[1]);
-		}
-	} 
-
 	/**
 	 * @return the doer
 	 */
@@ -63,20 +44,23 @@ public class CheckSummon extends Summon {
 	}
 
 	@Override
-	public String applyChanges(FileConfiguration config, Database database)
-			throws SQLException {
-		if(config.getBannedUsers().contains(doneTo.toLowerCase())) {
-			logger.info("Someone is attempting to check a banned user");
-			return config.getActionToBanned();
+	public String applyChanges(FileConfiguration config, Database database) {
+		try {
+			if(config.getBannedUsers().contains(doneTo.toLowerCase())) {
+				logger.info("Someone is attempting to check a banned user");
+				return config.getActionToBanned();
+			}
+
+			logger.printf(Level.INFO, "%s requested a check on %s", doer, doneTo);
+			List<Loan> relevantLoans1 = database.getLoansWith(doneTo);
+
+			return config.getCheck()
+					.replace("<checker>", doer)
+					.replace("<user>", doneTo)
+					.replace("<loans>", LoansBotUtils.getLoansString(relevantLoans1, doneTo, config));
+		}catch(SQLException ex) {
+			throw new RuntimeException(ex);
 		}
-		
-		logger.printf(Level.INFO, "%s requested a check on %s", doer, doneTo);
-		List<Loan> relevantLoans1 = database.getLoansWith(doneTo);
-		
-		return config.getCheck()
-				.replace("<checker>", doer)
-				.replace("<user>", doneTo)
-				.replace("<loans>", LoansBotUtils.getLoansString(relevantLoans1, doneTo, config));
 	}
 
 }

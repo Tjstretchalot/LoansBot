@@ -12,21 +12,6 @@ import org.apache.logging.log4j.Logger;
 public class LoansBotUtils {
 	@SuppressWarnings("unused")
 	private static Logger logger = LogManager.getLogger();
-	private static DateFormat dateFormatter;
-	
-	/**
-	 * Formats the specified number like you would expect for a
-	 * dollar amount. Does not add a dollar sign
-	 * 
-	 * @param d the amount in dollars
-	 * @return a formated string
-	 */
-	public static String getCostString(double d) {
-		DecimalFormat result = new DecimalFormat("0.00");
-		
-		return result.format(d);
-	}
-
 	/**
 	 * Gets a string that represents the specified loan such that it is readily
 	 * readable. If there are less than 5 loans this is equivalent to getLoansStringRaw,
@@ -91,9 +76,9 @@ public class LoansBotUtils {
 			
 			loansString = loansString.replace("<relevant user>", relevantUser);
 			loansString = loansString.replace("<num borrowed done>", Integer.toString(asBorrowerDone.size()));
-			loansString = loansString.replace("<amount borrowed done>", getCostString(amountBorrowedDonePen / 100.));
+			loansString = loansString.replace("<amount borrowed done>", BotUtils.getCostString(amountBorrowedDonePen / 100.));
 			loansString = loansString.replace("<num lended done>", Integer.toString(asLenderDone.size()));
-			loansString = loansString.replace("<amount lended done>", getCostString(amountLenderDonePen / 100.));
+			loansString = loansString.replace("<amount lended done>", BotUtils.getCostString(amountLenderDonePen / 100.));
 			loansString = loansString.replace("<loans unpaid borrower>", getLoansStringRaw(unpaidAsBorrower, config));
 			loansString = loansString.replace("<loans unpaid lender>", getLoansStringRaw(unpaidAsLender, config));
 			loansString = loansString.replace("<loans inprogress borrower>", getLoansStringRaw(inprogressAsBorrower, config));
@@ -134,30 +119,16 @@ public class LoansBotUtils {
 		String thisLoanString = config.getLoanFormat();
 		thisLoanString = thisLoanString.replace("<borrower>", l.getBorrower());
 		thisLoanString = thisLoanString.replace("<lender>", l.getLender());
-		thisLoanString = thisLoanString.replace("<amount initial>", getCostString(l.getAmountPennies()/100.));
-		thisLoanString = thisLoanString.replace("<amount paid>", getCostString(l.getAmountPaidPennies()/100.));
+		thisLoanString = thisLoanString.replace("<amount initial>", BotUtils.getCostString(l.getAmountPennies()/100.));
+		thisLoanString = thisLoanString.replace("<amount paid>", BotUtils.getCostString(l.getAmountPaidPennies()/100.));
 		if(l.getOriginalThread() != null) {
 			thisLoanString = thisLoanString.replace("<initial thread link>", "[Original Thread](" + l.getOriginalThread() + ")");
 		}else {
 			thisLoanString = thisLoanString.replaceAll("<initial thread link>", "");
 		}
 		thisLoanString = thisLoanString.replace("<unpaid>", l.isUnpaid() ? "***UNPAID***" : "");
-		thisLoanString = thisLoanString.replace("<loan date>", l.getDateLoanGivenJUTC() == 0 ? "" : "Loan given at: " + getDateStringFromJUTC(l.getDateLoanGivenJUTC()));
-		thisLoanString = thisLoanString.replace("<paid back date>", l.getDatePaidBackFullJUTC() == 0 ? "" : "Loan paid in full at: " + getDateStringFromJUTC(l.getDateLoanGivenJUTC()));
+		thisLoanString = thisLoanString.replace("<loan date>", l.getDateLoanGivenJUTC() == 0 ? "" : "Loan given at: " + BotUtils.getDateStringFromJUTC(l.getDateLoanGivenJUTC()));
+		thisLoanString = thisLoanString.replace("<paid back date>", l.getDatePaidBackFullJUTC() == 0 ? "" : "Loan paid in full at: " + BotUtils.getDateStringFromJUTC(l.getDateLoanGivenJUTC()));
 		return thisLoanString;
-	}
-
-	/**
-	 * Gets a date string from a timestamp that was acquired as if
-	 * by {@code System.currentTimeMillis}
-	 * 
-	 * @param dateLoanGivenJUTC when the loan was given
-	 * @return a human-readable version
-	 */
-	public static String getDateStringFromJUTC(long dateLoanGivenJUTC) {
-		if(dateFormatter == null) {
-			dateFormatter = DateFormat.getDateInstance(DateFormat.MEDIUM);
-		}
-		return dateFormatter.format(new Date(dateLoanGivenJUTC));
 	}
 }
