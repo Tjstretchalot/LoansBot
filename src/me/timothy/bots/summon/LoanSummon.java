@@ -1,6 +1,8 @@
 package me.timothy.bots.summon;
 
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import me.timothy.bots.BotUtils;
@@ -10,6 +12,8 @@ import me.timothy.bots.Loan;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.github.jreddit.comment.Comment;
 
 public class LoanSummon extends Summon {
 	/**
@@ -33,6 +37,34 @@ public class LoanSummon extends Summon {
 		logger = LogManager.getLogger();
 	}
 	
+	
+	/* (non-Javadoc)
+	 * @see me.timothy.bots.summon.Summon#parse(com.github.jreddit.comment.Comment)
+	 */
+	@Override
+	public boolean parse(Comment comment) throws UnsupportedOperationException {
+		Matcher matcher = LOAN_PATTERN.matcher(comment.getComment());
+		
+		if(matcher.find()) {
+			this.doer = comment.getAuthor();
+			this.doneTo = comment.getLinkAuthor();
+			this.url = comment.getLinkURL();
+			
+			String text = matcher.group();
+			String[] split = text.split("\\s");
+			String number = split[1].replace("$", "");
+			
+			try {
+				this.amountPennies = BotUtils.getPennies(number);
+			} catch (ParseException e) {
+				logger.warn(e);
+				return false;
+			}
+			return true;
+		}
+		return false;
+	}
+
 	@Override
 	public String applyChanges(FileConfiguration config, Database database) {
 		try {
