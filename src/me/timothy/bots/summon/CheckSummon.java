@@ -2,12 +2,17 @@ package me.timothy.bots.summon;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.github.jreddit.comment.Comment;
+import com.github.jreddit.submissions.Submission;
+
+import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.Loan;
@@ -43,6 +48,37 @@ public class CheckSummon extends Summon {
 		return doneTo;
 	}
 
+	/* (non-Javadoc)
+	 * @see me.timothy.bots.summon.Summon#parse(com.github.jreddit.comment.Comment)
+	 */
+	@Override
+	public boolean parse(Comment comment) throws UnsupportedOperationException {
+		Matcher matcher = CHECK_PATTERN.matcher(comment.getComment());
+		
+		if(matcher.find()) {
+			String text = matcher.group();
+			
+			this.doer = comment.getAuthor();
+			this.doneTo = BotUtils.getUser(text.split("\\s")[1]);
+			return true;
+		}
+		
+		return false;
+	}
+	
+	/* (non-Javadoc)
+	 * @see me.timothy.bots.summon.Summon#parse(com.github.jreddit.submissions.Submission)
+	 */
+	@Override
+	public boolean parse(Submission submission)
+			throws UnsupportedOperationException {
+		
+		this.doer = "AUTOMATIC";
+		this.doneTo = submission.getAuthor();
+		
+		return true;
+	}
+	
 	@Override
 	public String applyChanges(FileConfiguration config, Database database) {
 		try {
