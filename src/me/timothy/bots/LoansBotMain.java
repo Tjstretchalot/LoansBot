@@ -3,6 +3,14 @@ package me.timothy.bots;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import me.timothy.bots.summon.AdvancedLoanSummon;
+import me.timothy.bots.summon.CheckSummon;
+import me.timothy.bots.summon.ConfirmSummon;
+import me.timothy.bots.summon.LoanSummon;
+import me.timothy.bots.summon.PaidSummon;
+import me.timothy.bots.summon.Summon;
+import me.timothy.bots.summon.UnpaidSummon;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -48,7 +56,10 @@ public class LoansBotMain {
 		}
 		
 		logger.debug("Running loans bot driver");
-		BotDriver driver = new BotDriver(database, config, restClient, loansBot);
+		BotDriver driver = new BotDriver(database, config, restClient, loansBot,
+				new Summon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon() }, 
+				new Summon[] { new AdvancedLoanSummon(), new PaidSummon(), new UnpaidSummon() },
+				new Summon[] { new CheckSummon() } );
 		
 		driver.run();
 	}
