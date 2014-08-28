@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
+import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.Loan;
 import org.apache.logging.log4j.Level;
@@ -66,7 +67,8 @@ public class LoanSummon extends Summon {
 	}
 
 	@Override
-	public String applyChanges(FileConfiguration config, Database database) {
+	public String applyChanges(FileConfiguration config, Database db) {
+		LoansDatabase database = (LoansDatabase) db;
 		try {
 			Loan loan = new Loan(amountPennies, doer, doneTo, 0, false, System.currentTimeMillis(), 0);
 			loan.setOriginalThread(url);

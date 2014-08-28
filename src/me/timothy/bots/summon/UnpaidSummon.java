@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
+import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.Loan;
 import me.timothy.bots.LoansBotUtils;
@@ -69,7 +70,8 @@ public class UnpaidSummon extends Summon {
 	}
 
 	@Override
-	public String applyChanges(FileConfiguration config, Database database) {
+	public String applyChanges(FileConfiguration config, Database db) {
+		LoansDatabase database = (LoansDatabase) db;
 		try {
 			if(config.getBannedUsers().contains(doneTo.toLowerCase())) {
 				logger.info("Someone is attempting to $unpaid a banned user");

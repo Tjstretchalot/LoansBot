@@ -61,7 +61,7 @@ public class ConfirmSummon extends Summon {
 	}
 
 	@Override
-	public String applyChanges(FileConfiguration config, Database database) {
+	public String applyChanges(FileConfiguration config, Database db) {
 		if(config.getBannedUsers().contains(doneTo.toLowerCase())) {
 			logger.info("Someone is attempting to $confirm a banned user");
 			return config.getActionToBanned();

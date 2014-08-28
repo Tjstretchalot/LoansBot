@@ -15,6 +15,7 @@ import com.github.jreddit.message.Message;
 
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
+import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.Loan;
 import me.timothy.bots.LoansBotUtils;
@@ -82,7 +83,8 @@ public class PaidSummon extends Summon {
 		return false;
 	}
 
-	public String applyChanges(FileConfiguration config, Database database) {
+	public String applyChanges(FileConfiguration config, Database db) {
+		LoansDatabase database = (LoansDatabase) db;
 		try {
 			if(amountPennies <= 0) {
 				logger.warn("User attempted to pay back a negative amount of money, ignoring");

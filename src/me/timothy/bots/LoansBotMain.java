@@ -46,7 +46,7 @@ public class LoansBotMain {
 		}
 		
 		logger.debug("Connecting to database..");
-		Database database = new Database();
+		LoansDatabase database = new LoansDatabase();
 		
 		try {
 			database.connect(config.getDatabaseInfo().getProperty("username"), config.getDatabaseInfo().getProperty("password"), config.getDatabaseInfo().getProperty("url"));

@@ -13,6 +13,7 @@ import com.github.jreddit.message.Message;
 
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
+import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.Loan;
 
@@ -75,7 +76,7 @@ public class AdvancedLoanSummon extends Summon {
 			Loan loan = new Loan(amountPennies, doer, doneTo, 0, false, System.currentTimeMillis(), 0);
 			logger.printf(Level.INFO, "%s just lent %s to %s", doer, BotUtils.getCostString(amountPennies / 100.), doneTo);
 
-			database.addLoan(loan);
+			((LoansDatabase) database).addLoan(loan);
 			return config.getSuccessfulLoan()
 					.replace("<lender>", loan.getLender())
 					.replace("<borrower>", loan.getBorrower())
