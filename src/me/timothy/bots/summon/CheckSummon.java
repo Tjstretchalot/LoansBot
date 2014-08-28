@@ -56,7 +56,7 @@ public class CheckSummon extends Summon {
 		Matcher matcher = CHECK_PATTERN.matcher(comment.getComment());
 		
 		if(matcher.find()) {
-			String text = matcher.group();
+			String text = matcher.group().trim();
 			
 			this.doer = comment.getAuthor();
 			this.doneTo = BotUtils.getUser(text.split("\\s")[1]);

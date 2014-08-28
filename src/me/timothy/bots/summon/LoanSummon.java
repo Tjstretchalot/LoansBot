@@ -50,7 +50,7 @@ public class LoanSummon extends Summon {
 			this.doneTo = comment.getLinkAuthor();
 			this.url = comment.getLinkURL();
 			
-			String text = matcher.group();
+			String text = matcher.group().trim();
 			String[] split = text.split("\\s");
 			String number = split[1].replace("$", "");
 			

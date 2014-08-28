@@ -43,7 +43,7 @@ public class AdvancedLoanSummon extends Summon {
 	public boolean parse(Message message) throws UnsupportedOperationException {
 		Matcher matcher = LOAN_PATTERN_ADVANCED.matcher(message.getBody());
 		if(matcher.find()) {
-			String text = matcher.group();
+			String text = matcher.group().trim();
 			
 			this.doer = message.getAuthor();
 			String[] split = text.split("\\s");

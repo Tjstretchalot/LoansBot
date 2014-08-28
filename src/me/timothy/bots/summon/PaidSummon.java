@@ -60,7 +60,7 @@ public class PaidSummon extends Summon {
 		Matcher matcher = PAID_PATTERN.matcher(text);
 		
 		if(matcher.find()) {
-			String group = matcher.group();
+			String group = matcher.group().trim();
 			String[] split = group.split("\\s");
 			
 			this.doer = author;

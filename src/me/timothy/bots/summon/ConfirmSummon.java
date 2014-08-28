@@ -41,7 +41,7 @@ public class ConfirmSummon extends Summon {
 		Matcher matcher = CONFIRM_PATTERN.matcher(comment.getComment());
 		
 		if(matcher.find()) {
-			String text = matcher.group();
+			String text = matcher.group().trim();
 			
 			this.doer = comment.getAuthor();
 			String[] split = text.split("\\s");
