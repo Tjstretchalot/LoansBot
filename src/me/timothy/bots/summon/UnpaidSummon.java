@@ -80,7 +80,7 @@ public class UnpaidSummon extends Summon {
 				return config.getActionToBanned();
 			}
 
-			List<Loan> relevantLoans = database.getLoansWith(doer, doneTo);
+			List<Loan> relevantLoans = database.getLoansWith(doneTo, doer);
 			List<Loan> changed = new ArrayList<>();
 
 			for(Loan l : relevantLoans) {
