@@ -125,7 +125,7 @@ public class LoansBotUtils {
 		}
 		thisLoanString = thisLoanString.replace("<unpaid>", l.isUnpaid() ? "***UNPAID***" : "");
 		thisLoanString = thisLoanString.replace("<loan date>", l.getDateLoanGivenJUTC() == 0 ? "" : "Loan given at: " + BotUtils.getDateStringFromJUTC(l.getDateLoanGivenJUTC()));
-		thisLoanString = thisLoanString.replace("<paid back date>", l.getDatePaidBackFullJUTC() == 0 ? "" : "Loan paid in full at: " + BotUtils.getDateStringFromJUTC(l.getDateLoanGivenJUTC()));
+		thisLoanString = thisLoanString.replace("<paid back date>", l.getDatePaidBackFullJUTC() == 0 ? "" : "Loan paid in full at: " + BotUtils.getDateStringFromJUTC(l.getDatePaidBackFullJUTC()));
 		return thisLoanString;
 	}
 }
