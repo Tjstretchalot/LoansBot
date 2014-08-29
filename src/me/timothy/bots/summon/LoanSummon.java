@@ -11,12 +11,11 @@ import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.Loan;
 import me.timothy.bots.LoansFileConfiguration;
+import me.timothy.jreddit.info.Comment;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import com.github.jreddit.comment.Comment;
 
 public class LoanSummon extends Summon {
 	/**
@@ -46,12 +45,12 @@ public class LoanSummon extends Summon {
 	 */
 	@Override
 	public boolean parse(Comment comment) throws UnsupportedOperationException {
-		Matcher matcher = LOAN_PATTERN.matcher(comment.getComment());
+		Matcher matcher = LOAN_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
-			this.doer = comment.getAuthor();
-			this.doneTo = comment.getLinkAuthor();
-			this.url = comment.getLinkURL();
+			this.doer = comment.author();
+			this.doneTo = comment.linkAuthor();
+			this.url = comment.linkURL();
 			
 			String text = matcher.group().trim();
 			String[] split = text.split("\\s");

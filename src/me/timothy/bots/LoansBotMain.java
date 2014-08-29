@@ -10,12 +10,10 @@ import me.timothy.bots.summon.LoanSummon;
 import me.timothy.bots.summon.PaidSummon;
 import me.timothy.bots.summon.Summon;
 import me.timothy.bots.summon.UnpaidSummon;
+import me.timothy.jreddit.requests.Utils;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import com.github.jreddit.utils.restclient.HttpRestClient;
-import com.github.jreddit.utils.restclient.RestClient;
 
 /**
  * Entry point to the program. Handles initializing the bot on a local
@@ -28,13 +26,10 @@ public class LoansBotMain {
 	public static void main(String[] args) {
 		Logger logger = LogManager.getLogger();
 		
-		logger.debug("Loading rest client..");
-		RestClient restClient = new HttpRestClient();
-		restClient.setUserAgent("LoansBot by /u/Tjstretchalot");
+		Utils.USER_AGENT = "LoansBot by /u/Tjstretchalot";
 		
 		logger.debug("Initializing loans bot..");
 		Bot loansBot = new Bot("Loans");
-		loansBot.setRestClient(restClient);
 		
 		logger.debug("Loading config..");
 		LoansFileConfiguration config = new LoansFileConfiguration();
@@ -56,7 +51,7 @@ public class LoansBotMain {
 		}
 		
 		logger.debug("Running loans bot driver");
-		BotDriver driver = new BotDriver(database, config, restClient, loansBot,
+		BotDriver driver = new BotDriver(database, config, loansBot,
 				new Summon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon() }, 
 				new Summon[] { new AdvancedLoanSummon(), new PaidSummon(), new UnpaidSummon() },
 				new Summon[] { new CheckSummon() } );

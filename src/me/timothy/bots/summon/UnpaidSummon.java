@@ -13,13 +13,12 @@ import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.Loan;
 import me.timothy.bots.LoansBotUtils;
 import me.timothy.bots.LoansFileConfiguration;
+import me.timothy.jreddit.info.Comment;
+import me.timothy.jreddit.info.Message;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import com.github.jreddit.comment.Comment;
-import com.github.jreddit.message.Message;
 
 public class UnpaidSummon extends Summon {
 	/**
@@ -44,7 +43,7 @@ public class UnpaidSummon extends Summon {
 	 */
 	@Override
 	public boolean parse(Comment comment) throws UnsupportedOperationException {
-		return parse(comment.getAuthor(), comment.getComment());
+		return parse(comment.author(), comment.body());
 	}
 
 	/* (non-Javadoc)
@@ -52,7 +51,7 @@ public class UnpaidSummon extends Summon {
 	 */
 	@Override
 	public boolean parse(Message message) throws UnsupportedOperationException {
-		return parse(message.getAuthor(), message.getBody());
+		return parse(message.author(), message.body());
 	}
 
 	private boolean parse(String author, String text) {

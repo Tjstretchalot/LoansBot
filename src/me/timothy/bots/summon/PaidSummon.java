@@ -9,10 +9,6 @@ import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import com.github.jreddit.comment.Comment;
-import com.github.jreddit.message.Message;
-
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.LoansDatabase;
@@ -20,6 +16,8 @@ import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.Loan;
 import me.timothy.bots.LoansBotUtils;
 import me.timothy.bots.LoansFileConfiguration;
+import me.timothy.jreddit.info.Comment;
+import me.timothy.jreddit.info.Message;
 
 public class PaidSummon extends Summon {
 	/**
@@ -47,7 +45,7 @@ public class PaidSummon extends Summon {
 	 */
 	@Override
 	public boolean parse(Comment comment) throws UnsupportedOperationException {
-		return parse(comment.getAuthor(), comment.getComment());
+		return parse(comment.author(), comment.body());
 	}
 
 	/* (non-Javadoc)
@@ -55,7 +53,7 @@ public class PaidSummon extends Summon {
 	 */
 	@Override
 	public boolean parse(Message message) throws UnsupportedOperationException {
-		return parse(message.getAuthor(), message.getBody());
+		return parse(message.author(), message.body());
 	}
 
 	private boolean parse(String author, String text) {

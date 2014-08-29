@@ -9,9 +9,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.github.jreddit.comment.Comment;
-import com.github.jreddit.submissions.Submission;
-
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.LoansDatabase;
@@ -19,6 +16,8 @@ import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.Loan;
 import me.timothy.bots.LoansBotUtils;
 import me.timothy.bots.LoansFileConfiguration;
+import me.timothy.jreddit.info.Comment;
+import me.timothy.jreddit.info.Link;
 
 public class CheckSummon extends Summon {
 	/**
@@ -55,12 +54,12 @@ public class CheckSummon extends Summon {
 	 */
 	@Override
 	public boolean parse(Comment comment) throws UnsupportedOperationException {
-		Matcher matcher = CHECK_PATTERN.matcher(comment.getComment());
+		Matcher matcher = CHECK_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
 			String text = matcher.group().trim();
 			
-			this.doer = comment.getAuthor();
+			this.doer = comment.author();
 			this.doneTo = BotUtils.getUser(text.split("\\s")[1]);
 			return true;
 		}
@@ -72,11 +71,11 @@ public class CheckSummon extends Summon {
 	 * @see me.timothy.bots.summon.Summon#parse(com.github.jreddit.submissions.Submission)
 	 */
 	@Override
-	public boolean parse(Submission submission)
+	public boolean parse(Link submission)
 			throws UnsupportedOperationException {
 		
 		this.doer = "AUTOMATIC";
-		this.doneTo = submission.getAuthor();
+		this.doneTo = submission.author();
 		
 		return true;
 	}

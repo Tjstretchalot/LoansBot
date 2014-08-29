@@ -8,12 +8,11 @@ import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansFileConfiguration;
+import me.timothy.jreddit.info.Comment;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import com.github.jreddit.comment.Comment;
 
 public class ConfirmSummon extends Summon {
 	/**
@@ -39,12 +38,12 @@ public class ConfirmSummon extends Summon {
 	 */
 	@Override
 	public boolean parse(Comment comment) throws UnsupportedOperationException {
-		Matcher matcher = CONFIRM_PATTERN.matcher(comment.getComment());
+		Matcher matcher = CONFIRM_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
 			String text = matcher.group().trim();
 			
-			this.doer = comment.getAuthor();
+			this.doer = comment.author();
 			String[] split = text.split("\\s");
 			this.doneTo = BotUtils.getUser(split[1]);
 			String number = split[2].replace("$", "");

@@ -9,14 +9,13 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.github.jreddit.message.Message;
-
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.Loan;
 import me.timothy.bots.LoansFileConfiguration;
+import me.timothy.jreddit.info.Message;
 
 public class AdvancedLoanSummon extends Summon {
 	/**
@@ -43,11 +42,11 @@ public class AdvancedLoanSummon extends Summon {
 	 */
 	@Override
 	public boolean parse(Message message) throws UnsupportedOperationException {
-		Matcher matcher = LOAN_PATTERN_ADVANCED.matcher(message.getBody());
+		Matcher matcher = LOAN_PATTERN_ADVANCED.matcher(message.body());
 		if(matcher.find()) {
 			String text = matcher.group().trim();
 			
-			this.doer = message.getAuthor();
+			this.doer = message.author();
 			String[] split = text.split("\\s");
 			this.doneTo = BotUtils.getUser(split[1]);
 			String number = split[2].replace("$", "");
