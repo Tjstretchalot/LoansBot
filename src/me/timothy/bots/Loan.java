@@ -167,6 +167,20 @@ public class Loan {
 	public void setUnpaid(boolean unpaid) {
 		this.unpaid = unpaid;
 	}
+
+	/**
+	 * @param dateLoanGivenJUTC the dateLoanGivenJUTC to set
+	 */
+	public void setDateLoanGivenJUTC(long dateLoanGivenJUTC) {
+		this.dateLoanGivenJUTC = dateLoanGivenJUTC;
+	}
+
+	/**
+	 * @param datePaidBackFullJUTC the datePaidBackFullJUTC to set
+	 */
+	public void setDatePaidBackFullJUTC(long datePaidBackFullJUTC) {
+		this.datePaidBackFullJUTC = datePaidBackFullJUTC;
+	}
 	
 	
 }

@@ -103,6 +103,7 @@ public class PaidSummon extends Summon {
 			int remainingPennies = amountPennies;
 			List<Loan> changedLoans = new ArrayList<>();
 
+			long time = System.currentTimeMillis();
 			for(Loan l : relevantLoans) {
 				if(l.getAmountPaidPennies() < l.getAmountPennies()) {
 					changedLoans.add(l);
@@ -111,7 +112,8 @@ public class PaidSummon extends Summon {
 						if(amount > 0) {
 							remainingPennies -= amount;
 							database.payLoan(l.getId(), amount);
-							database.setLoanPaidBackInFullDate(l.getId(), System.currentTimeMillis());
+							database.setLoanPaidBackInFullDate(l.getId(), time);
+							l.setDatePaidBackFullJUTC(time);
 							l.setAmountPaidPennies(l.getAmountPennies());
 
 							if(l.isUnpaid()) {
