@@ -92,7 +92,7 @@ public class UnpaidSummon extends Summon {
 
 			logger.printf(Level.INFO, "%s has defaulted on %d loans from %s", doneTo, changed.size(), doer);
 
-			return config.getUnpaid().replace("<lender>", doer).replace("<borrower>", doneTo).replace("<loans>", LoansBotUtils.getLoansStringRaw(changed, config));
+			return config.getUnpaid().replace("<lender>", doer).replace("<borrower>", doneTo).replace("<loans>", LoansBotUtils.getLoansAsTable(changed, changed.size()));
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}

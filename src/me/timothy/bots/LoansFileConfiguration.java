@@ -24,7 +24,6 @@ public class LoansFileConfiguration extends FileConfiguration {
 	private static final String SUCCESSFUL_LOAN = "successful_loan.txt";
 	private static final String NO_LOANS_TO_REPAY = "no_loans_to_repay.txt";
 	private static final String REPAYMENT = "repayment.txt";
-	private static final String LOAN_FORMAT = "loan.txt";
 	private static final String CHECK = "check.txt";
 	private static final String CHECK_TRUNCATED = "check_truncated.txt";
 	private static final String UNPAID = "unpaid.txt";
@@ -36,7 +35,6 @@ public class LoansFileConfiguration extends FileConfiguration {
 	private String successfulLoan;
 	private String noLoansToRepay;
 	private String repayment;
-	private String loanFormat;
 	private String check;
 	private String checkTruncated;
 	private String actionToBanned;
@@ -64,7 +62,6 @@ public class LoansFileConfiguration extends FileConfiguration {
 		successfulLoan = loadReplyString(Paths.get(SUCCESSFUL_LOAN).toFile());
 		noLoansToRepay = loadReplyString(Paths.get(NO_LOANS_TO_REPAY).toFile());
 		repayment = loadReplyString(Paths.get(REPAYMENT).toFile());
-		loanFormat = loadReplyString(Paths.get(LOAN_FORMAT).toFile());
 		setActionToBanned(loadReplyString(Paths.get(ACTION_TO_BANNED).toFile()));
 		check = loadReplyString(Paths.get(CHECK).toFile());
 		checkTruncated = loadReplyString(Paths.get(CHECK_TRUNCATED).toFile());
@@ -186,13 +183,6 @@ public class LoansFileConfiguration extends FileConfiguration {
 	 */
 	public String getRepayment() {
 		return repayment;
-	}
-
-	/**
-	 * @return the format for a loan
-	 */
-	public String getLoanFormat() {
-		return loanFormat;
 	}
 
 	/**

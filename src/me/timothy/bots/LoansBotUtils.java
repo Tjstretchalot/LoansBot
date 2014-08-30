@@ -1,6 +1,8 @@
 package me.timothy.bots;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -15,7 +17,7 @@ public class LoansBotUtils {
 	 * otherwise it matches config.getCheckTruncated
 	 * 
 	 * @param loans the loans
-	 * @param relevantUser the relevent user in the loans (required for truncating)
+	 * @param relevantUser the relevant user in the loans (required for truncating)
 	 * @param config the configuration options to use
 	 * @return a string representing a human-readable version of the list of loans. Potentially truncated
 	 */
@@ -27,7 +29,7 @@ public class LoansBotUtils {
 
 		String loansString = "";
 		if(loans.size() < 5) {
-			loansString = getLoansStringRaw(loans, config);
+			loansString = getLoansAsTable(loans, 5);
 		}else {
 			List<Loan> inprogressAsBorrower = new ArrayList<>();
 			List<Loan> inprogressAsLender = new ArrayList<>();
@@ -76,56 +78,53 @@ public class LoansBotUtils {
 			loansString = loansString.replace("<amount borrowed done>", BotUtils.getCostString(amountBorrowedDonePen / 100.));
 			loansString = loansString.replace("<num lended done>", Integer.toString(asLenderDone.size()));
 			loansString = loansString.replace("<amount lended done>", BotUtils.getCostString(amountLenderDonePen / 100.));
-			loansString = loansString.replace("<loans unpaid borrower>", getLoansStringRaw(unpaidAsBorrower, config));
-			loansString = loansString.replace("<loans unpaid lender>", getLoansStringRaw(unpaidAsLender, config));
-			loansString = loansString.replace("<loans inprogress borrower>", getLoansStringRaw(inprogressAsBorrower, config));
-			loansString = loansString.replace("<loans inprogress lender>", getLoansStringRaw(inprogressAsLender, config));
+			loansString = loansString.replace("<loans unpaid borrower>", getLoansAsTable(unpaidAsBorrower, 3));
+			loansString = loansString.replace("<loans unpaid lender>", getLoansAsTable(unpaidAsLender, 3));
+			loansString = loansString.replace("<loans inprogress borrower>", getLoansAsTable(inprogressAsBorrower, 20));
+			loansString = loansString.replace("<loans inprogress lender>", getLoansAsTable(inprogressAsLender, 20));
 		}
 		
 		return loansString;
 	}
 	
+	
 	/**
-	 * Formats a list of loans such that there is 1 loan seperated by 2 newlines,
-	 * where each loan is formated according to getLoanString. Always ends in 2
-	 * newlines. In the event of an empty list, returns "No History\n\n"
-	 * 
-	 * @param loans the list of loans
-	 * @param config the configuration options to use
-	 * @return a somewhat human-readable version of loans
+	 * Sorts the specified list of loans according to their date (newest first),
+	 * and adds a little note at the bottom if any loans are truncated
+	 * @param loans
+	 * @param max
+	 * @return
 	 */
-	public static String getLoansStringRaw(List<Loan> loans,
-			LoansFileConfiguration config) {
-		if(loans == null || loans.size() == 0) {
-			return "No History\n\n";
-		}
-		String loansString = "";
-		for(Loan l : loans) {
-			loansString += getLoanString(l, config) + "\n\n";
-		}
-		return loansString;
-	}
+	public static String getLoansAsTable(List<Loan> loans, int max) {
+		Collections.sort(loans, new Comparator<Loan>() {
 
-	/**
-	 * Formats the specified loan according to config.getLoanFormat
-	 * @param l the loan to format
-	 * @param config the configuration options to use
-	 * @return a human-readable version of the loan
-	 */
-	public static String getLoanString(Loan l, LoansFileConfiguration config) {
-		String thisLoanString = config.getLoanFormat();
-		thisLoanString = thisLoanString.replace("<borrower>", l.getBorrower());
-		thisLoanString = thisLoanString.replace("<lender>", l.getLender());
-		thisLoanString = thisLoanString.replace("<amount initial>", BotUtils.getCostString(l.getAmountPennies()/100.));
-		thisLoanString = thisLoanString.replace("<amount paid>", BotUtils.getCostString(l.getAmountPaidPennies()/100.));
-		if(l.getOriginalThread() != null) {
-			thisLoanString = thisLoanString.replace("<initial thread link>", "[Original Thread](" + l.getOriginalThread() + ")");
-		}else {
-			thisLoanString = thisLoanString.replaceAll("<initial thread link>", "");
+			@Override
+			public int compare(Loan o1, Loan o2) {
+				// We want a DESCENDING sort (instead of ascending) so o2 compares to o1
+				return Long.valueOf(o2.getDateLoanGivenJUTC()).compareTo(o1.getDateLoanGivenJUTC());
+			}
+			
+		});
+		
+		Table table = new Table(Table.Alignment.LEFT, "Lender", "Borrower", "Amount Given", 
+				"Amount Repaid", "Unpaid?", "Original Thread", "Date Given", "Date Paid Back");
+		
+		int toShow = loans.size() > max ? max : loans.size();
+		for(int i = 0; i < toShow; i++) {
+			Loan l = loans.get(i);
+			table.addRow(l.getLender(), l.getBorrower(), BotUtils.getCostString(l.getAmountPennies()/100.), 
+					BotUtils.getCostString(l.getAmountPaidPennies()/100.), l.isUnpaid() ? "***UNPAID***" : "", 
+							l.getOriginalThread() != null ? String.format("[Original Thread](%s)", l.getOriginalThread()) : "",
+							l.getDateLoanGivenJUTC() != 0 ? BotUtils.getDateStringFromJUTC(l.getDateLoanGivenJUTC()) : "",
+							l.getDatePaidBackFullJUTC() != 0 ? BotUtils.getDateStringFromJUTC(l.getDatePaidBackFullJUTC()) : "");
 		}
-		thisLoanString = thisLoanString.replace("<unpaid>", l.isUnpaid() ? "***UNPAID***" : "");
-		thisLoanString = thisLoanString.replace("<loan date>", l.getDateLoanGivenJUTC() == 0 ? "" : "Loan given at: " + BotUtils.getDateStringFromJUTC(l.getDateLoanGivenJUTC()));
-		thisLoanString = thisLoanString.replace("<paid back date>", l.getDatePaidBackFullJUTC() == 0 ? "" : "Loan paid in full at: " + BotUtils.getDateStringFromJUTC(l.getDatePaidBackFullJUTC()));
-		return thisLoanString;
+		
+		StringBuilder result = new StringBuilder(table.format());
+		
+		if(toShow != loans.size()) {
+			result.append("\n");
+			result.append("- + An additional " + (loans.size() - toShow) + " older loans that were truncated\n");
+		}
+		return result.toString();
 	}
 }
