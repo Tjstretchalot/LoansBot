@@ -132,12 +132,17 @@ public class PaidSummon extends Summon {
 					}
 				}
 			}
+			
+			String rem = BotUtils.getCostString(remainingPennies / 100.);
+			String interest = 
+					remainingPennies == 0 ? String.format("/u/%s has opted not to tell us the interest", doer) :
+					String.format("In addition, /u/%s has paid $%s in interest", doneTo, rem);
 
 			String response = config.getRepayment();
 			response = response.replace("<lender>", doer);
 			response = response.replace("<borrower>", doneTo);
 			response = response.replace("<amount paid>", BotUtils.getCostString(amountPennies / 100.));
-			response = response.replace("<overpayment>", BotUtils.getCostString(remainingPennies / 100.));
+			response = response.replace("<interest>", interest);
 			response = response.replace("<loans>", LoansBotUtils.getLoansString(changedLoans, doer, config));
 
 			logger.info(doer + " has been repaid " + amountPennies + " by " + doneTo);
