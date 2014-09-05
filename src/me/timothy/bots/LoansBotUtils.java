@@ -123,4 +123,49 @@ public class LoansBotUtils {
 		}
 		return result.toString();
 	}
+	
+	/**
+	 * Searches a big list of loans and selectively grabs the loans where
+	 * {@code borrower} is the borrower
+	 * 
+	 * @param bigList the big list of loans
+	 * @param borrower the borrower to search for
+	 * @return a list of loans from {@code bigList} where the borrower is {@code borrower}
+	 */
+	private static List<Loan> getLoansWithBorrower(List<Loan> bigList, String borrower) {
+		return null;
+	}
+	/**
+	 * Searches a big list of loans and selectively grabs the loans where
+	 * {@code lender} is the lender
+	 * 
+	 * @param bigList the big list of loans
+	 * @param lender the lender to search for
+	 * @return a list of loans from {@code bigList} where the lender is {@code lender}
+	 */
+	private static List<Loan> getLoansWithLender(List<Loan> bigList, String lender) {
+		return null;
+	}
+	
+	/**
+	 * Searches a list of loans and selectively grabs the loans that are
+	 * unpaid
+	 * 
+	 * @param bigList the big list of loans
+	 * @return loans from {@code bigList} that are unpaid
+	 */
+	private static List<Loan> getUnpaidLoans(List<Loan> bigList) {
+		return null;
+	}
+	
+	/**
+	 * Searches a big list of loans and selectively grabs the loans
+	 * that are paid (amount lended == amount returned)
+	 * 
+	 * @param bigList the big list of loans
+	 * @return loans from {@code bigList} that are fully paid off
+	 */
+	private static List<Loan> getPaidLoans(List<Loan> bigList) {
+		return null;
+	}
 }
