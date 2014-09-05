@@ -1,6 +1,5 @@
 package me.timothy.bots;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -31,41 +30,24 @@ public class LoansBotUtils {
 		if(loans.size() < 5) {
 			loansString = getLoansAsTable(loans, 5);
 		}else {
-			List<Loan> inprogressAsBorrower = new ArrayList<>();
-			List<Loan> inprogressAsLender = new ArrayList<>();
-			List<Loan> unpaidAsBorrower = new ArrayList<>();
-			List<Loan> unpaidAsLender = new ArrayList<>();
-			List<Loan> asBorrowerDone = new ArrayList<>();
-			List<Loan> asLenderDone = new ArrayList<>();
 			
-			for(Loan l : loans) {
-				boolean borrower = relevantUser.equals(l.getBorrower());
-				boolean paid = l.getAmountPennies() == l.getAmountPaidPennies();
-				boolean unpaid = l.isUnpaid();
-				boolean inprog = !paid && !unpaid;
-				if(borrower && inprog)
-					inprogressAsBorrower.add(l);
-				else if(!borrower && inprog)
-					inprogressAsLender.add(l);
-				else if(borrower && unpaid)
-					unpaidAsBorrower.add(l);
-				else if(!borrower && unpaid)
-					unpaidAsLender.add(l);
-				else if(borrower && paid)
-					asBorrowerDone.add(l);
-				else if(!borrower && paid)
-					asLenderDone.add(l);
-			}
+			List<Loan> asBorrower = getLoansWithBorrower(loans, relevantUser);
+			List<Loan> asLender = getLoansWithLender(loans, relevantUser);
+			List<Loan> unpaidAsBorrower = getUnpaidLoans(asBorrower);
+			List<Loan> unpaidAsLender = getUnpaidLoans(asLender);
+			List<Loan> asBorrowerDone = getPaidLoans(asBorrower);
+			List<Loan> asLenderDone = getPaidLoans(asLender);
 			
-			long amountBorrowedDonePen = 0;
-			for(Loan l : asBorrowerDone) {
-				amountBorrowedDonePen += l.getAmountPaidPennies();
-			}
+			List<Loan> inprogressAsBorrower = asBorrower;
+			inprogressAsBorrower.removeAll(unpaidAsBorrower);
+			inprogressAsBorrower.removeAll(asBorrowerDone);
 			
-			long amountLenderDonePen = 0;
-			for(Loan l : asLenderDone) {
-				amountLenderDonePen += l.getAmountPaidPennies();
-			}
+			List<Loan> inprogressAsLender = asLender;
+			inprogressAsLender.removeAll(unpaidAsLender);
+			inprogressAsLender.removeAll(asLenderDone);
+			
+			long amountBorrowedDonePen = getTotalLentPen(asBorrowerDone);
+			long amountLenderDonePen = getTotalLentPen(asLenderDone);
 			
 			loansString = config.getCheckTruncated();
 			
@@ -167,5 +149,15 @@ public class LoansBotUtils {
 	 */
 	private static List<Loan> getPaidLoans(List<Loan> bigList) {
 		return null;
+	}
+	
+	/**
+	 * Calculates the total amount of money lent in a list of loans
+	 * 
+	 * @param loans the list of loans to sum
+	 * @return the amount lent in {@code loans} in pennies
+	 */
+	private static long getTotalLentPen(List<Loan> loans) {
+		return 0;
 	}
 }
