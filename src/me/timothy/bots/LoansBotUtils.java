@@ -1,5 +1,6 @@
 package me.timothy.bots;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -115,7 +116,13 @@ public class LoansBotUtils {
 	 * @return a list of loans from {@code bigList} where the borrower is {@code borrower}
 	 */
 	private static List<Loan> getLoansWithBorrower(List<Loan> bigList, String borrower) {
-		return null;
+		List<Loan> result = new ArrayList<>();
+		for(Loan l : bigList) {
+			if(l.getBorrower().equalsIgnoreCase(borrower)) {
+				result.add(l);
+			}
+		}
+		return result;
 	}
 	/**
 	 * Searches a big list of loans and selectively grabs the loans where
@@ -126,7 +133,13 @@ public class LoansBotUtils {
 	 * @return a list of loans from {@code bigList} where the lender is {@code lender}
 	 */
 	private static List<Loan> getLoansWithLender(List<Loan> bigList, String lender) {
-		return null;
+		List<Loan> result = new ArrayList<>();
+		for(Loan l : bigList) {
+			if(l.getLender().equalsIgnoreCase(lender)) {
+				result.add(l);
+			}
+		}
+		return result;
 	}
 	
 	/**
@@ -137,7 +150,13 @@ public class LoansBotUtils {
 	 * @return loans from {@code bigList} that are unpaid
 	 */
 	private static List<Loan> getUnpaidLoans(List<Loan> bigList) {
-		return null;
+		List<Loan> result = new ArrayList<>();
+		for(Loan l : bigList) {
+			if(l.isUnpaid()) {
+				result.add(l);
+			}
+		}
+		return result;
 	}
 	
 	/**
@@ -148,7 +167,13 @@ public class LoansBotUtils {
 	 * @return loans from {@code bigList} that are fully paid off
 	 */
 	private static List<Loan> getPaidLoans(List<Loan> bigList) {
-		return null;
+		List<Loan> result = new ArrayList<>();
+		for(Loan l : bigList) {
+			if(l.getAmountPennies() == l.getAmountPaidPennies()) {
+				result.add(l);
+			}
+		}
+		return result;
 	}
 	
 	/**
@@ -158,6 +183,10 @@ public class LoansBotUtils {
 	 * @return the amount lent in {@code loans} in pennies
 	 */
 	private static long getTotalLentPen(List<Loan> loans) {
-		return 0;
+		long total = 0;
+		for(Loan l : loans) {
+			total += l.getAmountPennies();
+		}
+		return total;
 	}
 }
