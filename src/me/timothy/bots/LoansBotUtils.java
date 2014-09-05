@@ -101,8 +101,13 @@ public class LoansBotUtils {
 		StringBuilder result = new StringBuilder(table.format());
 		
 		if(toShow != loans.size()) {
+			List<Loan> skipped = new ArrayList<>();
+			for(int i = toShow; i < loans.size(); i++) {
+				skipped.add(loans.get(i));
+			}
 			result.append("\n");
-			result.append("- + An additional " + (loans.size() - toShow) + " older loans that were truncated\n");
+			result.append("- + An additional " + skipped.size() + " older loans (a total of $" +
+						BotUtils.getCostString(getTotalLentPen(skipped) / 100.) + " lent) that were truncated\n");
 		}
 		return result.toString();
 	}
