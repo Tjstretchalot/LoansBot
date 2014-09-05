@@ -40,36 +40,32 @@ public class LoansBotUtils {
 			
 			for(Loan l : loans) {
 				boolean borrower = relevantUser.equals(l.getBorrower());
-				int state = l.getAmountPennies() == l.getAmountPaidPennies() ? 2 : (l.isUnpaid() ? 1 : 0);
-				switch(state) {
-				case 0:
-					if(borrower)
-						inprogressAsBorrower.add(l);
-					else
-						inprogressAsLender.add(l);
-					break;
-				case 1:
-					if(borrower)
-						unpaidAsBorrower.add(l);
-					else
-						unpaidAsLender.add(l);
-					break;
-				case 2:
-					if(borrower)
-						asBorrowerDone.add(l);
-					else
-						asLenderDone.add(l);
-					break;
-				}
+				boolean paid = l.getAmountPennies() == l.getAmountPaidPennies();
+				boolean unpaid = l.isUnpaid();
+				boolean inprog = !paid && !unpaid;
+				if(borrower && inprog)
+					inprogressAsBorrower.add(l);
+				else if(!borrower && inprog)
+					inprogressAsLender.add(l);
+				else if(borrower && unpaid)
+					unpaidAsBorrower.add(l);
+				else if(!borrower && unpaid)
+					unpaidAsLender.add(l);
+				else if(borrower && paid)
+					asBorrowerDone.add(l);
+				else if(!borrower && paid)
+					asLenderDone.add(l);
 			}
 			
 			long amountBorrowedDonePen = 0;
-			for(Loan l : asBorrowerDone)
+			for(Loan l : asBorrowerDone) {
 				amountBorrowedDonePen += l.getAmountPaidPennies();
+			}
 			
 			long amountLenderDonePen = 0;
-			for(Loan l : asLenderDone)
+			for(Loan l : asLenderDone) {
 				amountLenderDonePen += l.getAmountPaidPennies();
+			}
 			
 			loansString = config.getCheckTruncated();
 			
