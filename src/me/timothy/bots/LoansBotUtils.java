@@ -8,6 +8,13 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Contains various utility static methods
+ * that are necessary for the loans bot.
+ * 
+ * @author Timothy
+ *
+ */
 public class LoansBotUtils {
 	@SuppressWarnings("unused")
 	private static Logger logger = LogManager.getLogger();
