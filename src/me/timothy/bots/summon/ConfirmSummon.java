@@ -14,6 +14,11 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * A summon for confirming that some money was transfered to someone
+ * 
+ * @author Timothy
+ */
 public class ConfirmSummon extends Summon {
 	/**
 	 * Matches things like

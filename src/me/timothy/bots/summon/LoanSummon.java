@@ -17,6 +17,12 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * For creating a loan where the user the loan is being made out
+ * to can be easily and consistently guessed, such as in comments.
+ * 
+ * @author Timothy
+ */
 public class LoanSummon extends Summon {
 	/**
 	 * Matches things like:

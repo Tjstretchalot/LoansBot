@@ -17,6 +17,15 @@ import me.timothy.bots.Loan;
 import me.timothy.bots.LoansFileConfiguration;
 import me.timothy.jreddit.info.Message;
 
+/**
+ * When the bot is summoned to make a loan using the username
+ * as well as the fullname of the comment. This is for when the
+ * user the loan is being made to cannot be guessed, such as in
+ * Pm's
+ * 
+ * @author Timothy
+ *
+ */
 public class AdvancedLoanSummon extends Summon {
 	/**
 	 * Matches things like:

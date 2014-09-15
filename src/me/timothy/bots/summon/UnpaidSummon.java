@@ -20,6 +20,12 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * For when someone does not pay back ones loan
+ * in an adequate amount of time
+ * 
+ * @author Timothy
+ */
 public class UnpaidSummon extends Summon {
 	/**
 	 * Matches things like

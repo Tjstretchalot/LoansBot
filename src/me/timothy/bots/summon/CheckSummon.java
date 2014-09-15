@@ -19,6 +19,11 @@ import me.timothy.bots.LoansFileConfiguration;
 import me.timothy.jreddit.info.Comment;
 import me.timothy.jreddit.info.Link;
 
+/**
+ * A summon for checking all loans made by a user
+ * 
+ * @author Timothy
+ */
 public class CheckSummon extends Summon {
 	/**
 	 * Matches things like

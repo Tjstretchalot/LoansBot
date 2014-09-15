@@ -19,6 +19,12 @@ import me.timothy.bots.LoansFileConfiguration;
 import me.timothy.jreddit.info.Comment;
 import me.timothy.jreddit.info.Message;
 
+/**
+ * Saying that a user has paid back in part or in full a loan
+ * 
+ * 
+ * @author Timothy
+ */
 public class PaidSummon extends Summon {
 	/**
 	 * Matches things like
