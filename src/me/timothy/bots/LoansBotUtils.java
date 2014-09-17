@@ -23,12 +23,12 @@ public class LoansBotUtils {
 	/**
 	 * The primary subreddit the bot is for
 	 */
-	public static final String PRIMARY_SUBREDDIT = "Borrow";
+	public static final String PRIMARY_SUBREDDIT = "borrow";
 	
 	/**
 	 * The secondary subreddits the bot is for
 	 */
-	public static final List<String> SECONDARY_SUBREDDITS = Collections.unmodifiableList(Arrays.asList("Loans"));
+	public static final List<String> SECONDARY_SUBREDDITS = Collections.unmodifiableList(Arrays.asList("loans"));
 	
 	/**
 	 * Gets a string that represents the specified loan such that it is readily

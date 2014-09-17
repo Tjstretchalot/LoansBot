@@ -28,8 +28,10 @@ public class LoansFileConfiguration extends FileConfiguration {
 	private static final String CHECK_TRUNCATED = "check_truncated.txt";
 	private static final String UNPAID = "unpaid.txt";
 	private static final String CONFIRM = "confirm.txt";
+	private static final String SECONDARY_SUBREDDIT_POSTFIX = "secondary_subreddit_postfix.txt";
 	
 	private static final String ACTION_TO_BANNED = "action_to_banned.txt";
+	
 	
 	private Properties databaseInfo;
 	private String successfulLoan;
@@ -40,8 +42,10 @@ public class LoansFileConfiguration extends FileConfiguration {
 	private String actionToBanned;
 	private String unpaid;
 	private String confirm;
+	private String secondarySubredditPostfix;
 
 	private Logger logger;
+
 
 	public LoansFileConfiguration() {
 		logger = LogManager.getLogger();
@@ -62,11 +66,12 @@ public class LoansFileConfiguration extends FileConfiguration {
 		successfulLoan = loadReplyString(Paths.get(SUCCESSFUL_LOAN).toFile());
 		noLoansToRepay = loadReplyString(Paths.get(NO_LOANS_TO_REPAY).toFile());
 		repayment = loadReplyString(Paths.get(REPAYMENT).toFile());
-		setActionToBanned(loadReplyString(Paths.get(ACTION_TO_BANNED).toFile()));
+		actionToBanned = loadReplyString(Paths.get(ACTION_TO_BANNED).toFile());
 		check = loadReplyString(Paths.get(CHECK).toFile());
 		checkTruncated = loadReplyString(Paths.get(CHECK_TRUNCATED).toFile());
 		unpaid = loadReplyString(Paths.get(UNPAID).toFile());
 		confirm = loadReplyString(Paths.get(CONFIRM).toFile());
+		secondarySubredditPostfix = loadReplyString(Paths.get(SECONDARY_SUBREDDIT_POSTFIX).toFile());
 	}
 
 	/**
@@ -246,6 +251,15 @@ public class LoansFileConfiguration extends FileConfiguration {
 	 */
 	public void setConfirm(String confirm) {
 		this.confirm = confirm;
+	}
+
+	/**
+	 * The postfix for secondary subreddits
+	 * 
+	 * @return the postfix for secondary subreddits
+	 */
+	public String getSecondarySubredditPostfix() {
+		return secondarySubredditPostfix;
 	}
 
 }
