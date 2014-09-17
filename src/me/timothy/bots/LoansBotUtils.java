@@ -1,6 +1,7 @@
 package me.timothy.bots;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -18,6 +19,17 @@ import org.apache.logging.log4j.Logger;
 public class LoansBotUtils {
 	@SuppressWarnings("unused")
 	private static Logger logger = LogManager.getLogger();
+	
+	/**
+	 * The primary subreddit the bot is for
+	 */
+	public static final String PRIMARY_SUBREDDIT = "Borrow";
+	
+	/**
+	 * The secondary subreddits the bot is for
+	 */
+	public static final List<String> SECONDARY_SUBREDDITS = Collections.unmodifiableList(Arrays.asList("Loans"));
+	
 	/**
 	 * Gets a string that represents the specified loan such that it is readily
 	 * readable. If there are less than 5 loans this is equivalent to getLoansStringRaw,

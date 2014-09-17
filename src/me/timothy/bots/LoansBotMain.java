@@ -29,7 +29,7 @@ public class LoansBotMain {
 		Utils.USER_AGENT = "LoansBot by /u/Tjstretchalot";
 		
 		logger.debug("Initializing loans bot..");
-		Bot loansBot = new Bot("Loans+Borrow");
+		Bot loansBot = new Bot(getSubreddit());
 		
 		logger.debug("Loading config..");
 		LoansFileConfiguration config = new LoansFileConfiguration();
@@ -57,5 +57,19 @@ public class LoansBotMain {
 				new Summon[] { new CheckSummon() } );
 		
 		driver.run();
+	}
+
+	/**
+	 * Gets the subreddit string for the primary + 
+	 * secondary subreddits
+	 * 
+	 * @return the subreddits like so: a+b+c
+	 */
+	private static String getSubreddit() {
+		StringBuilder subredditBuilder = new StringBuilder(LoansBotUtils.PRIMARY_SUBREDDIT);
+		for(String sub : LoansBotUtils.SECONDARY_SUBREDDITS) {
+			subredditBuilder.append("+").append(sub);
+		}
+		return subredditBuilder.toString();
 	}
 }
