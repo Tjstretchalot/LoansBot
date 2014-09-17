@@ -28,7 +28,7 @@ public class LoansBotUtils {
 	/**
 	 * The secondary subreddits the bot is for
 	 */
-	public static final List<String> SECONDARY_SUBREDDITS = Collections.unmodifiableList(Arrays.asList("loans"));
+	public static final List<String> SECONDARY_SUBREDDITS = Collections.unmodifiableList(Arrays.asList("loans", "loansbot"));
 	
 	/**
 	 * Gets a string that represents the specified loan such that it is readily
