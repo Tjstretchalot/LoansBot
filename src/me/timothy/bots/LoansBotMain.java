@@ -29,7 +29,7 @@ public class LoansBotMain {
 		Utils.USER_AGENT = "LoansBot by /u/Tjstretchalot";
 		
 		logger.debug("Initializing loans bot..");
-		Bot loansBot = new Bot("Loans");
+		Bot loansBot = new Bot("Loans+Borrow");
 		
 		logger.debug("Loading config..");
 		LoansFileConfiguration config = new LoansFileConfiguration();
