@@ -78,6 +78,24 @@ public class LoansDatabase extends Database {
 				+ "id CHAR(12) NOT NULL, "
 				+ "PRIMARY KEY (id)"
 				+ ");");
+		
+		statement = connection.createStatement();
+		statement.execute("CREATE TABLE IF NOT EXISTS applicants (" +
+				"id INT NOT NULL AUTO_INCREMENT, " +
+				"timestamp TEXT, " +
+				"username CHAR(20), " +
+				"email TEXT, " +
+				"first_name CHAR(50), " +
+				"last_name CHAR(50), " +
+				"street_address TEXT, " +
+				"city CHAR(25), " +
+				"zip int, " +
+				"state char(10), " +
+				"country char(25), " +
+				"payment_method char(25), " +
+				"method_of_use char(25), " +
+				"PRIMARY KEY (id)" +
+				");");
 	}
 
 	/**
@@ -283,7 +301,115 @@ public class LoansDatabase extends Database {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	/**
+	 * Gets any applicants in the database that have the specified
+	 * reddit username.
+	 * 
+	 * @param username the username to search for
+	 * @return applicants with that reddit username
+	 */
+	public List<Applicant> getApplicantByUsername(String username) {
+		PreparedStatement prep;
+		
+		try {
+			prep = connection.prepareStatement("SELECT * FROM applicants WHERE username=?");
+			prep.setString(1, username);
+			ResultSet results = prep.executeQuery();
+			return getApplicants(results);
+		}catch(SQLException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
+	
+	/**
+	 * Gets any applicants in the database that match the specified 
+	 * information (case insensitive)
+	 * @param user
+	 * @param firstName
+	 * @param lastName
+	 * @param street
+	 * @param city
+	 * @param state
+	 * @param country
+	 * @return applicants with information like the arguments
+	 */
+	public List<Applicant> getApplicantsByInfo(String user, String firstName, String lastName, String street, String city, String state, String country) {
+		PreparedStatement prep;
+		try {
+			prep = connection.prepareStatement("SELECT * FROM applicants WHERE username LIKE ? AND first_name LIKE ? AND last_name LIKE ? AND street_address LIKE ? AND city LIKE ? AND state LIKE ? AND country LIKE ?");
+			prep.setString(1, user);
+			prep.setString(2, firstName);
+			prep.setString(3, lastName);
+			prep.setString(4, street);
+			prep.setString(5, city);
+			prep.setString(6, state);
+			prep.setString(7, country);
+			ResultSet results = prep.executeQuery();
+			return getApplicants(results);
+		}catch(SQLException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
+	
+	/**
+	 * Adds an applicant to the database
+	 * @param applicant the applicant to add
+	 */
+	public void addApplicant(Applicant applicant) {
+		PreparedStatement prep;
+		
+		try {
+			prep = connection.prepareStatement("INSERT INTO applicants (timestamp, username, email, first_name, last_name, street_address, " +
+					"city, zip, state, country, payment_method, method_of_use) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+			
+			prep.setString(1, applicant.getTimestamp());
+			prep.setString(2, applicant.getUsername());
+			prep.setString(3, applicant.getEmail());
+			prep.setString(4, applicant.getFirstName());
+			prep.setString(5, applicant.getLastName());
+			prep.setString(6, applicant.getStreetAddress());
+			prep.setString(7, applicant.getCity());
+			prep.setInt(8, applicant.getZip());
+			prep.setString(9, applicant.getState());
+			prep.setString(10, applicant.getCountry());
+			prep.setString(11, applicant.getPaymentMethod());
+			prep.setString(12, applicant.getMainMethodOfUse());
+		}catch(SQLException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
 
+	/**
+	 * Gets applicants from the result set, assumes * was used for wat to retrieve
+	 * 
+	 * @param results the results to parse
+	 * @return the parsed applicant opjects
+	 * @throws SQLException if a sql-exception occurs
+	 */
+	private List<Applicant> getApplicants(ResultSet results) throws SQLException {
+		List<Applicant> result = new ArrayList<>();
+		
+		while(results.next()) {
+			result.add(new Applicant(
+					results.getString("timestamp"), 
+					results.getString("username"),
+					results.getString("email"), 
+					results.getString("first_name"), 
+					results.getString("last_name"),
+					results.getString("street_address"),
+					results.getString("city"),
+					results.getInt("zip"),
+					results.getString("state"),
+					results.getString("country"),
+					results.getString("payment_method"),
+					results.getString("main_method_of_use")));
+			
+			result.get(result.size() - 1).setId(results.getInt("id"));
+		}
+		
+		return result;
+	}
 	public static void initMysql() throws ClassNotFoundException {
 		Class.forName("com.mysql.jdbc.Driver");
 	}
