@@ -112,14 +112,14 @@ public class LoansBotDriver extends BotDriver {
 
 			if(duplicates.size() > 0) {
 				logger.info(a.getUsername() + "'s application was denied (duplicate information)");
-				sendEmail(a.getEmail(), "Application Denied", "Your application to /r/Borrow was denied:\n\n- Duplicate Information");
+				sendEmail(a.getEmail(), a.getFirstName(), "Application Denied", "Your application to /r/Borrow was denied:\n\n- Duplicate Information");
 				sleepFor(2000);
 				continue;
 			}
 
 			ldb.addApplicant(a);
 			logger.info(a.getUsername() + "'s application was accepted");
-			sendEmail(a.getEmail(), "Application Accepted", "Your application to /r/Borrow was accepted, please read the sidebar before posting");
+			sendEmail(a.getEmail(), a.getFirstName(), "Application Accepted", "Your application to /r/Borrow was accepted, please read the sidebar before posting");
 			sleepFor(2000);
 		}
 
@@ -150,7 +150,7 @@ public class LoansBotDriver extends BotDriver {
 		}.run();
 	}
 
-	private void sendEmail(final String to, final String title, final String message) {
+	private void sendEmail(final String to, final String firstName, final String title, final String message) {
 		final LoansFileConfiguration lcf = (LoansFileConfiguration) config;
 		Properties props = new Properties();
 		props.put("mail.smtp.auth", "true");
@@ -168,7 +168,7 @@ public class LoansBotDriver extends BotDriver {
 			Message msg = new MimeMessage(session);
 			msg.setFrom(new InternetAddress(lcf.getGoogleInfo().getProperty("username"), "LoansBot"));
 			msg.addRecipient(Message.RecipientType.TO,
-					new InternetAddress(to, "Mr. User"));
+					new InternetAddress(to, firstName));
 			msg.setSubject(title);
 			msg.setText(message);
 			Transport.send(msg);
