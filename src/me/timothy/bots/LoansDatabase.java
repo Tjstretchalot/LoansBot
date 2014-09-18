@@ -46,6 +46,8 @@ public class LoansDatabase extends Database {
 			connection.close();
 		}
 		connection = DriverManager.getConnection(url, username, password);
+		
+		ensureTablesExist();
 	}
 
 	/**
