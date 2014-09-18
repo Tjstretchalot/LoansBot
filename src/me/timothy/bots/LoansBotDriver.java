@@ -8,6 +8,7 @@ import java.util.Properties;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.AddressException;
@@ -54,7 +55,7 @@ public class LoansBotDriver extends BotDriver {
 		}else if(replyable instanceof Link) {
 			subreddit = ((Link) replyable).subreddit();
 		}
-		
+
 		if(subreddit != null) {
 			if(LoansBotUtils.SECONDARY_SUBREDDITS.contains(subreddit.toLowerCase())) {
 				if(!response.endsWith("\n\n")) {
@@ -63,11 +64,11 @@ public class LoansBotDriver extends BotDriver {
 					}else {
 						response = response + "\n\n";
 					}
-					
+
 					String postfix = ((LoansFileConfiguration) config).getSecondarySubredditPostfix();
 					postfix = postfix.replace("<subreddit>", subreddit);
 					postfix = postfix.replace("<primary>", LoansBotUtils.PRIMARY_SUBREDDIT);
-					
+
 					response = response + postfix;
 				}
 			}
@@ -80,9 +81,9 @@ public class LoansBotDriver extends BotDriver {
 	 */
 	@Override
 	protected void doLoop() throws IOException, ParseException,
-			java.text.ParseException {
+	java.text.ParseException {
 		super.doLoop();
-		
+
 		logger.trace("Checking for pending applicants..");
 		checkPendingApplicants();
 	}
@@ -93,41 +94,41 @@ public class LoansBotDriver extends BotDriver {
 	 */
 	protected void checkPendingApplicants() {
 		LoansDatabase ldb = (LoansDatabase) database;
-		
+
 		SpreadsheetIntegration si = ldb.getSpreadsheetIntegration();
-		
+
 		List<Applicant> pendingApplicants = si.getPendingApplicants();
-		
+
 		if(pendingApplicants.size() == 0)
 			return;
-		
+
 		logger.debug("There are " + pendingApplicants.size() + " pending applicants..");
 		for(Applicant a : pendingApplicants) {
 			List<Applicant> duplicates = new ArrayList<>();
-			
+
 			duplicates.addAll(ldb.getApplicantByUsername(a.getUsername()));
 			duplicates.addAll(ldb.getApplicantsByInfo(a.getFirstName(), a.getLastName(), a.getStreetAddress(), a.getCity(), 
 					a.getState(), a.getCountry()));
-			
+
 			if(duplicates.size() > 0) {
 				logger.info(a.getUsername() + "'s application was denied (duplicate information)");
 				sendEmail(a.getEmail(), "Application Denied", "Your application to /r/Borrow was denied:\n\n- Duplicate Information");
 				sleepFor(2000);
 				continue;
 			}
-			
+
 			ldb.addApplicant(a);
 			logger.info(a.getUsername() + "'s application was accepted");
 			sendEmail(a.getEmail(), "Application Accepted", "Your application to /r/Borrow was accepted, please read the sidebar before posting");
 			sleepFor(2000);
 		}
-		
+
 		for(int i = 0; i < pendingApplicants.size(); i++) {
 			si.removeTopApplicant();
 			sleepFor(1000);
 		}
 	}
-	
+
 	/**
 	 * Sends a message to the specified user with the specified
 	 * title & message
@@ -145,27 +146,34 @@ public class LoansBotDriver extends BotDriver {
 				}
 				return true;
 			}
-			
+
 		}.run();
 	}
-	
-	private void sendEmail(final String to, final String title, final String message) {
-		LoansFileConfiguration lcf = (LoansFileConfiguration) config;
-		Properties props = new Properties();
-		Session session = Session.getDefaultInstance(props, null);
 
-		String msgBody = "...";
+	private void sendEmail(final String to, final String title, final String message) {
+		final LoansFileConfiguration lcf = (LoansFileConfiguration) config;
+		Properties props = new Properties();
+		props.put("mail.smtp.auth", "true");
+		props.put("mail.smtp.starttls.enable", "true");
+		props.put("mail.smtp.host", "smtp.gmail.com");
+		props.put("mail.smtp.port", "587");
+
+		Session session = Session.getDefaultInstance(props, new javax.mail.Authenticator() {
+			protected PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(lcf.getGoogleInfo().getProperty("username"), lcf.getGoogleInfo().getProperty("password"));
+			}
+		});
 
 		try {
-		    Message msg = new MimeMessage(session);
-		    msg.setFrom(new InternetAddress(lcf.getGoogleInfo().getProperty("username"), "LoansBot"));
-		    msg.addRecipient(Message.RecipientType.TO,
-		     new InternetAddress(to, "Mr. User"));
-		    msg.setSubject(title);
-		    msg.setText(message);
-		    Transport.send(msg);
+			Message msg = new MimeMessage(session);
+			msg.setFrom(new InternetAddress(lcf.getGoogleInfo().getProperty("username"), "LoansBot"));
+			msg.addRecipient(Message.RecipientType.TO,
+					new InternetAddress(to, "Mr. User"));
+			msg.setSubject(title);
+			msg.setText(message);
+			Transport.send(msg);
 		} catch (MessagingException | UnsupportedEncodingException e) {
-		    throw new RuntimeException(e);
+			throw new RuntimeException(e);
 		}
 	}
 }
