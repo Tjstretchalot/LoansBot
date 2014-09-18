@@ -376,6 +376,8 @@ public class LoansDatabase extends Database {
 			prep.setString(10, applicant.getCountry());
 			prep.setString(11, applicant.getPaymentMethod());
 			prep.setString(12, applicant.getMainMethodOfUse());
+			
+			prep.execute();
 		}catch(SQLException ex) {
 			throw new RuntimeException(ex);
 		}
