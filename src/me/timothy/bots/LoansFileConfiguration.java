@@ -30,6 +30,9 @@ public class LoansFileConfiguration extends FileConfiguration {
 	private static final String UNPAID = "unpaid.txt";
 	private static final String CONFIRM = "confirm.txt";
 	private static final String SECONDARY_SUBREDDIT_POSTFIX = "secondary_subreddit_postfix.txt";
+	private static final String BAD_VERIFY_SUMMON = "bad_verify_summon.txt";
+	private static final String GOOD_VERIFY_SUMMON_DNE = "good_verify_summon_dne.txt";
+	private static final String GOOD_VERIFY_SUMMON_EXISTS = "good_verify_summon_exists.txt";
 	
 	private static final String ACTION_TO_BANNED = "action_to_banned.txt";
 	
@@ -45,6 +48,9 @@ public class LoansFileConfiguration extends FileConfiguration {
 	private String unpaid;
 	private String confirm;
 	private String secondarySubredditPostfix;
+	private String badVerifySummon;
+	private String goodVerifySummonDNE;
+	private String goodVerifySummonExists;
 
 	private Logger logger;
 
@@ -75,6 +81,9 @@ public class LoansFileConfiguration extends FileConfiguration {
 		unpaid = loadReplyString(Paths.get(UNPAID).toFile());
 		confirm = loadReplyString(Paths.get(CONFIRM).toFile());
 		secondarySubredditPostfix = loadReplyString(Paths.get(SECONDARY_SUBREDDIT_POSTFIX).toFile());
+		badVerifySummon = loadReplyString(Paths.get(BAD_VERIFY_SUMMON).toFile());
+		goodVerifySummonDNE = loadReplyString(Paths.get(GOOD_VERIFY_SUMMON_DNE).toFile());
+		goodVerifySummonExists = loadReplyString(Paths.get(GOOD_VERIFY_SUMMON_EXISTS).toFile());
 	}
 
 	/**
@@ -279,4 +288,25 @@ public class LoansFileConfiguration extends FileConfiguration {
 		this.googleInfo = googleInfo;
 	}
 
+
+	/**
+	 * @return the badVerifySummon
+	 */
+	public String getBadVerifySummon() {
+		return badVerifySummon;
+	}
+
+	/**
+	 * @return the goodVerifySummonDNE
+	 */
+	public String getGoodVerifySummonDNE() {
+		return goodVerifySummonDNE;
+	}
+
+	/**
+	 * @return the goodVerifySummonExists
+	 */
+	public String getGoodVerifySummonExists() {
+		return goodVerifySummonExists;
+	}
 }

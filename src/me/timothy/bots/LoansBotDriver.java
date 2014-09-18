@@ -100,9 +100,21 @@ public class LoansBotDriver extends BotDriver {
 					a.getState(), a.getCountry()));
 			
 			if(duplicates.size() > 0) {
+				logger.info(a.getUsername() + "'s application was denied (duplicate information)");
 				sendMessage(a.getUsername(), "Application Denied", "Your application to /r/Borrow was denied:\n\n- Duplicate Information");
+				sleepFor(2000);
+				continue;
 			}
 			
+			ldb.addApplicant(a);
+			logger.info(a.getUsername() + "'s application was accepted");
+			sendMessage(a.getUsername(), "Application Accepted", "Your application to /r/Borrow was accepted, please read the sidebar before posting");
+			sleepFor(2000);
+		}
+		
+		for(int i = 0; i < pendingApplicants.size(); i++) {
+			si.removeTopApplicant();
+			sleepFor(1000);
 		}
 	}
 	
