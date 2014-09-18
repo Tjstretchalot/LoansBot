@@ -326,7 +326,6 @@ public class LoansDatabase extends Database {
 	/**
 	 * Gets any applicants in the database that match the specified 
 	 * information (case insensitive)
-	 * @param user
 	 * @param firstName
 	 * @param lastName
 	 * @param street
@@ -335,17 +334,16 @@ public class LoansDatabase extends Database {
 	 * @param country
 	 * @return applicants with information like the arguments
 	 */
-	public List<Applicant> getApplicantsByInfo(String user, String firstName, String lastName, String street, String city, String state, String country) {
+	public List<Applicant> getApplicantsByInfo(String firstName, String lastName, String street, String city, String state, String country) {
 		PreparedStatement prep;
 		try {
-			prep = connection.prepareStatement("SELECT * FROM applicants WHERE username LIKE ? AND first_name LIKE ? AND last_name LIKE ? AND street_address LIKE ? AND city LIKE ? AND state LIKE ? AND country LIKE ?");
-			prep.setString(1, user);
-			prep.setString(2, firstName);
-			prep.setString(3, lastName);
-			prep.setString(4, street);
-			prep.setString(5, city);
-			prep.setString(6, state);
-			prep.setString(7, country);
+			prep = connection.prepareStatement("SELECT * FROM applicants WHERE first_name LIKE ? AND last_name LIKE ? AND street_address LIKE ? AND city LIKE ? AND state LIKE ? AND country LIKE ?");
+			prep.setString(1, firstName);
+			prep.setString(2, lastName);
+			prep.setString(3, street);
+			prep.setString(4, city);
+			prep.setString(5, state);
+			prep.setString(6, country);
 			ResultSet results = prep.executeQuery();
 			return getApplicants(results);
 		}catch(SQLException ex) {

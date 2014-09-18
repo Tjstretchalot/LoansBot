@@ -1,5 +1,11 @@
 package me.timothy.bots;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.json.simple.parser.ParseException;
+
 import me.timothy.bots.summon.Summon;
 import me.timothy.jreddit.info.Comment;
 import me.timothy.jreddit.info.Link;
@@ -59,5 +65,65 @@ public class LoansBotDriver extends BotDriver {
 		super.handleReply(replyable, response);
 	}
 
+	/* (non-Javadoc)
+	 * @see me.timothy.bots.BotDriver#doLoop()
+	 */
+	@Override
+	protected void doLoop() throws IOException, ParseException,
+			java.text.ParseException {
+		super.doLoop();
+		
+		logger.debug("Checking for pending applicants..");
+		checkPendingApplicants();
+	}
+
+	/**
+	 * Check and handle any pending applicants 
+	 * 
+	 */
+	protected void checkPendingApplicants() {
+		LoansDatabase ldb = (LoansDatabase) database;
+		
+		SpreadsheetIntegration si = ldb.getSpreadsheetIntegration();
+		
+		List<Applicant> pendingApplicants = si.getPendingApplicants();
+		
+		if(pendingApplicants.size() == 0)
+			return;
+		
+		logger.debug("There are " + pendingApplicants.size() + " pending applicants..");
+		for(Applicant a : pendingApplicants) {
+			List<Applicant> duplicates = new ArrayList<>();
+			
+			duplicates.addAll(ldb.getApplicantByUsername(a.getUsername()));
+			duplicates.addAll(ldb.getApplicantsByInfo(a.getFirstName(), a.getLastName(), a.getStreetAddress(), a.getCity(), 
+					a.getState(), a.getCountry()));
+			
+			if(duplicates.size() > 0) {
+				sendMessage(a.getUsername(), "Application Denied", "Your application to /r/Borrow was denied:\n\n- Duplicate Information");
+			}
+			
+		}
+	}
 	
+	/**
+	 * Sends a message to the specified user with the specified
+	 * title & message
+	 * @param user the user to send the message to
+	 * @param title the title of the message
+	 * @param message the text of the message
+	 */
+	private void sendMessage(final String to, final String title, final String message) {
+		new Retryable<Boolean>("Send PM") {
+
+			@Override
+			protected Boolean runImpl() throws Exception {
+				if(!bot.sendPM(to, title, message)) {
+					logger.warn("Failed to send " + message + " to " + to);
+				}
+				return true;
+			}
+			
+		}.run();
+	}
 }
