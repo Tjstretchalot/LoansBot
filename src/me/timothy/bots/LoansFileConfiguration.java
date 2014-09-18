@@ -20,6 +20,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class LoansFileConfiguration extends FileConfiguration {
 	private static final String DATABASE_INFO_FILE = "database.properties";
+	private static final String GOOGLE_INFO_FILE = "google.properties";
 
 	private static final String SUCCESSFUL_LOAN = "successful_loan.txt";
 	private static final String NO_LOANS_TO_REPAY = "no_loans_to_repay.txt";
@@ -34,6 +35,7 @@ public class LoansFileConfiguration extends FileConfiguration {
 	
 	
 	private Properties databaseInfo;
+	private Properties googleInfo;
 	private String successfulLoan;
 	private String noLoansToRepay;
 	private String repayment;
@@ -63,6 +65,7 @@ public class LoansFileConfiguration extends FileConfiguration {
 		super.load();
 		
 		databaseInfo = loadProperties(Paths.get(DATABASE_INFO_FILE).toFile(), "url", "username", "password");
+		googleInfo = loadProperties(Paths.get(GOOGLE_INFO_FILE).toFile(), "username", "password");
 		successfulLoan = loadReplyString(Paths.get(SUCCESSFUL_LOAN).toFile());
 		noLoansToRepay = loadReplyString(Paths.get(NO_LOANS_TO_REPAY).toFile());
 		repayment = loadReplyString(Paths.get(REPAYMENT).toFile());
@@ -260,6 +263,20 @@ public class LoansFileConfiguration extends FileConfiguration {
 	 */
 	public String getSecondarySubredditPostfix() {
 		return secondarySubredditPostfix;
+	}
+
+	/**
+	 * @return the googleInfo
+	 */
+	public Properties getGoogleInfo() {
+		return googleInfo;
+	}
+
+	/**
+	 * @param googleInfo the googleInfo to set
+	 */
+	public void setGoogleInfo(Properties googleInfo) {
+		this.googleInfo = googleInfo;
 	}
 
 }

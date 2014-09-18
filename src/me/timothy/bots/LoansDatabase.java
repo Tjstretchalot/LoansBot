@@ -21,9 +21,10 @@ import java.util.List;
  */
 public class LoansDatabase extends Database {
 	private Connection connection;
+	private SpreadsheetIntegration spreadsheetIntegration;
 
-	public LoansDatabase() {
-
+	public LoansDatabase(SpreadsheetIntegration si) {
+		setSpreadsheetIntegration(si);
 	}
 
 	/**
@@ -412,5 +413,19 @@ public class LoansDatabase extends Database {
 	}
 	public static void initMysql() throws ClassNotFoundException {
 		Class.forName("com.mysql.jdbc.Driver");
+	}
+
+	/**
+	 * @return the spreadsheetIntegration
+	 */
+	public SpreadsheetIntegration getSpreadsheetIntegration() {
+		return spreadsheetIntegration;
+	}
+
+	/**
+	 * @param spreadsheetIntegration the spreadsheetIntegration to set
+	 */
+	public void setSpreadsheetIntegration(SpreadsheetIntegration spreadsheetIntegration) {
+		this.spreadsheetIntegration = spreadsheetIntegration;
 	}
 }

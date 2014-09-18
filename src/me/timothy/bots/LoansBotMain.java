@@ -40,8 +40,11 @@ public class LoansBotMain {
 			return;
 		}
 		
+		logger.debug("Connecting to Google..");
+		SpreadsheetIntegration si = new SpreadsheetIntegration(config);
+		
 		logger.debug("Connecting to database..");
-		LoansDatabase database = new LoansDatabase();
+		LoansDatabase database = new LoansDatabase(si);
 		
 		try {
 			database.connect(config.getDatabaseInfo().getProperty("username"), config.getDatabaseInfo().getProperty("password"), config.getDatabaseInfo().getProperty("url"));
