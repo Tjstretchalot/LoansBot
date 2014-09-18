@@ -12,7 +12,6 @@ import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.LoansFileConfiguration;
-import me.timothy.bots.SpreadsheetIntegration;
 import me.timothy.jreddit.info.Message;
 
 /**

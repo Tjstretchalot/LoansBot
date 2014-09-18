@@ -29,7 +29,7 @@ public class SpreadsheetIntegration {
 	private static final String LAST_NAME = "lastname";
 	private static final String STREET_ADDRESS = "streetaddress";
 	private static final String CITY = "citytown";
-	private static final String ZIP_CODE = "zip";
+	private static final String ZIP_CODE = "zipcode";
 	private static final String STATE = "state";
 	private static final String COUNTRY = "country";
 	private static final String PAYMENT_METHOD = "paymentmethod";
