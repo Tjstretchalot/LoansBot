@@ -406,7 +406,7 @@ public class LoansDatabase extends Database {
 					results.getString("state"),
 					results.getString("country"),
 					results.getString("payment_method"),
-					results.getString("main_method_of_use")));
+					results.getString("method_of_use")));
 			
 			result.get(result.size() - 1).setId(results.getInt("id"));
 		}
