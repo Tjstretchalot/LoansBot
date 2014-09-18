@@ -1,12 +1,18 @@
 package me.timothy.bots.summon;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.logging.log4j.LogManager;
+
+import me.timothy.bots.Applicant;
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
+import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.LoansFileConfiguration;
+import me.timothy.bots.SpreadsheetIntegration;
 import me.timothy.jreddit.info.Message;
 
 /**
@@ -79,9 +85,26 @@ public class VerifySummon extends Summon {
 	public String applyChanges(FileConfiguration config, Database database) {
 		LoansFileConfiguration lcf = (LoansFileConfiguration) config;
 		if(!validSummon) {
-			
+			return lcf.getBadVerifySummon();
 		}
-		return null;
+		
+		LoansDatabase ldb = (LoansDatabase) database;
+		
+		List<Applicant> applicantsWithThatInfo = ldb.getApplicantsByInfo(firstName, lastName, streetAddress, city, state, country);
+		if(applicantsWithThatInfo.size() > 1) {
+			LogManager.getLogger().warn("Multiple applicants matching " + firstName + " " + lastName + "!!");
+		}
+		
+		if(applicantsWithThatInfo.size() == 0) {
+			return lcf.getGoodVerifySummonDNE();
+		}
+		
+		Applicant a = applicantsWithThatInfo.get(0);
+		
+		if(a.getUsername().equalsIgnoreCase(verifyWho)) 
+			return lcf.getGoodVerifySummonExists();
+		else
+			return lcf.getGoodVerifySummonDNE();
 	}
 
 }
