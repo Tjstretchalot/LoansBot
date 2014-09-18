@@ -1,8 +1,18 @@
 package me.timothy.bots;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 
 import org.json.simple.parser.ParseException;
 
@@ -73,7 +83,7 @@ public class LoansBotDriver extends BotDriver {
 			java.text.ParseException {
 		super.doLoop();
 		
-		logger.debug("Checking for pending applicants..");
+		logger.trace("Checking for pending applicants..");
 		checkPendingApplicants();
 	}
 
@@ -101,14 +111,14 @@ public class LoansBotDriver extends BotDriver {
 			
 			if(duplicates.size() > 0) {
 				logger.info(a.getUsername() + "'s application was denied (duplicate information)");
-				sendMessage(a.getUsername(), "Application Denied", "Your application to /r/Borrow was denied:\n\n- Duplicate Information");
+				sendEmail(a.getEmail(), "Application Denied", "Your application to /r/Borrow was denied:\n\n- Duplicate Information");
 				sleepFor(2000);
 				continue;
 			}
 			
 			ldb.addApplicant(a);
 			logger.info(a.getUsername() + "'s application was accepted");
-			sendMessage(a.getUsername(), "Application Accepted", "Your application to /r/Borrow was accepted, please read the sidebar before posting");
+			sendEmail(a.getEmail(), "Application Accepted", "Your application to /r/Borrow was accepted, please read the sidebar before posting");
 			sleepFor(2000);
 		}
 		
@@ -137,5 +147,25 @@ public class LoansBotDriver extends BotDriver {
 			}
 			
 		}.run();
+	}
+	
+	private void sendEmail(final String to, final String title, final String message) {
+		LoansFileConfiguration lcf = (LoansFileConfiguration) config;
+		Properties props = new Properties();
+		Session session = Session.getDefaultInstance(props, null);
+
+		String msgBody = "...";
+
+		try {
+		    Message msg = new MimeMessage(session);
+		    msg.setFrom(new InternetAddress(lcf.getGoogleInfo().getProperty("username"), "LoansBot"));
+		    msg.addRecipient(Message.RecipientType.TO,
+		     new InternetAddress(to, "Mr. User"));
+		    msg.setSubject(title);
+		    msg.setText(message);
+		    Transport.send(msg);
+		} catch (MessagingException | UnsupportedEncodingException e) {
+		    throw new RuntimeException(e);
+		}
 	}
 }
