@@ -98,12 +98,11 @@ public class CheckSummon extends Summon {
 			logger.printf(Level.INFO, "%s requested a check on %s", doer, doneTo);
 			List<Loan> relevantLoans1 = database.getLoansWith(doneTo);
 
-			
 			return config.getCheck()
 					.replace("<checker>", doer)
 					.replace("<user>", doneTo)
-					.replace("<loans>", LoansBotUtils.getLoansString(relevantLoans1, doneTo, config)
-					.replace("<applied>", database.getApplicantByUsername(doneTo).size() > 0 ? "Yes" : "No"));
+					.replace("<loans>", LoansBotUtils.getLoansString(relevantLoans1, doneTo, config))
+					.replace("<applied>", database.getApplicantByUsername(doneTo).size() > 0 ? "Yes" : "No");
 		}catch(SQLException ex) {
 			throw new RuntimeException(ex);
 		}
