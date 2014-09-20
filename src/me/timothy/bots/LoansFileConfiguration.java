@@ -33,6 +33,7 @@ public class LoansFileConfiguration extends FileConfiguration {
 	private static final String BAD_VERIFY_SUMMON = "bad_verify_summon.txt";
 	private static final String GOOD_VERIFY_SUMMON_DNE = "good_verify_summon_dne.txt";
 	private static final String GOOD_VERIFY_SUMMON_EXISTS = "good_verify_summon_exists.txt";
+	private static final String SUICIDE = "suicide.txt";
 	
 	private static final String ACTION_TO_BANNED = "action_to_banned.txt";
 	
@@ -51,6 +52,7 @@ public class LoansFileConfiguration extends FileConfiguration {
 	private String badVerifySummon;
 	private String goodVerifySummonDNE;
 	private String goodVerifySummonExists;
+	private String suicide;
 
 	private Logger logger;
 
@@ -84,6 +86,7 @@ public class LoansFileConfiguration extends FileConfiguration {
 		badVerifySummon = loadReplyString(Paths.get(BAD_VERIFY_SUMMON).toFile());
 		goodVerifySummonDNE = loadReplyString(Paths.get(GOOD_VERIFY_SUMMON_DNE).toFile());
 		goodVerifySummonExists = loadReplyString(Paths.get(GOOD_VERIFY_SUMMON_EXISTS).toFile());
+		suicide = loadReplyString(Paths.get(SUICIDE).toFile());
 	}
 
 	/**
@@ -308,5 +311,12 @@ public class LoansFileConfiguration extends FileConfiguration {
 	 */
 	public String getGoodVerifySummonExists() {
 		return goodVerifySummonExists;
+	}
+	
+	/**
+	 * @return the message to suicide posts
+	 */
+	public String getSuicide() {
+		return suicide;
 	}
 }

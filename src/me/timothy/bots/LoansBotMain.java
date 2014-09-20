@@ -8,6 +8,7 @@ import me.timothy.bots.summon.CheckSummon;
 import me.timothy.bots.summon.ConfirmSummon;
 import me.timothy.bots.summon.LoanSummon;
 import me.timothy.bots.summon.PaidSummon;
+import me.timothy.bots.summon.SuicideSummon;
 import me.timothy.bots.summon.Summon;
 import me.timothy.bots.summon.UnpaidSummon;
 import me.timothy.jreddit.requests.Utils;
@@ -55,9 +56,9 @@ public class LoansBotMain {
 		
 		logger.debug("Running loans bot driver");
 		BotDriver driver = new LoansBotDriver(database, config, loansBot,
-				new Summon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon() }, 
+				new Summon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon(), new SuicideSummon() }, 
 				new Summon[] { new AdvancedLoanSummon(), new PaidSummon(), new UnpaidSummon() },
-				new Summon[] { new CheckSummon() } );
+				new Summon[] { new CheckSummon(), new SuicideSummon() } );
 		
 		driver.run();
 	}
