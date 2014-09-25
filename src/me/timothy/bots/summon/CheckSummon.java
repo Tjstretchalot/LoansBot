@@ -79,6 +79,11 @@ public class CheckSummon extends Summon {
 	public boolean parse(Link submission)
 			throws UnsupportedOperationException {
 		
+		String title = submission.title();
+		if(title.startsWith("[META]"))
+			return false;
+		
+		
 		this.doer = "AUTOMATIC";
 		this.doneTo = submission.author();
 		
