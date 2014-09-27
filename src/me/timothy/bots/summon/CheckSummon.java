@@ -80,7 +80,7 @@ public class CheckSummon extends Summon {
 			throws UnsupportedOperationException {
 		
 		String title = submission.title();
-		if(title.startsWith("[META]"))
+		if(title.toUpperCase().startsWith("[META]"))
 			return false;
 		
 		
