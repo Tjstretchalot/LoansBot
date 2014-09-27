@@ -15,7 +15,7 @@ public class Applicant {
 	private String lastName;
 	private String streetAddress;
 	private String city;
-	private int zip;
+	private String zip;
 	private String state;
 	private String country;
 	private String paymentMethod;
@@ -23,7 +23,7 @@ public class Applicant {
 	
 	public Applicant(String timestamp, String username, String email,
 			String firstName, String lastName, String streetAddress,
-			String city, int zip, String state, String country,
+			String city, String zip, String state, String country,
 			String paymentMethod, String mainMethodOfUse) {
 		super();
 		this.timestamp = timestamp;
@@ -85,7 +85,7 @@ public class Applicant {
 	/**
 	 * @return the zip
 	 */
-	public int getZip() {
+	public String getZip() {
 		return zip;
 	}
 	/**
@@ -165,7 +165,7 @@ public class Applicant {
 	/**
 	 * @param zip the zip to set
 	 */
-	public void setZip(int zip) {
+	public void setZip(String zip) {
 		this.zip = zip;
 	}
 

@@ -86,16 +86,16 @@ public class LoansDatabase extends Database {
 		statement.execute("CREATE TABLE IF NOT EXISTS applicants (" +
 				"id INT NOT NULL AUTO_INCREMENT, " +
 				"timestamp TEXT, " +
-				"username CHAR(20), " +
+				"username TEXT, " +
 				"email TEXT, " +
-				"first_name CHAR(50), " +
-				"last_name CHAR(50), " +
+				"first_name TEXT, " +
+				"last_name TEXT, " +
 				"street_address TEXT, " +
-				"city CHAR(25), " +
-				"zip int, " +
-				"state char(10), " +
-				"country char(25), " +
-				"payment_method char(25), " +
+				"city TEXT, " +
+				"zip TEXT, " +
+				"state TEXT, " +
+				"country TEXT, " +
+				"payment_method TEXT, " +
 				"method_of_use char(25), " +
 				"PRIMARY KEY (id)" +
 				");");
@@ -371,7 +371,7 @@ public class LoansDatabase extends Database {
 			prep.setString(5, applicant.getLastName());
 			prep.setString(6, applicant.getStreetAddress());
 			prep.setString(7, applicant.getCity());
-			prep.setInt(8, applicant.getZip());
+			prep.setString(8, applicant.getZip());
 			prep.setString(9, applicant.getState());
 			prep.setString(10, applicant.getCountry());
 			prep.setString(11, applicant.getPaymentMethod());
@@ -402,7 +402,7 @@ public class LoansDatabase extends Database {
 					results.getString("last_name"),
 					results.getString("street_address"),
 					results.getString("city"),
-					results.getInt("zip"),
+					results.getString("zip"),
 					results.getString("state"),
 					results.getString("country"),
 					results.getString("payment_method"),

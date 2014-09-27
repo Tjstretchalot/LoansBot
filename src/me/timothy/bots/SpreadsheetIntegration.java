@@ -98,7 +98,7 @@ public class SpreadsheetIntegration {
 					cec.getValue(LAST_NAME), 
 					cec.getValue(STREET_ADDRESS), 
 					cec.getValue(CITY), 
-					Integer.valueOf(cec.getValue(ZIP_CODE)), 
+					cec.getValue(ZIP_CODE), 
 					cec.getValue(STATE),
 					cec.getValue(COUNTRY), 
 					cec.getValue(PAYMENT_METHOD),
