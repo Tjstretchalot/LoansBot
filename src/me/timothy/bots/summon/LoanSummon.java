@@ -56,6 +56,10 @@ public class LoanSummon extends Summon {
 		if(matcher.find()) {
 			this.doer = comment.author();
 			this.doneTo = comment.linkAuthor();
+			
+			if(doer.toLowerCase().equals(doneTo.toLowerCase()))
+				return false;
+			
 			this.url = comment.linkURL();
 			
 			String text = matcher.group().trim();
