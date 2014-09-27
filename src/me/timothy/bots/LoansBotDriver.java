@@ -9,6 +9,7 @@ import java.util.Properties;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.PasswordAuthentication;
+import javax.mail.SendFailedException;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
@@ -116,9 +117,12 @@ public class LoansBotDriver extends BotDriver {
 				continue;
 			}
 
-			ldb.addApplicant(a);
-			logger.info(a.getUsername() + "'s application was accepted");
-			sendEmail(a.getEmail(), a.getFirstName(), "Application Accepted", "Your application to /r/Borrow was accepted, please read the sidebar before posting");
+			logger.info(a.getUsername() + "'s application will be accepted if the email works");
+			if(sendEmail(a.getEmail(), a.getFirstName(), "Application Accepted", "Your application to /r/Borrow was accepted, please read the sidebar before posting"))
+				ldb.addApplicant(a);
+			else {
+				logger.info(a.getUsername() + "'s application was denied (invalid email)");
+			}
 			sleepFor(2000);
 		}
 
@@ -151,7 +155,7 @@ public class LoansBotDriver extends BotDriver {
 		}.run();
 	}
 
-	private void sendEmail(final String to, final String firstName, final String title, final String message) {
+	private boolean sendEmail(final String to, final String firstName, final String title, final String message) {
 		final LoansFileConfiguration lcf = (LoansFileConfiguration) config;
 		Properties props = new Properties();
 		props.put("mail.smtp.auth", "true");
@@ -173,8 +177,13 @@ public class LoansBotDriver extends BotDriver {
 			msg.setSubject(title);
 			msg.setText(message);
 			Transport.send(msg);
-		} catch (MessagingException | UnsupportedEncodingException e) {
+		} catch(SendFailedException invAddress) {
+			if(invAddress.getMessage().equals("Invalid Addresses"))
+				return false;
+			throw new RuntimeException(invAddress);
+		}catch (MessagingException | UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}
+		return true;
 	}
 }
