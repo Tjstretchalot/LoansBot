@@ -78,31 +78,32 @@ public class SpreadsheetIntegration {
 	public List<Applicant> getPendingApplicants() {
 		List<Applicant> result = new ArrayList<>();
 
-		try {
-			ListFeed lFeed = service.getFeed(wEntry.getListFeedUrl(), ListFeed.class);
+		ListFeed lFeed = new Retryable<ListFeed>("Get list-feed") {
 
-			List<ListEntry> rows = lFeed.getEntries();
-
-			for(ListEntry row : rows) {
-				CustomElementCollection cec = row.getCustomElements();
-				result.add(new Applicant(cec.getValue(TIMESTAMP), 
-						cec.getValue(USERNAME), 
-						cec.getValue(EMAIL), 
-						cec.getValue(FIRST_NAME), 
-						cec.getValue(LAST_NAME), 
-						cec.getValue(STREET_ADDRESS), 
-						cec.getValue(CITY), 
-						Integer.valueOf(cec.getValue(ZIP_CODE)), 
-						cec.getValue(STATE),
-						cec.getValue(COUNTRY), 
-						cec.getValue(PAYMENT_METHOD),
-						cec.getValue(MAIN_METHOD_OF_USE)
-						));
+			@Override
+			protected ListFeed runImpl() throws Exception {
+				return service.getFeed(wEntry.getListFeedUrl(), ListFeed.class);
 			}
+			
+		}.run();
 
+		List<ListEntry> rows = lFeed.getEntries();
 
-		}catch(IOException | ServiceException e) {
-			throw new RuntimeException(e);
+		for(ListEntry row : rows) {
+			CustomElementCollection cec = row.getCustomElements();
+			result.add(new Applicant(cec.getValue(TIMESTAMP), 
+					cec.getValue(USERNAME), 
+					cec.getValue(EMAIL), 
+					cec.getValue(FIRST_NAME), 
+					cec.getValue(LAST_NAME), 
+					cec.getValue(STREET_ADDRESS), 
+					cec.getValue(CITY), 
+					Integer.valueOf(cec.getValue(ZIP_CODE)), 
+					cec.getValue(STATE),
+					cec.getValue(COUNTRY), 
+					cec.getValue(PAYMENT_METHOD),
+					cec.getValue(MAIN_METHOD_OF_USE)
+					));
 		}
 		return result;
 	}
@@ -111,14 +112,15 @@ public class SpreadsheetIntegration {
 	 * Removes the top applicant
 	 */
 	public void removeTopApplicant() {
-		try {
-			ListFeed lFeed = service.getFeed(wEntry.getListFeedUrl(), ListFeed.class);
+		new Retryable<Boolean>("Delete top row") {
 
-			List<ListEntry> rows = lFeed.getEntries();
-			
-			rows.get(0).delete();
-		}catch(IOException | ServiceException e) {
-			throw new RuntimeException(e);
-		}
+			@Override
+			protected Boolean runImpl() throws Exception {
+				ListFeed lFeed = service.getFeed(wEntry.getListFeedUrl(), ListFeed.class);
+				List<ListEntry> rows = lFeed.getEntries();
+				rows.get(0).delete();
+				return true;
+			}
+		}.run();
 	}
 }

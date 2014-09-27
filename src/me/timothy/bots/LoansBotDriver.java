@@ -11,7 +11,6 @@ import javax.mail.MessagingException;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
-import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
@@ -124,6 +123,7 @@ public class LoansBotDriver extends BotDriver {
 		}
 
 		for(int i = 0; i < pendingApplicants.size(); i++) {
+			logger.info("Removing " + pendingApplicants.get(i).getUsername() + " from spreadsheet");
 			si.removeTopApplicant();
 			sleepFor(1000);
 		}
@@ -136,6 +136,7 @@ public class LoansBotDriver extends BotDriver {
 	 * @param title the title of the message
 	 * @param message the text of the message
 	 */
+	@SuppressWarnings("unused")
 	private void sendMessage(final String to, final String title, final String message) {
 		new Retryable<Boolean>("Send PM") {
 
