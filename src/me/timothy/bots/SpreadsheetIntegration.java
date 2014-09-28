@@ -22,6 +22,9 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.google.gdata.client.spreadsheet.SpreadsheetService;
 import com.google.gdata.data.spreadsheet.CustomElementCollection;
 import com.google.gdata.data.spreadsheet.ListEntry;
@@ -55,6 +58,8 @@ public class SpreadsheetIntegration {
 	
 	private final URL SPREADSHEET_FEED_URL;
 
+	private Logger logger;
+	
 	private SpreadsheetService service;
 
 	private SpreadsheetEntry mSpreadsheet;
@@ -67,6 +72,7 @@ public class SpreadsheetIntegration {
 	private Store store;
 
 	public SpreadsheetIntegration(LoansFileConfiguration cfg) {
+		logger = LogManager.getLogger();
 		config = cfg;
 		
 		// SPREADSHEET 
@@ -85,6 +91,7 @@ public class SpreadsheetIntegration {
 			List<SpreadsheetEntry> entries = sFeed.getEntries();
 
 			mSpreadsheet = entries.get(0);
+			logger.debug("Spreadsheet Found: " + mSpreadsheet.getTitle().getPlainText());
 
 			WorksheetFeed wFeed = service.getFeed(mSpreadsheet.getWorksheetFeedUrl(), WorksheetFeed.class);
 			List<WorksheetEntry> wEntries = wFeed.getEntries();
