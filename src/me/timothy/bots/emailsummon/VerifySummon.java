@@ -1,8 +1,10 @@
-package me.timothy.bots.summon;
+package me.timothy.bots.emailsummon;
 
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.mail.Message;
 
 import org.apache.logging.log4j.LogManager;
 
@@ -10,9 +12,9 @@ import me.timothy.bots.Applicant;
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
+import me.timothy.bots.LoansBotUtils;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.LoansFileConfiguration;
-import me.timothy.jreddit.info.Message;
 
 /**
  * Called to verify that some personal information matches what
@@ -21,7 +23,7 @@ import me.timothy.jreddit.info.Message;
  * 
  * @author Timothy
  */
-public class VerifySummon implements PMSummon {
+public class VerifySummon implements EmailSummon {
 	/**
 	 * Matches things like
 	 * 
@@ -41,27 +43,32 @@ public class VerifySummon implements PMSummon {
 	private String country;
 	
 	
+	public boolean isSummonedBy(Message message) {
+		String body = LoansBotUtils.getMessageBody(message);
+		Matcher m = UNPAID_PATTERN.matcher(body);
+		
+		return m.find();
+	}
 	/* (non-Javadoc)
 	 * @see me.timothy.bots.summon.Summon#parse(me.timothy.jreddit.info.Message)
 	 */
 	@Override
-	public boolean parse(Message message) throws UnsupportedOperationException {
+	public void parse(Message message) {
 		validSummon = false;
-		Matcher m = UNPAID_PATTERN.matcher(message.body());
-		String group;
+		String body = LoansBotUtils.getMessageBody(message);
+		Matcher m = UNPAID_PATTERN.matcher(body);
+		if(!m.find())
+			return;
 		
-		if(m.find())
-			group = m.group().trim();
-		else
-			return false;
+		String group = m.group().trim();
 		
 		Matcher quotesMatcher = QUOTES_PATTERN.matcher(group);
 		if(!quotesMatcher.find()) {
-			return true;
+			return;
 		}
 		streetAddress = quotesMatcher.group();
 		if(quotesMatcher.find()) {
-			return true;
+			return;
 		}
 		
 		group = group.replace(streetAddress, "");
@@ -76,12 +83,10 @@ public class VerifySummon implements PMSummon {
 		state = split[4];
 		country = split[5];
 		validSummon = true;
-		return true;
 	}
 
-
 	@Override
-	public String applyChanges(FileConfiguration config, Database database) {
+	public String applyDatabaseChanges(FileConfiguration config, Database database) {
 		LoansFileConfiguration lcf = (LoansFileConfiguration) config;
 		if(!validSummon) {
 			return lcf.getBadVerifySummon();

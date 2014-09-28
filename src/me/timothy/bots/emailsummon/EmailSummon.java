@@ -2,6 +2,9 @@ package me.timothy.bots.emailsummon;
 
 import javax.mail.Message;
 
+import me.timothy.bots.Database;
+import me.timothy.bots.FileConfiguration;
+
 /**
  * Describes a Summon that is for emails as well
  * @author Timothy
@@ -32,5 +35,5 @@ public interface EmailSummon {
 	 * has from the last parse, and applies those changes
 	 * @return
 	 */
-	public void applyDatabaseChanges() throws IllegalStateException;
+	public String applyDatabaseChanges(FileConfiguration config, Database database) throws IllegalStateException;
 }

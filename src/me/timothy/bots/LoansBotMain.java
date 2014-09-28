@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 import me.timothy.bots.emailsummon.EmailSummon;
+import me.timothy.bots.emailsummon.VerifySummon;
 import me.timothy.bots.summon.AdvancedLoanSummon;
 import me.timothy.bots.summon.CheckSummon;
 import me.timothy.bots.summon.CommentSummon;
@@ -62,7 +63,7 @@ public class LoansBotMain {
 				new CommentSummon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon(), new SuicideSummon() }, 
 				new PMSummon[] { new AdvancedLoanSummon(), new PaidSummon(), new UnpaidSummon() },
 				new LinkSummon[] { new CheckSummon(), new SuicideSummon() },
-				new EmailSummon[] { });
+				new EmailSummon[] { new VerifySummon() });
 		
 		driver.run();
 	}

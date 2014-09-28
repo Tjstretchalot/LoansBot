@@ -1,10 +1,15 @@
 package me.timothy.bots;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import javax.mail.Message;
+import javax.mail.MessagingException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -212,5 +217,16 @@ public class LoansBotUtils {
 			total += l.getAmountPennies();
 		}
 		return total;
+	}
+
+	public static String getMessageBody(Message message) {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		
+		try {
+			message.writeTo(baos);
+			return new String(baos.toByteArray(), "UTF-8");
+		} catch (IOException | MessagingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

@@ -154,7 +154,7 @@ public class LoansBotDriver extends BotDriver {
 						try {
 							if(eSummon.isSummonedBy(mess)) {
 								eSummon.parse(mess);
-								eSummon.applyDatabaseChanges();
+								eSummon.applyDatabaseChanges(config, database);
 							}
 						}catch(Exception ex) {
 							logger.error(ex);
