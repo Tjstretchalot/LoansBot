@@ -17,6 +17,9 @@ import javax.mail.internet.MimeMessage;
 
 import org.json.simple.parser.ParseException;
 
+import me.timothy.bots.summon.CommentSummon;
+import me.timothy.bots.summon.LinkSummon;
+import me.timothy.bots.summon.PMSummon;
 import me.timothy.bots.summon.Summon;
 import me.timothy.jreddit.info.Comment;
 import me.timothy.jreddit.info.Link;
@@ -39,8 +42,8 @@ public class LoansBotDriver extends BotDriver {
 	 * @param submissionSummons submission summons
 	 */
 	public LoansBotDriver(Database database, FileConfiguration config, Bot bot,
-			Summon[] commentSummons, Summon[] pmSummons,
-			Summon[] submissionSummons) {
+			CommentSummon[] commentSummons, PMSummon[] pmSummons,
+			LinkSummon[] submissionSummons) {
 		super(database, config, bot, commentSummons, pmSummons, submissionSummons);
 	}
 
