@@ -18,6 +18,8 @@ import javax.mail.SendFailedException;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.Transport;
+import javax.mail.event.StoreEvent;
+import javax.mail.event.StoreListener;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
@@ -128,6 +130,15 @@ public class SpreadsheetIntegration {
 		try {
 			store = imapsSession.getStore();
 			store.connect("imap.gmail.com", null, null);
+			
+			store.addStoreListener(new StoreListener() {
+
+				@Override
+				public void notification(StoreEvent se) {
+					logger.info("STORE EVENT: " + se.getMessageType() + " - " + se.getMessage() + " (from " + se.getSource().toString() + ", " + se.getSource().getClass().getCanonicalName() + ")");
+				}
+				
+			});
 		} catch (NoSuchProviderException e) {
 			throw new RuntimeException(e);
 		} catch (MessagingException e) {
