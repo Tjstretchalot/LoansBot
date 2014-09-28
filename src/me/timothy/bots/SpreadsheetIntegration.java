@@ -1,7 +1,6 @@
 package me.timothy.bots;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -58,6 +57,7 @@ public class SpreadsheetIntegration {
 	
 	private final URL SPREADSHEET_FEED_URL;
 
+	@SuppressWarnings("unused")
 	private Logger logger;
 	
 	private SpreadsheetService service;
@@ -67,6 +67,7 @@ public class SpreadsheetIntegration {
 	
 	private Authenticator gmailAuth;
 	private Session imapsSession;
+	private Properties propsSMTP;
 	private Session smtpSession;
 	
 	private Store store;
@@ -110,19 +111,20 @@ public class SpreadsheetIntegration {
 				return new PasswordAuthentication(config.getGoogleInfo().getProperty("username"), config.getGoogleInfo().getProperty("password"));
 			}
 		};
-		
-		Properties props = new Properties();
-		props.setProperty("mail.store.protocol", "imaps");
-		
-		imapsSession = Session.getInstance(props, gmailAuth);
 
-		Properties propsSMTP = new Properties();
+		propsSMTP = new Properties();
 		propsSMTP.put("mail.smtp.auth", "true");
 		propsSMTP.put("mail.smtp.starttls.enable", "true");
 		propsSMTP.put("mail.smtp.host", "smtp.gmail.com");
 		propsSMTP.put("mail.smtp.port", "587");
-
 		smtpSession = Session.getDefaultInstance(propsSMTP, gmailAuth);
+
+		Properties propsImaps = new Properties();
+		propsImaps.setProperty("mail.store.protocol", "imaps");
+		propsImaps.putAll(propsSMTP);
+		
+		imapsSession = Session.getInstance(propsImaps, gmailAuth);
+
 		try {
 			store = imapsSession.getStore();
 			store.connect("imap.gmail.com", null, null);
@@ -197,25 +199,29 @@ public class SpreadsheetIntegration {
 	 * @param firstName first name of that person
 	 * @param title title of email
 	 * @param message email message
-	 * @returnsuccess
+	 * @return success
 	 */
 	public boolean sendEmail(final Address to, final String title, final String message) {
-		try {
-			Message msg = new MimeMessage(smtpSession);
-			msg.setFrom(new InternetAddress(config.getGoogleInfo().getProperty("username"), "LoansBot"));
-			msg.addRecipient(Message.RecipientType.TO,
-					to);
-			msg.setSubject(title);
-			msg.setText(message);
-			Transport.send(msg);
-		} catch(SendFailedException invAddress) {
-			if(invAddress.getMessage().equals("Invalid Addresses"))
-				return false;
-			throw new RuntimeException(invAddress);
-		}catch (MessagingException | UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		}
-		return true;
+		return new Retryable<Boolean>("send email") {
+
+			@Override
+			protected Boolean runImpl() throws Exception {
+				try {
+					Message msg = new MimeMessage(smtpSession);
+					msg.setFrom(new InternetAddress(config.getGoogleInfo().getProperty("username"), "LoansBot"));
+					msg.addRecipient(Message.RecipientType.TO,
+							to);
+					msg.setSubject(title);
+					msg.setText(message);
+					Transport.send(msg);
+				}catch(SendFailedException sfe) {
+					if(sfe.getMessage().equals("Invalid Addresses"))
+						return false;
+				}
+				return true;
+			}
+			
+		}.run();
 	}
 	
 	/**
