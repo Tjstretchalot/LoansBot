@@ -26,7 +26,7 @@ import me.timothy.jreddit.info.Message;
  * @author Timothy
  *
  */
-public class AdvancedLoanSummon extends Summon {
+public class AdvancedLoanSummon implements PMSummon {
 	/**
 	 * Matches things like:
 	 * 

@@ -16,7 +16,7 @@ import me.timothy.jreddit.info.Link;
  * 
  * @author Timothy
  */
-public class SuicideSummon extends Summon {
+public class SuicideSummon implements LinkSummon, CommentSummon {
 	/**
 	 * The pattern to search the messages for
 	 */

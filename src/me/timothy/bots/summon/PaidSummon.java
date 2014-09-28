@@ -25,7 +25,7 @@ import me.timothy.jreddit.info.Message;
  * 
  * @author Timothy
  */
-public class PaidSummon extends Summon {
+public class PaidSummon implements PMSummon, CommentSummon {
 	/**
 	 * Matches things like
 	 * 

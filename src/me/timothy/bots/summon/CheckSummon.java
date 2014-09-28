@@ -24,7 +24,7 @@ import me.timothy.jreddit.info.Link;
  * 
  * @author Timothy
  */
-public class CheckSummon extends Summon {
+public class CheckSummon implements CommentSummon, LinkSummon {
 	/**
 	 * Matches things like
 	 * 

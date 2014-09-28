@@ -19,7 +19,7 @@ import org.apache.logging.log4j.Logger;
  * 
  * @author Timothy
  */
-public class ConfirmSummon extends Summon {
+public class ConfirmSummon implements CommentSummon {
 	/**
 	 * Matches things like
 	 * 

@@ -23,7 +23,7 @@ import org.apache.logging.log4j.Logger;
  * 
  * @author Timothy
  */
-public class LoanSummon extends Summon {
+public class LoanSummon implements CommentSummon {
 	/**
 	 * Matches things like:
 	 * 

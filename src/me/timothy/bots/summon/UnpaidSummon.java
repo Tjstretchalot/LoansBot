@@ -26,7 +26,7 @@ import org.apache.logging.log4j.Logger;
  * 
  * @author Timothy
  */
-public class UnpaidSummon extends Summon {
+public class UnpaidSummon implements PMSummon, CommentSummon {
 	/**
 	 * Matches things like
 	 * 
