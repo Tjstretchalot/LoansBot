@@ -5,8 +5,11 @@ import java.sql.SQLException;
 
 import me.timothy.bots.summon.AdvancedLoanSummon;
 import me.timothy.bots.summon.CheckSummon;
+import me.timothy.bots.summon.CommentSummon;
 import me.timothy.bots.summon.ConfirmSummon;
+import me.timothy.bots.summon.LinkSummon;
 import me.timothy.bots.summon.LoanSummon;
+import me.timothy.bots.summon.PMSummon;
 import me.timothy.bots.summon.PaidSummon;
 import me.timothy.bots.summon.SuicideSummon;
 import me.timothy.bots.summon.Summon;
@@ -56,9 +59,9 @@ public class LoansBotMain {
 		
 		logger.debug("Running loans bot driver");
 		BotDriver driver = new LoansBotDriver(database, config, loansBot,
-				new Summon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon(), new SuicideSummon() }, 
-				new Summon[] { new AdvancedLoanSummon(), new PaidSummon(), new UnpaidSummon() },
-				new Summon[] { new CheckSummon(), new SuicideSummon() } );
+				new CommentSummon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon(), new SuicideSummon() }, 
+				new PMSummon[] { new AdvancedLoanSummon(), new PaidSummon(), new UnpaidSummon() },
+				new LinkSummon[] { new CheckSummon(), new SuicideSummon() } );
 		
 		driver.run();
 	}

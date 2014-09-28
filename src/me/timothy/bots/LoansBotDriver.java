@@ -15,15 +15,14 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
-import org.json.simple.parser.ParseException;
-
 import me.timothy.bots.summon.CommentSummon;
 import me.timothy.bots.summon.LinkSummon;
 import me.timothy.bots.summon.PMSummon;
-import me.timothy.bots.summon.Summon;
 import me.timothy.jreddit.info.Comment;
 import me.timothy.jreddit.info.Link;
 import me.timothy.jreddit.info.Thing;
+
+import org.json.simple.parser.ParseException;
 
 /**
  * The bot driver for the loans bot
