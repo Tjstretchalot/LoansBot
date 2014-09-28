@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import javax.mail.Address;
 import javax.mail.Authenticator;
 import javax.mail.Folder;
 import javax.mail.Message;
@@ -60,7 +61,9 @@ public class SpreadsheetIntegration {
 	private WorksheetEntry wEntry;
 	
 	private Authenticator gmailAuth;
-	private Session session;
+	private Session imapsSession;
+	private Session smtpSession;
+	
 	private Store store;
 
 	public SpreadsheetIntegration(LoansFileConfiguration cfg) {
@@ -101,9 +104,17 @@ public class SpreadsheetIntegration {
 		Properties props = new Properties();
 		props.setProperty("mail.store.protocol", "imaps");
 		
-		session = Session.getInstance(props, gmailAuth);
+		imapsSession = Session.getInstance(props, gmailAuth);
+
+		Properties propsSMTP = new Properties();
+		props.put("mail.smtp.auth", "true");
+		props.put("mail.smtp.starttls.enable", "true");
+		props.put("mail.smtp.host", "smtp.gmail.com");
+		props.put("mail.smtp.port", "587");
+
+		smtpSession = Session.getDefaultInstance(propsSMTP, gmailAuth);
 		try {
-			store = session.getStore();
+			store = imapsSession.getStore();
 			store.connect("imap.gmail.com", null, null);
 		} catch (NoSuchProviderException e) {
 			throw new RuntimeException(e);
@@ -178,20 +189,12 @@ public class SpreadsheetIntegration {
 	 * @param message email message
 	 * @returnsuccess
 	 */
-	public boolean sendEmail(final String to, final String firstName, final String title, final String message) {
-		Properties props = new Properties();
-		props.put("mail.smtp.auth", "true");
-		props.put("mail.smtp.starttls.enable", "true");
-		props.put("mail.smtp.host", "smtp.gmail.com");
-		props.put("mail.smtp.port", "587");
-
-		Session session = Session.getDefaultInstance(props, gmailAuth);
-
+	public boolean sendEmail(final Address to, final String title, final String message) {
 		try {
-			Message msg = new MimeMessage(session);
+			Message msg = new MimeMessage(smtpSession);
 			msg.setFrom(new InternetAddress(config.getGoogleInfo().getProperty("username"), "LoansBot"));
 			msg.addRecipient(Message.RecipientType.TO,
-					new InternetAddress(to, firstName));
+					to);
 			msg.setSubject(title);
 			msg.setText(message);
 			Transport.send(msg);

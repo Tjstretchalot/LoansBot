@@ -1,11 +1,13 @@
 package me.timothy.bots;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.mail.Folder;
 import javax.mail.Message;
+import javax.mail.internet.InternetAddress;
 
 import me.timothy.bots.emailsummon.EmailSummon;
 import me.timothy.bots.summon.CommentSummon;
@@ -116,16 +118,24 @@ public class LoansBotDriver extends BotDriver {
 
 			if(duplicates.size() > 0) {
 				logger.info(a.getUsername() + "'s application was denied (duplicate information)");
-				si.sendEmail(a.getEmail(), a.getFirstName(), "Application Denied", "Your application to /r/Borrow was denied:\n\n- Duplicate Information");
+				try {
+					si.sendEmail(new InternetAddress(a.getEmail(), a.getFirstName()), "Application Denied", "Your application to /r/Borrow was denied:\n\n- Duplicate Information");
+				} catch (UnsupportedEncodingException e) {
+					logger.error(e);
+				}
 				sleepFor(2000);
 				continue;
 			}
 
 			logger.info(a.getUsername() + "'s application will be accepted if the email works");
-			if(si.sendEmail(a.getEmail(), a.getFirstName(), "Application Accepted", "Your application to /r/Borrow was accepted, please read the sidebar before posting"))
-				ldb.addApplicant(a);
-			else {
-				logger.info(a.getUsername() + "'s application was denied (invalid email)");
+			try {
+				if(si.sendEmail(new InternetAddress(a.getEmail(), a.getFirstName()), "Application Accepted", "Your application to /r/Borrow was accepted, please read the sidebar before posting"))
+					ldb.addApplicant(a);
+				else {
+					logger.info(a.getUsername() + "'s application was denied (invalid email)");
+				}
+			} catch (UnsupportedEncodingException e) {
+				logger.error(e);
 			}
 			sleepFor(2000);
 		}
@@ -146,7 +156,8 @@ public class LoansBotDriver extends BotDriver {
 		new Retryable<Boolean>("Check emails") {
 			@Override
 			protected Boolean runImpl() throws Exception {
-				Folder inbox = ((LoansDatabase) database).getSpreadsheetIntegration().getInbox();
+				SpreadsheetIntegration si = ((LoansDatabase) database).getSpreadsheetIntegration();
+				Folder inbox = si.getInbox();
 				
 				Message[] messages = inbox.getMessages();
 				for(Message mess : messages) {
@@ -159,7 +170,8 @@ public class LoansBotDriver extends BotDriver {
 						try {
 							if(eSummon.isSummonedBy(mess)) {
 								eSummon.parse(mess);
-								eSummon.applyDatabaseChanges(config, database);
+								String response = eSummon.applyDatabaseChanges(config, database);
+								si.sendEmail(mess.getFrom()[0], eSummon.getClass().getSimpleName(), response);
 							}
 						}catch(Exception ex) {
 							logger.error(ex);
