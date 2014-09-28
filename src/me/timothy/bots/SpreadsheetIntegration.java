@@ -89,9 +89,12 @@ public class SpreadsheetIntegration {
 
 			SpreadsheetFeed sFeed = service.getFeed(SPREADSHEET_FEED_URL, SpreadsheetFeed.class);
 			List<SpreadsheetEntry> entries = sFeed.getEntries();
-
-			mSpreadsheet = entries.get(0);
-			logger.debug("Spreadsheet Found: " + mSpreadsheet.getTitle().getPlainText());
+			for(SpreadsheetEntry se : entries) {
+				if(se.getTitle().getPlainText().equals("/r/Borrow Application (Responses)")) {
+					mSpreadsheet = se;
+					break;
+				}
+			}
 
 			WorksheetFeed wFeed = service.getFeed(mSpreadsheet.getWorksheetFeedUrl(), WorksheetFeed.class);
 			List<WorksheetEntry> wEntries = wFeed.getEntries();
