@@ -150,6 +150,11 @@ public class LoansBotDriver extends BotDriver {
 				
 				Message[] messages = inbox.getMessages();
 				for(Message mess : messages) {
+					// Using a timestamp as a uuid is not the best... but its all I got
+					String timestamp = Long.toString(mess.getReceivedDate().getTime());
+					if(database.containsFullname(timestamp))
+						continue;
+					
 					for(EmailSummon eSummon : emailSummons) {
 						try {
 							if(eSummon.isSummonedBy(mess)) {
@@ -160,6 +165,7 @@ public class LoansBotDriver extends BotDriver {
 							logger.error(ex);
 						}
 					}
+					database.addFullname(timestamp);
 				}
 				return true;
 			}
