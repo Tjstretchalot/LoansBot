@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.mail.Folder;
+import javax.mail.Message;
+
 import me.timothy.bots.emailsummon.EmailSummon;
 import me.timothy.bots.summon.CommentSummon;
 import me.timothy.bots.summon.LinkSummon;
@@ -140,7 +143,27 @@ public class LoansBotDriver extends BotDriver {
 	 * does, handles that appropriately
 	 */
 	protected void checkEmails() {
-		
+		new Retryable<Boolean>("Check emails") {
+			@Override
+			protected Boolean runImpl() throws Exception {
+				Folder inbox = ((LoansDatabase) database).getSpreadsheetIntegration().getInbox();
+				
+				Message[] messages = inbox.getMessages();
+				for(Message mess : messages) {
+					for(EmailSummon eSummon : emailSummons) {
+						try {
+							if(eSummon.isSummonedBy(mess)) {
+								eSummon.parse(mess);
+								eSummon.applyDatabaseChanges();
+							}
+						}catch(Exception ex) {
+							logger.error(ex);
+						}
+					}
+				}
+				return true;
+			}
+		}.run();
 	}
 
 	/**
