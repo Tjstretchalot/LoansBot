@@ -1,10 +1,25 @@
 package me.timothy.bots;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+
+import javax.mail.Authenticator;
+import javax.mail.Folder;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.NoSuchProviderException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.SendFailedException;
+import javax.mail.Session;
+import javax.mail.Store;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 
 import com.google.gdata.client.spreadsheet.SpreadsheetService;
 import com.google.gdata.data.spreadsheet.CustomElementCollection;
@@ -34,15 +49,24 @@ public class SpreadsheetIntegration {
 	private static final String COUNTRY = "country";
 	private static final String PAYMENT_METHOD = "paymentmethod";
 	private static final String MAIN_METHOD_OF_USE = "mainmethodofuse";
-
+	
+	private LoansFileConfiguration config;
+	
 	private final URL SPREADSHEET_FEED_URL;
 
 	private SpreadsheetService service;
 
 	private SpreadsheetEntry mSpreadsheet;
 	private WorksheetEntry wEntry;
+	
+	private Authenticator gmailAuth;
+	private Session session;
+	private Store store;
 
-	public SpreadsheetIntegration(LoansFileConfiguration config) {
+	public SpreadsheetIntegration(LoansFileConfiguration cfg) {
+		config = cfg;
+		
+		// SPREADSHEET 
 		try {
 			SPREADSHEET_FEED_URL = new URL("https://spreadsheets.google.com/feeds/spreadsheets/private/full");
 		} catch (MalformedURLException e) {
@@ -64,6 +88,26 @@ public class SpreadsheetIntegration {
 
 			wEntry = wEntries.get(0);
 		} catch (IOException | ServiceException e) {
+			throw new RuntimeException(e);
+		}
+		
+		// EMAIL
+		gmailAuth = new javax.mail.Authenticator() {
+			protected PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(config.getGoogleInfo().getProperty("username"), config.getGoogleInfo().getProperty("password"));
+			}
+		};
+		
+		Properties props = new Properties();
+		props.setProperty("mail.store.protocol", "imaps");
+		
+		session = Session.getInstance(props, gmailAuth);
+		try {
+			store = session.getStore();
+			store.connect("imap.gmail.com", null, null);
+		} catch (NoSuchProviderException e) {
+			throw new RuntimeException(e);
+		} catch (MessagingException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -122,5 +166,54 @@ public class SpreadsheetIntegration {
 				return true;
 			}
 		}.run();
+	}
+
+
+	/**
+	 * Sends the specified email
+	 * 
+	 * @param to who to send the email to
+	 * @param firstName first name of that person
+	 * @param title title of email
+	 * @param message email message
+	 * @returnsuccess
+	 */
+	public boolean sendEmail(final String to, final String firstName, final String title, final String message) {
+		Properties props = new Properties();
+		props.put("mail.smtp.auth", "true");
+		props.put("mail.smtp.starttls.enable", "true");
+		props.put("mail.smtp.host", "smtp.gmail.com");
+		props.put("mail.smtp.port", "587");
+
+		Session session = Session.getDefaultInstance(props, gmailAuth);
+
+		try {
+			Message msg = new MimeMessage(session);
+			msg.setFrom(new InternetAddress(config.getGoogleInfo().getProperty("username"), "LoansBot"));
+			msg.addRecipient(Message.RecipientType.TO,
+					new InternetAddress(to, firstName));
+			msg.setSubject(title);
+			msg.setText(message);
+			Transport.send(msg);
+		} catch(SendFailedException invAddress) {
+			if(invAddress.getMessage().equals("Invalid Addresses"))
+				return false;
+			throw new RuntimeException(invAddress);
+		}catch (MessagingException | UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
+		return true;
+	}
+	
+	/**
+	 * Gets the email inbox of the loans bot. It is already
+	 * opened in READ-ONLY mode
+	 * @return the inbox
+	 * @throws MessagingException if an exception occurs
+	 */
+	public Folder getInbox() throws MessagingException {
+		Folder inb = store.getFolder("INBOX");
+		inb.open(Folder.READ_ONLY);
+		return inb;
 	}
 }

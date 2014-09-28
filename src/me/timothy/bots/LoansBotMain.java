@@ -3,6 +3,7 @@ package me.timothy.bots;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import me.timothy.bots.emailsummon.EmailSummon;
 import me.timothy.bots.summon.AdvancedLoanSummon;
 import me.timothy.bots.summon.CheckSummon;
 import me.timothy.bots.summon.CommentSummon;
@@ -12,7 +13,6 @@ import me.timothy.bots.summon.LoanSummon;
 import me.timothy.bots.summon.PMSummon;
 import me.timothy.bots.summon.PaidSummon;
 import me.timothy.bots.summon.SuicideSummon;
-import me.timothy.bots.summon.Summon;
 import me.timothy.bots.summon.UnpaidSummon;
 import me.timothy.jreddit.requests.Utils;
 
@@ -61,7 +61,8 @@ public class LoansBotMain {
 		BotDriver driver = new LoansBotDriver(database, config, loansBot,
 				new CommentSummon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon(), new SuicideSummon() }, 
 				new PMSummon[] { new AdvancedLoanSummon(), new PaidSummon(), new UnpaidSummon() },
-				new LinkSummon[] { new CheckSummon(), new SuicideSummon() } );
+				new LinkSummon[] { new CheckSummon(), new SuicideSummon() },
+				new EmailSummon[] { });
 		
 		driver.run();
 	}

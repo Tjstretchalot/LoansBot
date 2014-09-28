@@ -1,20 +1,10 @@
 package me.timothy.bots;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.PasswordAuthentication;
-import javax.mail.SendFailedException;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-
+import me.timothy.bots.emailsummon.EmailSummon;
 import me.timothy.bots.summon.CommentSummon;
 import me.timothy.bots.summon.LinkSummon;
 import me.timothy.bots.summon.PMSummon;
@@ -30,7 +20,11 @@ import org.json.simple.parser.ParseException;
  * @author Timothy
  */
 public class LoansBotDriver extends BotDriver {
-
+	/**
+	 * Email summons
+	 */
+	private EmailSummon[] emailSummons;
+	
 	/**
 	 * Exact echo of BotDriver constructor 
 	 * @param database database
@@ -42,8 +36,10 @@ public class LoansBotDriver extends BotDriver {
 	 */
 	public LoansBotDriver(Database database, FileConfiguration config, Bot bot,
 			CommentSummon[] commentSummons, PMSummon[] pmSummons,
-			LinkSummon[] submissionSummons) {
+			LinkSummon[] submissionSummons, EmailSummon[] emailSummons) {
 		super(database, config, bot, commentSummons, pmSummons, submissionSummons);
+		
+		this.emailSummons = emailSummons;
 	}
 
 	/* (non-Javadoc)
@@ -88,6 +84,9 @@ public class LoansBotDriver extends BotDriver {
 
 		logger.trace("Checking for pending applicants..");
 		checkPendingApplicants();
+		
+		logger.trace("Checking for any emails..");
+		checkEmails();
 	}
 
 	/**
@@ -114,13 +113,13 @@ public class LoansBotDriver extends BotDriver {
 
 			if(duplicates.size() > 0) {
 				logger.info(a.getUsername() + "'s application was denied (duplicate information)");
-				sendEmail(a.getEmail(), a.getFirstName(), "Application Denied", "Your application to /r/Borrow was denied:\n\n- Duplicate Information");
+				si.sendEmail(a.getEmail(), a.getFirstName(), "Application Denied", "Your application to /r/Borrow was denied:\n\n- Duplicate Information");
 				sleepFor(2000);
 				continue;
 			}
 
 			logger.info(a.getUsername() + "'s application will be accepted if the email works");
-			if(sendEmail(a.getEmail(), a.getFirstName(), "Application Accepted", "Your application to /r/Borrow was accepted, please read the sidebar before posting"))
+			if(si.sendEmail(a.getEmail(), a.getFirstName(), "Application Accepted", "Your application to /r/Borrow was accepted, please read the sidebar before posting"))
 				ldb.addApplicant(a);
 			else {
 				logger.info(a.getUsername() + "'s application was denied (invalid email)");
@@ -133,6 +132,15 @@ public class LoansBotDriver extends BotDriver {
 			si.removeTopApplicant();
 			sleepFor(1000);
 		}
+	}
+	
+	/**
+	 * Checks if there are any new, unread emails and 
+	 * also checks if that matches any EmailSummons. If it
+	 * does, handles that appropriately
+	 */
+	protected void checkEmails() {
+		
 	}
 
 	/**
@@ -155,37 +163,5 @@ public class LoansBotDriver extends BotDriver {
 			}
 
 		}.run();
-	}
-
-	private boolean sendEmail(final String to, final String firstName, final String title, final String message) {
-		final LoansFileConfiguration lcf = (LoansFileConfiguration) config;
-		Properties props = new Properties();
-		props.put("mail.smtp.auth", "true");
-		props.put("mail.smtp.starttls.enable", "true");
-		props.put("mail.smtp.host", "smtp.gmail.com");
-		props.put("mail.smtp.port", "587");
-
-		Session session = Session.getDefaultInstance(props, new javax.mail.Authenticator() {
-			protected PasswordAuthentication getPasswordAuthentication() {
-				return new PasswordAuthentication(lcf.getGoogleInfo().getProperty("username"), lcf.getGoogleInfo().getProperty("password"));
-			}
-		});
-
-		try {
-			Message msg = new MimeMessage(session);
-			msg.setFrom(new InternetAddress(lcf.getGoogleInfo().getProperty("username"), "LoansBot"));
-			msg.addRecipient(Message.RecipientType.TO,
-					new InternetAddress(to, firstName));
-			msg.setSubject(title);
-			msg.setText(message);
-			Transport.send(msg);
-		} catch(SendFailedException invAddress) {
-			if(invAddress.getMessage().equals("Invalid Addresses"))
-				return false;
-			throw new RuntimeException(invAddress);
-		}catch (MessagingException | UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		}
-		return true;
 	}
 }
