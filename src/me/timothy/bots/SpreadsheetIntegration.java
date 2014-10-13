@@ -54,36 +54,43 @@ public class SpreadsheetIntegration {
 	private static final String COUNTRY = "country";
 	private static final String PAYMENT_METHOD = "paymentmethod";
 	private static final String MAIN_METHOD_OF_USE = "mainmethodofuse";
-	
+
 	private LoansFileConfiguration config;
-	
+
 	private final URL SPREADSHEET_FEED_URL;
 
 	@SuppressWarnings("unused")
 	private Logger logger;
-	
+
 	private SpreadsheetService service;
 
 	private SpreadsheetEntry mSpreadsheet;
 	private WorksheetEntry wEntry;
-	
+
 	private Authenticator gmailAuth;
 	private Session imapsSession;
 	private Properties propsSMTP;
 	private Session smtpSession;
-	
+
 	private Store store;
+	private boolean initSuccessful;
 
 	public SpreadsheetIntegration(LoansFileConfiguration cfg) {
 		logger = LogManager.getLogger();
 		config = cfg;
-		
-		// SPREADSHEET 
+
 		try {
 			SPREADSHEET_FEED_URL = new URL("https://spreadsheets.google.com/feeds/spreadsheets/private/full");
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
+
+		init();
+	}
+
+
+	private void init() {
+		// SPREADSHEET 
 
 		service = new SpreadsheetService("/u/LoansBot Spreadsheet Integration");
 
@@ -104,9 +111,10 @@ public class SpreadsheetIntegration {
 
 			wEntry = wEntries.get(0);
 		} catch (IOException | ServiceException e) {
-			throw new RuntimeException(e);
+			logger.error(e);
+			return;
 		}
-		
+
 		// EMAIL
 		gmailAuth = new javax.mail.Authenticator() {
 			protected PasswordAuthentication getPasswordAuthentication() {
@@ -124,26 +132,30 @@ public class SpreadsheetIntegration {
 		Properties propsImaps = new Properties();
 		propsImaps.setProperty("mail.store.protocol", "imaps");
 		propsImaps.putAll(propsSMTP);
-		
+
 		imapsSession = Session.getInstance(propsImaps, gmailAuth);
 
 		try {
 			store = imapsSession.getStore();
 			store.connect("imap.gmail.com", null, null);
-			
+
 			store.addStoreListener(new StoreListener() {
 
 				@Override
 				public void notification(StoreEvent se) {
 					logger.info("STORE EVENT: " + se.getMessageType() + " - " + se.getMessage() + " (from " + se.getSource().toString() + ", " + se.getSource().getClass().getCanonicalName() + ")");
 				}
-				
+
 			});
 		} catch (NoSuchProviderException e) {
-			throw new RuntimeException(e);
+			logger.error(e);
+			return;
 		} catch (MessagingException e) {
-			throw new RuntimeException(e);
+			logger.error(e);
+			return;
 		}
+		
+		initSuccessful = true;
 	}
 
 
@@ -154,6 +166,10 @@ public class SpreadsheetIntegration {
 	 * @return pending applicants
 	 */
 	public List<Applicant> getPendingApplicants() {
+		if(!initSuccessful)
+			init();
+		if(!initSuccessful)
+			return null;
 		List<Applicant> result = new ArrayList<>();
 
 		ListFeed lFeed = new Retryable<ListFeed>("Get list-feed") {
@@ -162,7 +178,7 @@ public class SpreadsheetIntegration {
 			protected ListFeed runImpl() throws Exception {
 				return service.getFeed(wEntry.getListFeedUrl(), ListFeed.class);
 			}
-			
+
 		}.run();
 
 		List<ListEntry> rows = lFeed.getEntries();
@@ -194,6 +210,11 @@ public class SpreadsheetIntegration {
 
 			@Override
 			protected Boolean runImpl() throws Exception {
+				if(!initSuccessful)
+					init();
+				if(!initSuccessful)
+					return null;
+				
 				ListFeed lFeed = service.getFeed(wEntry.getListFeedUrl(), ListFeed.class);
 				List<ListEntry> rows = lFeed.getEntries();
 				rows.get(0).delete();
@@ -217,6 +238,12 @@ public class SpreadsheetIntegration {
 
 			@Override
 			protected Boolean runImpl() throws Exception {
+
+				if(!initSuccessful)
+					init();
+				if(!initSuccessful)
+					return null;
+				
 				try {
 					Message msg = new MimeMessage(smtpSession);
 					msg.setFrom(new InternetAddress(config.getGoogleInfo().getProperty("username"), "LoansBot"));
@@ -231,10 +258,10 @@ public class SpreadsheetIntegration {
 				}
 				return true;
 			}
-			
+
 		}.run();
 	}
-	
+
 	/**
 	 * Gets the email inbox of the loans bot. It is already
 	 * opened in READ-ONLY mode
@@ -242,6 +269,12 @@ public class SpreadsheetIntegration {
 	 * @throws MessagingException if an exception occurs
 	 */
 	public Folder getInbox() throws MessagingException {
+
+		if(!initSuccessful)
+			init();
+		if(!initSuccessful)
+			return null;
+		
 		Folder inb = store.getFolder("INBOX");
 		inb.open(Folder.READ_ONLY);
 		return inb;

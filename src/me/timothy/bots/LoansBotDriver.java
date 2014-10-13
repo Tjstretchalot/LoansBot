@@ -29,7 +29,7 @@ public class LoansBotDriver extends BotDriver {
 	 * Email summons
 	 */
 	private EmailSummon[] emailSummons;
-	
+
 	/**
 	 * Exact echo of BotDriver constructor 
 	 * @param database database
@@ -43,7 +43,7 @@ public class LoansBotDriver extends BotDriver {
 			CommentSummon[] commentSummons, PMSummon[] pmSummons,
 			LinkSummon[] submissionSummons, EmailSummon[] emailSummons) {
 		super(database, config, bot, commentSummons, pmSummons, submissionSummons);
-		
+
 		this.emailSummons = emailSummons;
 	}
 
@@ -89,7 +89,7 @@ public class LoansBotDriver extends BotDriver {
 
 		logger.trace("Checking for pending applicants..");
 		checkPendingApplicants();
-		
+
 		logger.trace("Checking for any emails..");
 		checkEmails();
 	}
@@ -105,7 +105,7 @@ public class LoansBotDriver extends BotDriver {
 
 		List<Applicant> pendingApplicants = si.getPendingApplicants();
 
-		if(pendingApplicants.size() == 0)
+		if(pendingApplicants == null || pendingApplicants.size() == 0)
 			return;
 
 		logger.debug("There are " + pendingApplicants.size() + " pending applicants..");
@@ -146,42 +146,40 @@ public class LoansBotDriver extends BotDriver {
 			sleepFor(1000);
 		}
 	}
-	
+
 	/**
 	 * Checks if there are any new, unread emails and 
 	 * also checks if that matches any EmailSummons. If it
 	 * does, handles that appropriately
 	 */
 	protected void checkEmails() {
-		new Retryable<Boolean>("Check emails") {
-			@Override
-			protected Boolean runImpl() throws Exception {
-				SpreadsheetIntegration si = ((LoansDatabase) database).getSpreadsheetIntegration();
-				Folder inbox = si.getInbox();
-				
-				Message[] messages = inbox.getMessages();
-				for(Message mess : messages) {
-					// Using a timestamp as a uuid is not the best... but its all I got
-					String timestamp = Long.toString(mess.getReceivedDate().getTime());
-					if(database.containsFullname(timestamp))
-						continue;
-					
-					for(EmailSummon eSummon : emailSummons) {
-						try {
-							if(eSummon.isSummonedBy(mess)) {
-								eSummon.parse(mess);
-								String response = eSummon.applyDatabaseChanges(config, database);
-								si.sendEmail(mess.getFrom()[0], eSummon.getClass().getSimpleName(), response);
-							}
-						}catch(Exception ex) {
-							logger.error(ex);
+		try {
+			SpreadsheetIntegration si = ((LoansDatabase) database).getSpreadsheetIntegration();
+			Folder inbox = si.getInbox();
+
+			Message[] messages = inbox.getMessages();
+			for(Message mess : messages) {
+				// Using a timestamp as a uuid is not the best... but its all I got
+				String timestamp = Long.toString(mess.getReceivedDate().getTime());
+				if(database.containsFullname(timestamp))
+					continue;
+
+				for(EmailSummon eSummon : emailSummons) {
+					try {
+						if(eSummon.isSummonedBy(mess)) {
+							eSummon.parse(mess);
+							String response = eSummon.applyDatabaseChanges(config, database);
+							si.sendEmail(mess.getFrom()[0], eSummon.getClass().getSimpleName(), response);
 						}
+					}catch(Exception ex) {
+						logger.error(ex);
 					}
-					database.addFullname(timestamp);
 				}
-				return true;
+				database.addFullname(timestamp);
 			}
-		}.run();
+		}catch(Exception e) {
+			logger.error(e);
+		}
 	}
 
 	/**

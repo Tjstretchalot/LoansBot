@@ -65,7 +65,11 @@ public class LoansBotMain {
 				new LinkSummon[] { new CheckSummon(), new SuicideSummon() },
 				new EmailSummon[] { new VerifySummon() });
 		
-		driver.run();
+		while(true) {
+			try {
+				driver.run();
+			}catch(Exception e) {}
+		}
 	}
 
 	/**
