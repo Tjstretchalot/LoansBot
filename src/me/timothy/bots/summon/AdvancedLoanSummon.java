@@ -15,6 +15,7 @@ import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.Loan;
 import me.timothy.bots.LoansFileConfiguration;
+import me.timothy.jreddit.info.Comment;
 import me.timothy.jreddit.info.Message;
 
 /**
@@ -26,7 +27,7 @@ import me.timothy.jreddit.info.Message;
  * @author Timothy
  *
  */
-public class AdvancedLoanSummon implements PMSummon {
+public class AdvancedLoanSummon implements PMSummon, CommentSummon {
 	/**
 	 * Matches things like:
 	 * 
@@ -34,7 +35,7 @@ public class AdvancedLoanSummon implements PMSummon {
 	 */
 	private static final Pattern LOAN_PATTERN_ADVANCED = Pattern.compile("\\s*\\$loan\\s/u/\\S+\\s\\$?\\d+\\.?\\d*\\$?\\st3_\\S{4,10}");
 	private Logger logger;
-
+	private boolean invalid;
 	private String doer;
 	private String doneTo;
 
@@ -51,6 +52,7 @@ public class AdvancedLoanSummon implements PMSummon {
 	 */
 	@Override
 	public boolean parse(Message message) throws UnsupportedOperationException {
+		invalid = true;
 		Matcher matcher = LOAN_PATTERN_ADVANCED.matcher(message.body());
 		if(matcher.find()) {
 			String text = matcher.group().trim();
@@ -70,6 +72,7 @@ public class AdvancedLoanSummon implements PMSummon {
 			if(amountPennies <= 0)
 				return false;
 			
+			invalid = false;
 			return true;
 		}
 		
@@ -77,11 +80,30 @@ public class AdvancedLoanSummon implements PMSummon {
 		
 	}
 
+	
+	
+
+	/* (non-Javadoc)
+	 * @see me.timothy.bots.summon.CommentSummon#parse(me.timothy.jreddit.info.Comment)
+	 */
+	@Override
+	public boolean parse(Comment comment) {
+		invalid = true;
+		Matcher matcher = LOAN_PATTERN_ADVANCED.matcher(comment.body());
+		if(matcher.find()) {
+			return true;
+		}
+		return false;
+	}
+
 
 
 	@Override
 	public String applyChanges(FileConfiguration con, Database database) {
 		LoansFileConfiguration config = (LoansFileConfiguration) con;
+		if(invalid) {
+			return config.getBadLoanSummon();
+		}
 		try {
 			Loan loan = new Loan(amountPennies, doer, doneTo, 0, false, System.currentTimeMillis(), 0);
 			logger.printf(Level.INFO, "%s just lent %s to %s", doer, BotUtils.getCostString(amountPennies / 100.), doneTo);

@@ -60,7 +60,7 @@ public class LoansBotMain {
 		
 		logger.debug("Running loans bot driver");
 		BotDriver driver = new LoansBotDriver(database, config, loansBot,
-				new CommentSummon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon(), new SuicideSummon() }, 
+				new CommentSummon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon(), new SuicideSummon(), new AdvancedLoanSummon() }, 
 				new PMSummon[] { new AdvancedLoanSummon(), new PaidSummon(), new UnpaidSummon() },
 				new LinkSummon[] { new CheckSummon(), new SuicideSummon() },
 				new EmailSummon[] { new VerifySummon() });

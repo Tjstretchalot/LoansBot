@@ -29,10 +29,6 @@ public class SuicideSummon implements LinkSummon, CommentSummon {
 	 */
 	@Override
 	public boolean parse(Link submission) throws UnsupportedOperationException {
-		user = submission.author();
-		if(user.equals("LoansBot"))
-			return false;
-		
 		return PATTERN.matcher(submission.title()).find() || PATTERN.matcher(submission.selftext()).find();
 	}
 
@@ -41,10 +37,6 @@ public class SuicideSummon implements LinkSummon, CommentSummon {
 	 */
 	@Override
 	public boolean parse(Comment comment) throws UnsupportedOperationException {
-		user = comment.author();
-		if(user.equals("LoansBot"))
-			return false;
-		
 		return PATTERN.matcher(comment.body()).find();
 	}
 

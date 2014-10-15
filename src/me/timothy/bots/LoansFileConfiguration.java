@@ -31,6 +31,7 @@ public class LoansFileConfiguration extends FileConfiguration {
 	private static final String CONFIRM = "confirm.txt";
 	private static final String SECONDARY_SUBREDDIT_POSTFIX = "secondary_subreddit_postfix.txt";
 	private static final String BAD_VERIFY_SUMMON = "bad_verify_summon.txt";
+	private static final String BAD_LOAN_SUMMON = "bad_loan_summon.txt";
 	private static final String GOOD_VERIFY_SUMMON_DNE = "good_verify_summon_dne.txt";
 	private static final String GOOD_VERIFY_SUMMON_EXISTS = "good_verify_summon_exists.txt";
 	private static final String SUICIDE = "suicide.txt";
@@ -50,6 +51,7 @@ public class LoansFileConfiguration extends FileConfiguration {
 	private String confirm;
 	private String secondarySubredditPostfix;
 	private String badVerifySummon;
+	private String badLoanSummon;
 	private String goodVerifySummonDNE;
 	private String goodVerifySummonExists;
 	private String suicide;
@@ -84,6 +86,7 @@ public class LoansFileConfiguration extends FileConfiguration {
 		confirm = loadReplyString(Paths.get(CONFIRM).toFile());
 		secondarySubredditPostfix = loadReplyString(Paths.get(SECONDARY_SUBREDDIT_POSTFIX).toFile());
 		badVerifySummon = loadReplyString(Paths.get(BAD_VERIFY_SUMMON).toFile());
+		badLoanSummon = loadReplyString(Paths.get(BAD_LOAN_SUMMON).toFile());
 		goodVerifySummonDNE = loadReplyString(Paths.get(GOOD_VERIFY_SUMMON_DNE).toFile());
 		goodVerifySummonExists = loadReplyString(Paths.get(GOOD_VERIFY_SUMMON_EXISTS).toFile());
 		suicide = loadReplyString(Paths.get(SUICIDE).toFile());
@@ -318,5 +321,19 @@ public class LoansFileConfiguration extends FileConfiguration {
 	 */
 	public String getSuicide() {
 		return suicide;
+	}
+
+	/**
+	 * @return the badLoanSummon
+	 */
+	public String getBadLoanSummon() {
+		return badLoanSummon;
+	}
+
+	/**
+	 * @param badLoanSummon the badLoanSummon to set
+	 */
+	public void setBadLoanSummon(String badLoanSummon) {
+		this.badLoanSummon = badLoanSummon;
 	}
 }
