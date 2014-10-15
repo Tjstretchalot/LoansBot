@@ -27,7 +27,7 @@ import me.timothy.jreddit.info.Message;
  * @author Timothy
  *
  */
-public class AdvancedLoanSummon implements PMSummon, CommentSummon {
+public class AdvancedLoanSummon implements PMSummon {
 	/**
 	 * Matches things like:
 	 * 
@@ -78,22 +78,6 @@ public class AdvancedLoanSummon implements PMSummon, CommentSummon {
 		
 		return false;
 		
-	}
-
-	
-	
-
-	/* (non-Javadoc)
-	 * @see me.timothy.bots.summon.CommentSummon#parse(me.timothy.jreddit.info.Comment)
-	 */
-	@Override
-	public boolean parse(Comment comment) {
-		invalid = true;
-		Matcher matcher = LOAN_PATTERN_ADVANCED.matcher(comment.body());
-		if(matcher.find()) {
-			return true;
-		}
-		return false;
 	}
 
 

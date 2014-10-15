@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import me.timothy.bots.emailsummon.EmailSummon;
 import me.timothy.bots.emailsummon.VerifySummon;
 import me.timothy.bots.summon.AdvancedLoanSummon;
+import me.timothy.bots.summon.BadLoanSummon;
 import me.timothy.bots.summon.CheckSummon;
 import me.timothy.bots.summon.CommentSummon;
 import me.timothy.bots.summon.ConfirmSummon;
@@ -60,7 +61,7 @@ public class LoansBotMain {
 		
 		logger.debug("Running loans bot driver");
 		BotDriver driver = new LoansBotDriver(database, config, loansBot,
-				new CommentSummon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon(), new SuicideSummon(), new AdvancedLoanSummon() }, 
+				new CommentSummon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon(), new SuicideSummon(), new BadLoanSummon() }, 
 				new PMSummon[] { new AdvancedLoanSummon(), new PaidSummon(), new UnpaidSummon() },
 				new LinkSummon[] { new CheckSummon(), new SuicideSummon() },
 				new EmailSummon[] { new VerifySummon() });
