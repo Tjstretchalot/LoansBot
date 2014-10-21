@@ -1,10 +1,7 @@
 package me.timothy.bots;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -13,6 +10,7 @@ import java.util.Properties;
 
 import javax.mail.Address;
 import javax.mail.Authenticator;
+import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
@@ -21,8 +19,6 @@ import javax.mail.SendFailedException;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.Transport;
-import javax.mail.event.StoreEvent;
-import javax.mail.event.StoreListener;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.net.ssl.HttpsURLConnection;
@@ -42,6 +38,7 @@ import org.w3c.dom.NodeList;
  * @author Timothy
  */
 public class SpreadsheetIntegration {
+	@SuppressWarnings("unused")
 	private static final String TIMESTAMP = "timestamp";
 	private static final String USERNAME = "redditusername";
 	private static final String EMAIL = "emailaddress";
@@ -256,5 +253,17 @@ public class SpreadsheetIntegration {
 			}
 
 		}.run();
+	}
+
+	/**
+	 * Gets the email inbox of the loans bot. It is already
+	 * opened in READ-ONLY mode
+	 * @return the inbox
+	 * @throws MessagingException if an exception occurs
+	 */
+	public Folder getInbox() throws MessagingException {
+		Folder inb = store.getFolder("INBOX");
+		inb.open(Folder.READ_ONLY);
+		return inb;
 	}
 }

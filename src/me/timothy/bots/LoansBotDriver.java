@@ -1,7 +1,13 @@
 package me.timothy.bots;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.List;
+
+import javax.mail.Folder;
+import javax.mail.Message;
+import javax.mail.internet.InternetAddress;
 
 import me.timothy.bots.emailsummon.EmailSummon;
 import me.timothy.bots.summon.CommentSummon;
@@ -22,7 +28,6 @@ public class LoansBotDriver extends BotDriver {
 	/**
 	 * Email summons
 	 */
-	@SuppressWarnings("unused")
 	private EmailSummon[] emailSummons;
 
 	/**
@@ -104,42 +109,42 @@ public class LoansBotDriver extends BotDriver {
 			return;
 
 		logger.debug("There are " + pendingApplicants.size() + " pending applicants..");
-//		for(Applicant a : pendingApplicants) {
-//			List<Applicant> duplicates = new ArrayList<>();
-//
-//			duplicates.addAll(ldb.getApplicantByUsername(a.getUsername()));
-//			duplicates.addAll(ldb.getApplicantsByInfo(a.getFirstName(), a.getLastName(), a.getStreetAddress(), a.getCity(), 
-//					a.getState(), a.getCountry()));
-//
-//			if(duplicates.size() > 0) {
-//				logger.info(a.getUsername() + "'s application was denied (duplicate information)");
-//				try {
-//					si.sendEmail(new InternetAddress(a.getEmail(), a.getFirstName()), "Application Denied", "Your application to /r/Borrow was denied:\n\n- Duplicate Information");
-//				} catch (UnsupportedEncodingException e) {
-//					logger.error(e);
-//				}
-//				sleepFor(2000);
-//				continue;
-//			}
-//
-//			logger.info(a.getUsername() + "'s application will be accepted if the email works");
-//			try {
-//				if(si.sendEmail(new InternetAddress(a.getEmail(), a.getFirstName()), "Application Accepted", "Your application to /r/Borrow was accepted, please read the sidebar before posting"))
-//					ldb.addApplicant(a);
-//				else {
-//					logger.info(a.getUsername() + "'s application was denied (invalid email)");
-//				}
-//			} catch (UnsupportedEncodingException e) {
-//				logger.error(e);
-//			}
-//			sleepFor(2000);
-//		}
-//
-//		for(int i = 0; i < pendingApplicants.size(); i++) {
-//			logger.info("Removing " + pendingApplicants.get(i).getUsername() + " from spreadsheet");
-//			si.removeTopApplicant();
-//			sleepFor(1000);
-//		}
+		for(Applicant a : pendingApplicants) {
+			List<Applicant> duplicates = new ArrayList<>();
+
+			duplicates.addAll(ldb.getApplicantByUsername(a.getUsername()));
+			duplicates.addAll(ldb.getApplicantsByInfo(a.getFirstName(), a.getLastName(), a.getStreetAddress(), a.getCity(), 
+					a.getState(), a.getCountry()));
+
+			if(duplicates.size() > 0) {
+				logger.info(a.getUsername() + "'s application was denied (duplicate information)");
+				try {
+					si.sendEmail(new InternetAddress(a.getEmail(), a.getFirstName()), "Application Denied", "Your application to /r/Borrow was denied:\n\n- Duplicate Information");
+				} catch (UnsupportedEncodingException e) {
+					logger.error(e);
+				}
+				sleepFor(2000);
+				continue;
+			}
+
+			logger.info(a.getUsername() + "'s application will be accepted if the email works");
+			try {
+				if(si.sendEmail(new InternetAddress(a.getEmail(), a.getFirstName()), "Application Accepted", "Your application to /r/Borrow was accepted, please read the sidebar before posting"))
+					ldb.addApplicant(a);
+				else {
+					logger.info(a.getUsername() + "'s application was denied (invalid email)");
+				}
+			} catch (UnsupportedEncodingException e) {
+				logger.error(e);
+			}
+			sleepFor(2000);
+		}
+
+		for(int i = 0; i < pendingApplicants.size(); i++) {
+			logger.info("Removing " + pendingApplicants.get(i).getUsername() + " from spreadsheet");
+			si.removeTopApplicant();
+			sleepFor(1000);
+		}
 	}
 
 	/**
@@ -148,33 +153,34 @@ public class LoansBotDriver extends BotDriver {
 	 * does, handles that appropriately
 	 */
 	protected void checkEmails() {
-//		try {
-//			SpreadsheetIntegration si = ((LoansDatabase) database).getSpreadsheetIntegration();
-//			Folder inbox = si.getInbox();
-//
-//			Message[] messages = inbox.getMessages();
-//			for(Message mess : messages) {
-//				// Using a timestamp as a uuid is not the best... but its all I got
-//				String timestamp = Long.toString(mess.getReceivedDate().getTime());
-//				if(database.containsFullname(timestamp))
-//					continue;
-//
-//				for(EmailSummon eSummon : emailSummons) {
-//					try {
-//						if(eSummon.isSummonedBy(mess)) {
-//							eSummon.parse(mess);
-//							String response = eSummon.applyDatabaseChanges(config, database);
-//							si.sendEmail(mess.getFrom()[0], eSummon.getClass().getSimpleName(), response);
-//						}
-//					}catch(Exception ex) {
-//						logger.error(ex);
-//					}
-//				}
-//				database.addFullname(timestamp);
-//			}
-//		}catch(Exception e) {
-//			logger.error(e);
-//		}
+		try {
+			SpreadsheetIntegration si = ((LoansDatabase) database).getSpreadsheetIntegration();
+			Folder inbox = si.getInbox();
+
+			Message[] messages = inbox.getMessages();
+			for(Message mess : messages) {
+				// Using a timestamp as a uuid is not the best... but its all I got
+				String timestamp = Long.toString(mess.getReceivedDate().getTime());
+				if(database.containsFullname(timestamp))
+					continue;
+
+				for(EmailSummon eSummon : emailSummons) {
+					try {
+						String body = LoansBotUtils.getMessageBody(mess);
+						if(eSummon.isSummonedBy(mess.getSubject(), body)) {
+							eSummon.parse(mess.getSubject(), body);
+							String response = eSummon.applyDatabaseChanges(config, database);
+							si.sendEmail(mess.getFrom()[0], eSummon.getClass().getSimpleName(), response);
+						}
+					}catch(Exception ex) {
+						logger.error(ex);
+					}
+				}
+				database.addFullname(timestamp);
+			}
+		}catch(Exception e) {
+			logger.error(e);
+		}
 	}
 
 	/**
