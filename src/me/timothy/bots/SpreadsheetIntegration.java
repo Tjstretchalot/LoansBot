@@ -11,6 +11,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import javax.mail.Address;
+import javax.mail.Authenticator;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.NoSuchProviderException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.SendFailedException;
+import javax.mail.Session;
+import javax.mail.Store;
+import javax.mail.Transport;
+import javax.mail.event.StoreEvent;
+import javax.mail.event.StoreListener;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import javax.net.ssl.HttpsURLConnection;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -46,6 +60,11 @@ public class SpreadsheetIntegration {
 
 	private LoansFileConfiguration config;
 
+	private Authenticator gmailAuth;
+	private Session imapsSession;
+	private Properties propsSMTP;
+	private Session smtpSession;
+	private Store store;
 	private Logger logger;
 
 	/**
@@ -91,6 +110,35 @@ public class SpreadsheetIntegration {
 
 				if (con.getResponseCode() != 200) {
 					logger.error("Non-200 response code from Google: " + con.getResponseCode());
+					System.exit(1);
+				}
+				gmailAuth = new javax.mail.Authenticator() {
+					protected PasswordAuthentication getPasswordAuthentication() {
+						return new PasswordAuthentication(config.getGoogleInfo().getProperty("username"), config.getGoogleInfo().getProperty("password"));
+					}
+				};
+
+				propsSMTP = new Properties();
+				propsSMTP.put("mail.smtp.auth", "true");
+				propsSMTP.put("mail.smtp.starttls.enable", "true");
+				propsSMTP.put("mail.smtp.host", "smtp.gmail.com");
+				propsSMTP.put("mail.smtp.port", "587");
+				smtpSession = Session.getDefaultInstance(propsSMTP, gmailAuth);
+
+				Properties propsImaps = new Properties();
+				propsImaps.setProperty("mail.store.protocol", "imaps");
+				propsImaps.putAll(propsSMTP);
+
+				imapsSession = Session.getInstance(propsImaps, gmailAuth);
+
+				try {
+					store = imapsSession.getStore();
+					store.connect("imap.gmail.com", null, null);
+				} catch (NoSuchProviderException e) {
+					logger.error(e);
+					System.exit(1);
+				} catch (MessagingException e) {
+					logger.error(e);
 					System.exit(1);
 				}
 
@@ -184,7 +232,29 @@ public class SpreadsheetIntegration {
 	 *            email message
 	 * @return success
 	 */
-	public boolean sendEmail(final String to, final String title, final String message) {
-		return true;
+	public boolean sendEmail(final Address to, final String title, final String message) {
+		return new Retryable<Boolean>("Send Email") {
+
+			@Override
+			protected Boolean runImpl() throws Exception {
+				
+				try {
+					Message msg = new MimeMessage(smtpSession);
+					msg.setFrom(new InternetAddress(config.getGoogleInfo().getProperty("username"), "LoansBot"));
+					msg.addRecipient(Message.RecipientType.TO,
+							to);
+					msg.setSubject(title);
+					msg.setText(message);
+					Transport.send(msg);
+				}catch(SendFailedException sfe) {
+					if(sfe.getMessage().equals("Invalid Addresses"))
+						return false;
+					sfe.printStackTrace();
+					return null;
+				}
+				return true;
+			}
+
+		}.run();
 	}
 }
