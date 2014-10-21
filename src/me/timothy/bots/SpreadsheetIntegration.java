@@ -179,10 +179,8 @@ public class SpreadsheetIntegration {
 				
 				NodeList nList = doc.getElementsByTagName("entry");
 				
-				logger.info("Detected " + nList.getLength() + " entries");
 				for(int i = 0; i < nList.getLength(); i++) {
 					Node node = nList.item(i);
-					logger.info("Checking node " + node.getNodeName() + " with type " + node.getNodeType());
 					
 					if(node.getNodeType() == Node.ELEMENT_NODE) {
 						Element element = (Element) node;
