@@ -210,6 +210,16 @@ public class Applicant {
 	public void setId(int id) {
 		this.id = id;
 	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Applicant [id=" + id + ", timestamp=" + timestamp + ", username=" + username + ", email=" + email + ", firstName=" + firstName
+				+ ", lastName=" + lastName + ", streetAddress=" + streetAddress + ", city=" + city + ", zip=" + zip + ", state=" + state
+				+ ", country=" + country + ", paymentMethod=" + paymentMethod + ", mainMethodOfUse=" + mainMethodOfUse + "]";
+	}
 	
 	
 }

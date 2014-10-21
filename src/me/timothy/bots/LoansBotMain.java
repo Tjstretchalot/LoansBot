@@ -48,6 +48,8 @@ public class LoansBotMain {
 		
 		logger.debug("Connecting to Google..");
 		SpreadsheetIntegration si = new SpreadsheetIntegration(config);
+		logger.debug("Applicants: " + si.getPendingApplicants().toString());
+		System.exit(0);
 		
 		logger.debug("Connecting to database..");
 		LoansDatabase database = new LoansDatabase(si);
