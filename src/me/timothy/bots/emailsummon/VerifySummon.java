@@ -4,15 +4,12 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.mail.Message;
-
 import org.apache.logging.log4j.LogManager;
 
 import me.timothy.bots.Applicant;
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
-import me.timothy.bots.LoansBotUtils;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.LoansFileConfiguration;
 
@@ -43,8 +40,7 @@ public class VerifySummon implements EmailSummon {
 	private String country;
 	
 	
-	public boolean isSummonedBy(Message message) {
-		String body = LoansBotUtils.getMessageBody(message);
+	public boolean isSummonedBy(String title, String body) {
 		Matcher m = UNPAID_PATTERN.matcher(body);
 		
 		return m.find();
@@ -53,9 +49,8 @@ public class VerifySummon implements EmailSummon {
 	 * @see me.timothy.bots.summon.Summon#parse(me.timothy.jreddit.info.Message)
 	 */
 	@Override
-	public void parse(Message message) {
+	public void parse(String subject, String body) {
 		validSummon = false;
-		String body = LoansBotUtils.getMessageBody(message);
 		Matcher m = UNPAID_PATTERN.matcher(body);
 		if(!m.find())
 			return;

@@ -1,7 +1,5 @@
 package me.timothy.bots.emailsummon;
 
-import javax.mail.Message;
-
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 
@@ -17,18 +15,20 @@ public interface EmailSummon {
 	 * in this way, or at least necessitates a response
 	 * by this summon.
 	 * 
-	 * @param msg the message to look into
+	 * @param subject the subject 
+	 * @param message the message
 	 * @return if this summon is applicable to the message
 	 */
-	public boolean isSummonedBy(Message msg);
+	public boolean isSummonedBy(String subject, String message);
 	
 	/**
 	 * Parses the specified message, which has
 	 * already returned true from isSummonedBy
 	 * 
-	 * @param msg the message to parse
+	 * @param subject the subject
+	 * @param message the message to parse
 	 */
-	public void parse(Message msg);
+	public void parse(String subject, String message);
 	
 	/**
 	 * Takes whatever the internal state of this summon
