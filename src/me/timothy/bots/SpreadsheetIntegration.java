@@ -63,6 +63,7 @@ public class SpreadsheetIntegration {
 	private Properties propsSMTP;
 	private Session smtpSession;
 	private Store store;
+	private Folder inb;
 	private Logger logger;
 
 	/**
@@ -140,6 +141,9 @@ public class SpreadsheetIntegration {
 					System.exit(1);
 				}
 
+
+				inb = store.getFolder("INBOX");
+				inb.open(Folder.READ_ONLY);
 				return true;
 			}
 
@@ -279,8 +283,6 @@ public class SpreadsheetIntegration {
 	 * @throws MessagingException if an exception occurs
 	 */
 	public Folder getInbox() throws MessagingException {
-		Folder inb = store.getFolder("INBOX");
-		inb.open(Folder.READ_ONLY);
 		return inb;
 	}
 }
