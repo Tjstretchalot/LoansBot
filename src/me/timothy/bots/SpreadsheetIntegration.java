@@ -1,6 +1,7 @@
 package me.timothy.bots;
 
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -163,11 +164,7 @@ public class SpreadsheetIntegration {
 			protected List<Applicant> runImpl() throws Exception {
 				List<Applicant> result = new ArrayList<>();
 				
-				URL feed = new URL(WORKSHEET_URL);
-				HttpsURLConnection con = (HttpsURLConnection) feed.openConnection();
-				con.setRequestMethod("GET");
-				con.setRequestProperty("Authorization", "GoogleLogin auth=" + auth);
-				con.setRequestProperty("User-Agent", "Timothy Moore LoansBot application");
+				HttpsURLConnection con = getGoogleAuthedConnection(WORKSHEET_URL, "GET");
 				
 				InputStream input = con.getInputStream();
 				DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -179,12 +176,14 @@ public class SpreadsheetIntegration {
 				
 				NodeList nList = doc.getElementsByTagName("entry");
 				
+				List<String> rowIds = new ArrayList<>();
 				for(int i = 0; i < nList.getLength(); i++) {
 					Node node = nList.item(i);
 					
 					if(node.getNodeType() == Node.ELEMENT_NODE) {
 						Element element = (Element) node;
 						
+						rowIds.add(element.getElementsByTagName("id").item(0).getTextContent());
 						String timestamp = element.getElementsByTagName("title").item(0).getTextContent();
 						String username = element.getElementsByTagName("gsx:" + USERNAME).item(0).getTextContent();
 						String email = element.getElementsByTagName("gsx:" + EMAIL).item(0).getTextContent();
@@ -198,9 +197,18 @@ public class SpreadsheetIntegration {
 						String paymentMethod = element.getElementsByTagName("gsx:" + PAYMENT_METHOD).item(0).getTextContent();
 						String mainMethodOfUse = element.getElementsByTagName("gsx:" + MAIN_METHOD_OF_USE).item(0).getTextContent();
 						
-						logger.info("adding applicant");
 						result.add(new Applicant(timestamp, username, email, firstName, lastName, streetAddr, city, zip, state, country, paymentMethod, mainMethodOfUse));
 					}
+				}
+				
+				con.disconnect();
+				for(String rowId : rowIds) {
+					con = getGoogleAuthedConnection(rowId, "DELETE");
+					con.connect();
+					if(con.getResponseCode() != 200) {
+						logger.warn("Weird response code " + con.getResponseCode() + " for url " + rowId);
+					}
+					con.disconnect();
 				}
 				return result;
 			}
@@ -209,9 +217,20 @@ public class SpreadsheetIntegration {
 	}
 
 	/**
-	 * Removes the top applicant
+	 * Prepares a url connection for input that is appropriately authed
+	 * @param url the url to auth to
+	 * @param method the request method
+	 * @return the connection
+	 * @throws IOException if an i/o error occurs, like the url being invalid
 	 */
-	public void removeTopApplicant() {
+	protected HttpsURLConnection getGoogleAuthedConnection(String url, String method) throws IOException {
+		URL u = new URL(url);
+		HttpsURLConnection con = (HttpsURLConnection) u.openConnection();
+		con.setRequestMethod(method);
+		con.setRequestProperty("Authorization", "GoogleLogin auth=" + auth);
+		con.setRequestProperty("User-Agent", "Timothy Moore LoansBot application");
+		
+		return con;
 	}
 
 	/**

@@ -139,12 +139,6 @@ public class LoansBotDriver extends BotDriver {
 			}
 			sleepFor(2000);
 		}
-
-		for(int i = 0; i < pendingApplicants.size(); i++) {
-			logger.info("Removing " + pendingApplicants.get(i).getUsername() + " from spreadsheet");
-			si.removeTopApplicant();
-			sleepFor(1000);
-		}
 	}
 
 	/**
