@@ -15,7 +15,6 @@ import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.Loan;
 import me.timothy.bots.LoansFileConfiguration;
-import me.timothy.jreddit.info.Comment;
 import me.timothy.jreddit.info.Message;
 
 /**
