@@ -1,15 +1,13 @@
 package me.timothy.bots;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import javax.mail.Message;
-import javax.mail.MessagingException;
+import me.timothy.bots.models.Loan;
+import me.timothy.bots.models.User;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,7 +43,7 @@ public class LoansBotUtils {
 	 * @param config the configuration options to use
 	 * @return a string representing a human-readable version of the list of loans. Potentially truncated
 	 */
-	public static String getLoansString(List<Loan> loans, String relevantUser, LoansFileConfiguration config) {
+	public static String getLoansString(List<Loan> loans, LoansDatabase db, String relevantUser, FileConfiguration config) {
 		if(loans == null || loans.size() == 0) {
 			return "No History\n\n";
 		}
@@ -53,11 +51,11 @@ public class LoansBotUtils {
 
 		String loansString = "";
 		if(loans.size() < 5) {
-			loansString = getLoansAsTable(loans, 5);
+			loansString = getLoansAsTable(loans, db, 5);
 		}else {
 			
-			List<Loan> asBorrower = getLoansWithBorrower(loans, relevantUser);
-			List<Loan> asLender = getLoansWithLender(loans, relevantUser);
+			List<Loan> asBorrower = getLoansWithBorrower(loans, db, relevantUser);
+			List<Loan> asLender = getLoansWithLender(loans, db, relevantUser);
 			List<Loan> unpaidAsBorrower = getUnpaidLoans(asBorrower);
 			List<Loan> unpaidAsLender = getUnpaidLoans(asLender);
 			List<Loan> asBorrowerDone = getPaidLoans(asBorrower);
@@ -74,17 +72,17 @@ public class LoansBotUtils {
 			long amountBorrowedDonePen = getTotalLentPen(asBorrowerDone);
 			long amountLenderDonePen = getTotalLentPen(asLenderDone);
 			
-			loansString = config.getCheckTruncated();
+			loansString = config.getString("check_truncated");
 			
 			loansString = loansString.replace("<relevant user>", relevantUser);
 			loansString = loansString.replace("<num borrowed done>", Integer.toString(asBorrowerDone.size()));
 			loansString = loansString.replace("<amount borrowed done>", BotUtils.getCostString(amountBorrowedDonePen / 100.));
 			loansString = loansString.replace("<num lended done>", Integer.toString(asLenderDone.size()));
 			loansString = loansString.replace("<amount lended done>", BotUtils.getCostString(amountLenderDonePen / 100.));
-			loansString = loansString.replace("<loans unpaid borrower>", getLoansAsTable(unpaidAsBorrower, 3));
-			loansString = loansString.replace("<loans unpaid lender>", getLoansAsTable(unpaidAsLender, 3));
-			loansString = loansString.replace("<loans inprogress borrower>", getLoansAsTable(inprogressAsBorrower, 20));
-			loansString = loansString.replace("<loans inprogress lender>", getLoansAsTable(inprogressAsLender, 20));
+			loansString = loansString.replace("<loans unpaid borrower>", getLoansAsTable(unpaidAsBorrower, db, 3));
+			loansString = loansString.replace("<loans unpaid lender>", getLoansAsTable(unpaidAsLender, db, 3));
+			loansString = loansString.replace("<loans inprogress borrower>", getLoansAsTable(inprogressAsBorrower, db, 20));
+			loansString = loansString.replace("<loans inprogress lender>", getLoansAsTable(inprogressAsLender, db, 20));
 		}
 		
 		return loansString;
@@ -98,13 +96,13 @@ public class LoansBotUtils {
 	 * @param max
 	 * @return
 	 */
-	public static String getLoansAsTable(List<Loan> loans, int max) {
+	public static String getLoansAsTable(List<Loan> loans, LoansDatabase db, int max) {
 		Collections.sort(loans, new Comparator<Loan>() {
 
 			@Override
 			public int compare(Loan o1, Loan o2) {
 				// We want a DESCENDING sort (instead of ascending) so o2 compares to o1
-				return Long.valueOf(o2.getDateLoanGivenJUTC()).compareTo(o1.getDateLoanGivenJUTC());
+				return Long.valueOf(o2.createdAt.getTime()).compareTo(o1.createdAt.getTime());
 			}
 			
 		});
@@ -115,11 +113,13 @@ public class LoansBotUtils {
 		int toShow = loans.size() > max ? max : loans.size();
 		for(int i = 0; i < toShow; i++) {
 			Loan l = loans.get(i);
-			table.addRow(l.getLender(), l.getBorrower(), BotUtils.getCostString(l.getAmountPennies()/100.), 
-					BotUtils.getCostString(l.getAmountPaidPennies()/100.), l.isUnpaid() ? "***UNPAID***" : "", 
-							l.getOriginalThread() != null ? String.format("[Original Thread](%s)", l.getOriginalThread()) : "",
-							l.getDateLoanGivenJUTC() != 0 ? BotUtils.getDateStringFromJUTC(l.getDateLoanGivenJUTC()) : "",
-							l.getDatePaidBackFullJUTC() != 0 ? BotUtils.getDateStringFromJUTC(l.getDatePaidBackFullJUTC()) : "");
+			User uLend = db.getUserById(l.lenderId);
+			User uBorr = db.getUserById(l.borrowerId);
+			table.addRow(uLend.username, uBorr.username, BotUtils.getCostString(l.principalCents/100.), 
+					BotUtils.getCostString(l.principalRepaymentCents/100.), l.unpaid ? "***UNPAID***" : "", 
+							l.originalThread != null ? String.format("[Original Thread](%s)", l.originalThread) : "",
+							l.createdAt != null ? BotUtils.getDateStringFromJUTC(l.createdAt.getTime()) : "",
+							(l.principalRepaymentCents == l.principalCents && l.updatedAt != null) ? BotUtils.getDateStringFromJUTC(l.updatedAt.getTime()) : "");
 		}
 		
 		StringBuilder result = new StringBuilder(table.format());
@@ -141,13 +141,15 @@ public class LoansBotUtils {
 	 * {@code borrower} is the borrower
 	 * 
 	 * @param bigList the big list of loans
+	 * @param db the database to get more info from
 	 * @param borrower the borrower to search for
 	 * @return a list of loans from {@code bigList} where the borrower is {@code borrower}
 	 */
-	private static List<Loan> getLoansWithBorrower(List<Loan> bigList, String borrower) {
+	private static List<Loan> getLoansWithBorrower(List<Loan> bigList, LoansDatabase db, String borrower) {
 		List<Loan> result = new ArrayList<>();
 		for(Loan l : bigList) {
-			if(l.getBorrower().equalsIgnoreCase(borrower)) {
+			User borrowerU = db.getUserById(l.borrowerId);
+			if(borrowerU.username.equalsIgnoreCase(borrower)) {
 				result.add(l);
 			}
 		}
@@ -158,13 +160,15 @@ public class LoansBotUtils {
 	 * {@code lender} is the lender
 	 * 
 	 * @param bigList the big list of loans
+	 * @param db the database to get more info from
 	 * @param lender the lender to search for
 	 * @return a list of loans from {@code bigList} where the lender is {@code lender}
 	 */
-	private static List<Loan> getLoansWithLender(List<Loan> bigList, String lender) {
+	private static List<Loan> getLoansWithLender(List<Loan> bigList, LoansDatabase db, String lender) {
 		List<Loan> result = new ArrayList<>();
 		for(Loan l : bigList) {
-			if(l.getLender().equalsIgnoreCase(lender)) {
+			User lenderU = db.getUserById(l.lenderId);
+			if(lenderU.username.equalsIgnoreCase(lender)) {
 				result.add(l);
 			}
 		}
@@ -181,7 +185,7 @@ public class LoansBotUtils {
 	private static List<Loan> getUnpaidLoans(List<Loan> bigList) {
 		List<Loan> result = new ArrayList<>();
 		for(Loan l : bigList) {
-			if(l.isUnpaid()) {
+			if(l.unpaid) {
 				result.add(l);
 			}
 		}
@@ -198,7 +202,7 @@ public class LoansBotUtils {
 	private static List<Loan> getPaidLoans(List<Loan> bigList) {
 		List<Loan> result = new ArrayList<>();
 		for(Loan l : bigList) {
-			if(l.getAmountPennies() == l.getAmountPaidPennies()) {
+			if(l.principalCents == l.principalRepaymentCents) {
 				result.add(l);
 			}
 		}
@@ -214,19 +218,8 @@ public class LoansBotUtils {
 	private static long getTotalLentPen(List<Loan> loans) {
 		long total = 0;
 		for(Loan l : loans) {
-			total += l.getAmountPennies();
+			total += l.principalCents;
 		}
 		return total;
-	}
-
-	public static String getMessageBody(Message message) {
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		
-		try {
-			message.writeTo(baos);
-			return new String(baos.toByteArray(), "UTF-8");
-		} catch (IOException | MessagingException e) {
-			throw new RuntimeException(e);
-		}
 	}
 }

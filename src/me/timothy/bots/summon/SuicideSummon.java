@@ -7,7 +7,6 @@ import java.util.regex.Pattern;
 
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
-import me.timothy.bots.LoansFileConfiguration;
 import me.timothy.jreddit.info.Comment;
 import me.timothy.jreddit.info.Link;
 
@@ -23,31 +22,25 @@ public class SuicideSummon implements LinkSummon, CommentSummon {
 	private static final Pattern PATTERN = Pattern.compile("suicide");
 	
 	private String user;
-	
-	/* (non-Javadoc)
-	 * @see me.timothy.bots.summon.Summon#parse(me.timothy.jreddit.info.Link)
-	 */
-	@Override
-	public boolean parse(Link submission) throws UnsupportedOperationException {
-		return PATTERN.matcher(submission.title()).find() || PATTERN.matcher(submission.selftext()).find();
+
+	private SummonResponse getReply(FileConfiguration config, Database database) {
+		return new SummonResponse(SummonResponse.ResponseType.VALID, config.getString("suicide").replace("<user>", user));
 	}
 
-	/* (non-Javadoc)
-	 * @see me.timothy.bots.summon.Summon#parse(me.timothy.jreddit.info.Comment)
-	 */
 	@Override
-	public boolean parse(Comment comment) throws UnsupportedOperationException {
-		return PATTERN.matcher(comment.body()).find();
+	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
+		user = comment.author();
+		if(PATTERN.matcher(comment.body()).find())
+			return getReply(config, db);
+		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see me.timothy.bots.summon.Summon#applyChanges(me.timothy.bots.FileConfiguration, me.timothy.bots.Database)
-	 */
 	@Override
-	public String applyChanges(FileConfiguration config, Database database) {
-		LoansFileConfiguration lcf = (LoansFileConfiguration) config;
-		
-		return lcf.getSuicide().replace("<user>", user);
+	public SummonResponse handleLink(Link link, Database db, FileConfiguration config) {
+		user = link.author();
+		if(PATTERN.matcher(link.title()).find() || PATTERN.matcher(link.selftext()).find())
+			return getReply(config, db);
+		return null;
 	}
 
 }

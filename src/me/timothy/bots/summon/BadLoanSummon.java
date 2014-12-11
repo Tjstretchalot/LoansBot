@@ -4,7 +4,6 @@ import java.util.regex.Pattern;
 
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
-import me.timothy.bots.LoansFileConfiguration;
 import me.timothy.jreddit.info.Comment;
 
 /**
@@ -17,17 +16,13 @@ import me.timothy.jreddit.info.Comment;
 public class BadLoanSummon implements CommentSummon {
 
 	private static final Pattern BAD_LOAN_PATTERN = Pattern.compile("\\$loan\\s/u/\\S+\\s\\$?\\d+\\.?\\d*\\$?");
-	
-	@Override
-	public String applyChanges(FileConfiguration config, Database database) {
-		LoansFileConfiguration lfc = (LoansFileConfiguration) config;
-		
-		return lfc.getBadLoanSummon();
-	}
 
 	@Override
-	public boolean parse(Comment comment) {
-		return BAD_LOAN_PATTERN.matcher(comment.body()).find();
+	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
+		if(BAD_LOAN_PATTERN.matcher(comment.body()).find()) {
+			return new SummonResponse(SummonResponse.ResponseType.INVALID, config.getString("bad_loan_summon"));
+		}
+		return null;
 	}
 
 }

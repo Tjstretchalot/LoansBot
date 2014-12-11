@@ -3,9 +3,6 @@ package me.timothy.bots;
 import java.io.IOException;
 import java.sql.SQLException;
 
-import me.timothy.bots.emailsummon.EmailSummon;
-import me.timothy.bots.emailsummon.VerifySummon;
-import me.timothy.bots.summon.AdvancedLoanSummon;
 import me.timothy.bots.summon.BadLoanSummon;
 import me.timothy.bots.summon.CheckSummon;
 import me.timothy.bots.summon.CommentSummon;
@@ -46,14 +43,11 @@ public class LoansBotMain {
 			return;
 		}
 		
-		logger.debug("Connecting to Google..");
-		SpreadsheetIntegration si = new SpreadsheetIntegration(config);
-		
 		logger.debug("Connecting to database..");
-		LoansDatabase database = new LoansDatabase(si);
+		LoansDatabase database = new LoansDatabase();
 		
 		try {
-			database.connect(config.getDatabaseInfo().getProperty("username"), config.getDatabaseInfo().getProperty("password"), config.getDatabaseInfo().getProperty("url"));
+			database.connect(config.getProperty("database.username"), config.getProperty("database.password"), config.getProperty("database.url"));
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return;
@@ -62,9 +56,8 @@ public class LoansBotMain {
 		logger.debug("Running loans bot driver");
 		BotDriver driver = new LoansBotDriver(database, config, loansBot,
 				new CommentSummon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon(), new SuicideSummon(), new BadLoanSummon() }, 
-				new PMSummon[] { new AdvancedLoanSummon(), new PaidSummon(), new UnpaidSummon() },
-				new LinkSummon[] { new CheckSummon(), new SuicideSummon() },
-				new EmailSummon[] { new VerifySummon() });
+				new PMSummon[] { },
+				new LinkSummon[] { new CheckSummon(), new SuicideSummon() });
 		
 		while(true) {
 			try {

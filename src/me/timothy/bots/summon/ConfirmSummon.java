@@ -7,7 +7,6 @@ import java.util.regex.Pattern;
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
-import me.timothy.bots.LoansFileConfiguration;
 import me.timothy.jreddit.info.Comment;
 
 import org.apache.logging.log4j.Level;
@@ -29,73 +28,41 @@ public class ConfirmSummon implements CommentSummon {
 			.compile("\\s*\\$confirm\\s/u/\\S+\\s\\$?\\d+\\.?\\d*\\$?");
 
 	private Logger logger;
-	
-	private String doer;
-	private String doneTo;
-	private int amountPennies;
 
 	public ConfirmSummon() {
 		logger = LogManager.getLogger();
 	}
 
-	/* (non-Javadoc)
-	 * @see me.timothy.bots.summon.Summon#parse(com.github.jreddit.comment.Comment)
-	 */
 	@Override
-	public boolean parse(Comment comment) throws UnsupportedOperationException {
+	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
 		Matcher matcher = CONFIRM_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
 			String text = matcher.group().trim();
 			
-			this.doer = comment.author();
+			String doer = comment.author();
 			String[] split = text.split("\\s");
-			this.doneTo = BotUtils.getUser(split[1]);
+			String doneTo = BotUtils.getUser(split[1]);
 			String number = split[2].replace("$", "");
 
+			int amountPennies;
 			try {
 				amountPennies = BotUtils.getPennies(number);
 			} catch (ParseException e) {
 				logger.warn(e);
-				return false;
+				return null;
 			}
 			
-			return true;
+			if(config.getList("banned").contains(doneTo.toLowerCase())) {
+				logger.info("Someone is attempting to $confirm a banned user");
+				return new SummonResponse(SummonResponse.ResponseType.INVALID, config.getString("action_to_banned"));
+			}
+			logger.printf(Level.INFO, "%s confirmed a $%s transfer from %s", doer, BotUtils.getCostString(amountPennies /100.), doneTo);
+			
+			String resp = config.getString("confirm").replace("<borrower>", doer).replace("<lender>", doneTo).replace("<amount>", BotUtils.getCostString(amountPennies / 100.));
+			return new SummonResponse(SummonResponse.ResponseType.VALID, resp);
 		}
-		return false;
-	}
-
-	@Override
-	public String applyChanges(FileConfiguration con, Database db) {
-		LoansFileConfiguration config = (LoansFileConfiguration) con;
-		if(config.getBannedUsers().contains(doneTo.toLowerCase())) {
-			logger.info("Someone is attempting to $confirm a banned user");
-			return config.getActionToBanned();
-		}
-		logger.printf(Level.INFO, "%s confirmed a $%s transfer from %s", doer, BotUtils.getCostString(amountPennies /100.), doneTo);
-		
-		return config.getConfirm().replace("<borrower>", doer).replace("<lender>", doneTo).replace("<amount>", BotUtils.getCostString(amountPennies / 100.));
-	}
-
-	/**
-	 * @return the doer
-	 */
-	public String getDoer() {
-		return doer;
-	}
-
-	/**
-	 * @return the doneTo
-	 */
-	public String getDoneTo() {
-		return doneTo;
-	}
-
-	/**
-	 * @return the amountPennies
-	 */
-	public int getAmountPennies() {
-		return amountPennies;
+		return null;
 	}
 
 }

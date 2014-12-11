@@ -1,6 +1,6 @@
 package me.timothy.bots.summon;
 
-import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -9,8 +9,8 @@ import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.FileConfiguration;
-import me.timothy.bots.Loan;
-import me.timothy.bots.LoansFileConfiguration;
+import me.timothy.bots.models.Loan;
+import me.timothy.bots.models.User;
 import me.timothy.jreddit.info.Comment;
 
 import org.apache.logging.log4j.Level;
@@ -38,19 +38,13 @@ public class LoanSummon implements CommentSummon {
 	
 	private String doer;
 	private String doneTo;
-	private String url;
 	private int amountPennies;
 	
 	public LoanSummon() {
 		logger = LogManager.getLogger();
 	}
-	
-	
-	/* (non-Javadoc)
-	 * @see me.timothy.bots.summon.Summon#parse(com.github.jreddit.comment.Comment)
-	 */
 	@Override
-	public boolean parse(Comment comment) throws UnsupportedOperationException {
+	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
 		Matcher matcher = LOAN_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
@@ -58,9 +52,8 @@ public class LoanSummon implements CommentSummon {
 			this.doneTo = comment.linkAuthor();
 			
 			if(doer.toLowerCase().equals(doneTo.toLowerCase()))
-				return false;
-			
-			this.url = comment.linkURL();
+				return null;
+			String url = comment.linkURL();
 			
 			String text = matcher.group().trim();
 			String[] split = text.split("\\s");
@@ -70,51 +63,24 @@ public class LoanSummon implements CommentSummon {
 				this.amountPennies = BotUtils.getPennies(number);
 			} catch (ParseException e) {
 				logger.warn(e);
-				return false;
+				return null;
 			}
-			return true;
+			
+			LoansDatabase database = (LoansDatabase) db;
+			User doerU = database.getOrCreateUserByUsername(doer);
+			User doneToU = database.getOrCreateUserByUsername(doneTo);
+			long now = System.currentTimeMillis();
+			Loan loan = new Loan(-1, doerU.id, doneToU.id, amountPennies, 0, false, url, new Timestamp(now), new Timestamp(now));
+
+			database.addOrUpdateLoan(loan);
+			logger.printf(Level.INFO, "%s just lent %s to %s [loan %d]", doer, BotUtils.getCostString(amountPennies / 100.), doneTo, loan.id);
+			String resp = config.getString("successful_loan")
+					.replace("<lender>", doerU.username)
+					.replace("<borrower>", doneToU.username)
+					.replace("<amount>", BotUtils.getCostString(loan.principalCents/100.));
+			return new SummonResponse(SummonResponse.ResponseType.VALID, resp);
 		}
-		return false;
-	}
-
-	@Override
-	public String applyChanges(FileConfiguration con, Database db) {
-		LoansFileConfiguration config = (LoansFileConfiguration) con;
-		LoansDatabase database = (LoansDatabase) db;
-		try {
-			Loan loan = new Loan(amountPennies, doer, doneTo, 0, false, System.currentTimeMillis(), 0);
-			loan.setOriginalThread(url);
-			logger.printf(Level.INFO, "%s just lent %s to %s", doer, BotUtils.getCostString(amountPennies / 100.), doneTo);
-
-			database.addLoan(loan);
-			return config.getSuccessfulLoan()
-					.replace("<lender>", loan.getLender())
-					.replace("<borrower>", loan.getBorrower())
-					.replace("<amount>", BotUtils.getCostString(loan.getAmountPennies()/100.));
-		}catch(SQLException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
-
-	/**
-	 * @return the person who performed the summon
-	 */
-	public String getDoer() {
-		return doer;
-	}
-
-	/**
-	 * @return the person the summon was done to
-	 */
-	public String getDoneTo() {
-		return doneTo;
-	}
-
-	/**
-	 * @return the amount, in pennies, of the loan
-	 */
-	public int getAmountPennies() {
-		return amountPennies;
+		return null;
 	}
 
 }

@@ -6,8 +6,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+
+import me.timothy.bots.models.Loan;
+import me.timothy.bots.models.Recheck;
+import me.timothy.bots.models.Repayment;
+import me.timothy.bots.models.ShareCode;
+import me.timothy.bots.models.User;
 
 /**
  * Contains the connection to the MySQL database, both for remembering loans and
@@ -21,12 +29,7 @@ import java.util.List;
  */
 public class LoansDatabase extends Database {
 	private Connection connection;
-	private SpreadsheetIntegration spreadsheetIntegration;
-
-	public LoansDatabase(SpreadsheetIntegration si) {
-		setSpreadsheetIntegration(si);
-	}
-
+	
 	/**
 	 * Connects to the specified database. If there is an active connection
 	 * already, the active connection is explicity closed.
@@ -46,239 +49,30 @@ public class LoansDatabase extends Database {
 			connection.close();
 		}
 		connection = DriverManager.getConnection(url, username, password);
-		
-		ensureTablesExist();
 	}
 
-	/**
-	 * Creates any necessary tables if they do not exist (as if by CREATE TABLE
-	 * IF NOT EXISTS). <br>
-	 * <br>
-	 * This does not ensure that the tables are in the correct format if they
-	 * already exist.
-	 * 
-	 * @throws SQLException
-	 *             if a sql-related exception occurs
+	// ===========================================================
+	// |                                                         |
+	// |                       FULLNAMES                         |
+	// |                                                         |
+	// ===========================================================
+	
+	/*
+	 * fullnames
+	 *   id - int primary key
+	 *   fullname - varchar(50)
 	 */
-	public void ensureTablesExist() throws SQLException {
-		Statement statement = connection.createStatement();
-
-		statement.execute("CREATE TABLE IF NOT EXISTS loans ("
-				+ "loan_id INT NOT NULL AUTO_INCREMENT, "
-				+ "original_thread TEXT, "
-				+ "amount_pennies INT NOT NULL, "
-				+ "lender TEXT NOT NULL, "
-				+ "borrower TEXT NOT NULL, "
-				+ "amount_paid_pennies INT NOT NULL, "
-				+ "unpaid BOOL NOT NULL DEFAULT 0, "
-				+ "date_loan_given_jutc BIGINT DEFAULT 0, "
-				+ "date_paid_back_full_jutc BIGINT DEFAULT 0, "
-				+ "PRIMARY KEY (loan_id)"
-				+ ");");
-
-		statement = connection.createStatement();
-		statement.execute("CREATE TABLE IF NOT EXISTS remembered ("
-				+ "id CHAR(12) NOT NULL, "
-				+ "PRIMARY KEY (id)"
-				+ ");");
-		
-		statement = connection.createStatement();
-		statement.execute("CREATE TABLE IF NOT EXISTS applicants (" +
-				"id INT NOT NULL AUTO_INCREMENT, " +
-				"timestamp TEXT, " +
-				"username TEXT, " +
-				"email TEXT, " +
-				"first_name TEXT, " +
-				"last_name TEXT, " +
-				"street_address TEXT, " +
-				"city TEXT, " +
-				"zip TEXT, " +
-				"state TEXT, " +
-				"country TEXT, " +
-				"payment_method TEXT, " +
-				"method_of_use char(25), " +
-				"PRIMARY KEY (id)" +
-				");");
-	}
-
+	
+	
 	/**
-	 * Creates a new loan with the specified information. {@code loan} is
-	 * updated to reflect the new loan id. A new loan entry will be created each
-	 * time, regardless of if a similar entry already exists in this database.
-	 * The loans old id is ignored. <br>
-	 * The statement is prepared, and thus safe from SQL-injection.
-	 * 
-	 * @param loan
-	 *            the loan
-	 * @throws SQLException
-	 *             if a sql-exception occurs
+	 * Adds a fullname to the database
+	 * @param id the fullname to add
 	 */
-	public void addLoan(Loan loan) throws SQLException {
-		PreparedStatement prep = connection
-				.prepareStatement(
-						"INSERT INTO loans (original_thread, amount_pennies, lender, borrower, " +
-						"amount_paid_pennies, unpaid, date_loan_given_jutc, date_paid_back_full_jutc) " +
-						"VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
-						Statement.RETURN_GENERATED_KEYS);
-
-		prep.setString(1, loan.getOriginalThread());
-		prep.setInt(2, loan.getAmountPennies());
-		prep.setString(3, loan.getLender());
-		prep.setString(4, loan.getBorrower());
-		prep.setInt(5, loan.getAmountPaidPennies());
-		prep.setBoolean(6, loan.isUnpaid());
-		prep.setLong(7, loan.getDateLoanGivenJUTC());
-		prep.setLong(8, loan.getDatePaidBackFullJUTC());
-
-		prep.executeUpdate();
-
-		ResultSet keys = prep.getGeneratedKeys();
-		keys.next();
-		loan.setId(keys.getInt(1));
-		keys.close();
-	}
-
-	/**
-	 * Pays the specified loan by incrementing amountPaidPennies by
-	 * amountPennies. This does not verify that amountPaidPennies is greater
-	 * than amountPennies. <br>
-	 * <br>
-	 * The statement is prepared, and thus safe from SQL-injection.
-	 * 
-	 * @param loanId
-	 *            the loan id to modify
-	 * @param amountPennies
-	 *            the amount in pennies to increment amountPaidPennies
-	 * @throws SQLException
-	 *             if a sql-related exception occurs
-	 */
-	public void payLoan(int loanId, int amountPennies) throws SQLException {
-		PreparedStatement prep = connection
-				.prepareStatement("UPDATE loans SET amount_paid_pennies = amount_paid_pennies + ? WHERE loan_id=?");
-
-		prep.setInt(1, amountPennies);
-		prep.setInt(2, loanId);
-
-		prep.executeUpdate();
-	}
-
-	/**
-	 * Sets the specified loan id to unpaid/paid
-	 * 
-	 * @param loanId
-	 *            the loan id to modify
-	 * @param unpaid
-	 *            if true then sets loan ids unpaid to true, otherwise false
-	 * @throws SQLException
-	 *             if a sql-related exception occurs
-	 */
-	public void setLoanUnpaid(int loanId, boolean unpaid) throws SQLException {
-		PreparedStatement prep = connection
-				.prepareStatement("UPDATE loans SET unpaid=? WHERE loan_id=?");
-
-		prep.setBoolean(1, unpaid);
-		prep.setInt(2, loanId);
-
-		prep.executeUpdate();
-	}
-
-	/**
-	 * Sets the specified loan id's paid back in full timestamp in the slightly
-	 * modified version of UTC that is System.currentTimeMillis()
-	 * 
-	 * @param loanId
-	 *            the loan id
-	 * @param paidBackInFullJUTC
-	 *            the timestamp when the loan was paid back in full
-	 * @throws SQLException
-	 *             if a sql-related exception occurs
-	 */
-	public void setLoanPaidBackInFullDate(int loanId, long paidBackInFullJUTC)
-			throws SQLException {
-		PreparedStatement prep = connection
-				.prepareStatement("UPDATE loans SET date_paid_back_full_jutc=? WHERE loan_id=?");
-
-		prep.setLong(1, paidBackInFullJUTC);
-		prep.setInt(2, loanId);
-
-		prep.executeUpdate();
-	}
-
-	/**
-	 * Checks for any loans with {@code concernedParty} as the lender or
-	 * borrower
-	 * 
-	 * @param concernedParty
-	 *            the concerned party
-	 * @return a list of loans (not null) containing {@code concernedParty}
-	 * @throws SQLException
-	 *             if a sql-related exception occurs
-	 */
-	public List<Loan> getLoansWith(String concernedParty) throws SQLException {
-		List<Loan> result = new ArrayList<>();
-
-		PreparedStatement prep = connection
-				.prepareStatement("SELECT * FROM loans WHERE lender=? OR borrower=?");
-
-		prep.setString(1, concernedParty);
-		prep.setString(2, concernedParty);
-
-		ResultSet results = prep.executeQuery();
-		fillLoans(result, results);
-		results.close();
-		return result;
-	}
-
-	/**
-	 * Gets loans with the specified borrower and lender
-	 * 
-	 * @param borrower
-	 *            the borrower
-	 * @param lender
-	 *            the lender
-	 * @return Loans (not null) containing {@code borrower} as the borrower and
-	 *         {@code lender} as the lender
-	 * @throws SQLException
-	 */
-	public List<Loan> getLoansWith(String borrower, String lender)
-			throws SQLException {
-		List<Loan> result = new ArrayList<>();
-
-		PreparedStatement prep = connection
-				.prepareStatement("SELECT * FROM loans WHERE lender=? AND borrower=?");
-
-		prep.setString(1, lender);
-		prep.setString(2, borrower);
-
-		ResultSet results = prep.executeQuery();
-		fillLoans(result, results);
-		results.close();
-		return result;
-	}
-
-	private void fillLoans(List<Loan> result, ResultSet results)
-			throws SQLException {
-		if (results.first()) {
-			do {
-				Loan l = new Loan(results.getInt("amount_pennies"),
-						results.getString("lender"),
-						results.getString("borrower"),
-						results.getInt("amount_paid_pennies"),
-						results.getBoolean("unpaid"),
-						results.getLong("date_loan_given_jutc"),
-						results.getLong("date_paid_back_full_jutc"));
-				l.setId(results.getInt("loan_id"));
-				l.setOriginalThread(results.getString("original_thread"));
-				result.add(l);
-			} while (results.next());
-		}
-	}
-
 	public void addFullname(String id) {
 		PreparedStatement prep;
 		try {
 			prep = connection
-					.prepareStatement("INSERT INTO remembered (id) VALUES(?)");
+					.prepareStatement("INSERT INTO fullnames (fullname) VALUES(?)");
 
 			prep.setString(1, id);
 
@@ -288,10 +82,16 @@ public class LoansDatabase extends Database {
 		}
 	}
 
+	/**
+	 * Scans the database for ids matching the specified id
+	 * 
+	 * @param id the id to scan for
+	 * @return if the database has that id
+	 */
 	public boolean containsFullname(String id) {
 		try {
 			PreparedStatement prep = connection
-					.prepareStatement("SELECT * FROM remembered WHERE id=?");
+					.prepareStatement("SELECT * FROM fullnames WHERE fullname=?");
 
 			prep.setString(1, id);
 
@@ -305,129 +105,556 @@ public class LoansDatabase extends Database {
 		}
 	}
 	
-	/**
-	 * Gets any applicants in the database that have the specified
-	 * reddit username.
-	 * 
-	 * @param username the username to search for
-	 * @return applicants with that reddit username
+	// ===========================================================
+	// |                                                         |
+	// |                         RECHECKS                        |
+	// |                                                         |
+	// ===========================================================
+	
+	/*
+	 * rechecks 
+	 *   id - int
+	 *   fullname - string
+	 *   
+	 *   created_at - datetime
+	 *   updated_at - datetime
 	 */
-	public List<Applicant> getApplicantByUsername(String username) {
-		PreparedStatement prep;
-		
+	
+	/**
+	 * Gets all queued rechecks
+	 * 
+	 * @return any rechecks in the rechecks database
+	 */
+	public List<Recheck> getAllRechecks() {
 		try {
-			prep = connection.prepareStatement("SELECT * FROM applicants WHERE username=?");
-			prep.setString(1, username);
-			ResultSet results = prep.executeQuery();
-			return getApplicants(results);
-		}catch(SQLException ex) {
-			throw new RuntimeException(ex);
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM rechecks");
+			
+			ResultSet set = statement.executeQuery();
+			List<Recheck> results = new ArrayList<>();
+			
+			while(set.next()) {
+				results.add(getRecheckFromSet(set));
+			}
+			
+			set.close();
+			return results;
+		}catch(SQLException sqlE) {
+			throw new RuntimeException(sqlE);
 		}
 	}
 	
 	/**
-	 * Gets any applicants in the database that match the specified 
-	 * information (case insensitive)
-	 * @param firstName
-	 * @param lastName
-	 * @param street
-	 * @param city
-	 * @param state
-	 * @param country
-	 * @return applicants with information like the arguments
+	 * Removes a recheck request (by id) from the database
+	 * 
+	 * @param recheck the recheck request to remove
 	 */
-	public List<Applicant> getApplicantsByInfo(String firstName, String lastName, String street, String city, String state, String country) {
-		PreparedStatement prep;
+	public void deleteRecheck(Recheck recheck) {
 		try {
-			prep = connection.prepareStatement("SELECT * FROM applicants WHERE first_name LIKE ? AND last_name LIKE ? AND street_address LIKE ? AND city LIKE ? AND state LIKE ? AND country LIKE ?");
-			prep.setString(1, firstName);
-			prep.setString(2, lastName);
-			prep.setString(3, street);
-			prep.setString(4, city);
-			prep.setString(5, state);
-			prep.setString(6, country);
-			ResultSet results = prep.executeQuery();
-			return getApplicants(results);
-		}catch(SQLException ex) {
-			throw new RuntimeException(ex);
+			PreparedStatement statement = connection.prepareStatement("DELETE FROM rechecks WHERE id=?");
+			statement.setInt(1, recheck.id);
+			
+			statement.executeUpdate();
+		}catch(SQLException sqlE) {
+			throw new RuntimeException(sqlE);
 		}
 	}
 	
 	/**
-	 * Adds an applicant to the database
-	 * @param applicant the applicant to add
-	 */
-	public void addApplicant(Applicant applicant) {
-		PreparedStatement prep;
-		
-		try {
-			prep = connection.prepareStatement("INSERT INTO applicants (timestamp, username, email, first_name, last_name, street_address, " +
-					"city, zip, state, country, payment_method, method_of_use) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-			
-			prep.setString(1, applicant.getTimestamp());
-			prep.setString(2, applicant.getUsername());
-			prep.setString(3, applicant.getEmail());
-			prep.setString(4, applicant.getFirstName());
-			prep.setString(5, applicant.getLastName());
-			prep.setString(6, applicant.getStreetAddress());
-			prep.setString(7, applicant.getCity());
-			prep.setString(8, applicant.getZip());
-			prep.setString(9, applicant.getState());
-			prep.setString(10, applicant.getCountry());
-			prep.setString(11, applicant.getPaymentMethod());
-			prep.setString(12, applicant.getMainMethodOfUse());
-			
-			prep.execute();
-		}catch(SQLException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
-
-	/**
-	 * Gets applicants from the result set, assumes * was used for wat to retrieve
+	 * Parases the recheck request thats currently selected
+	 * in the result set
 	 * 
-	 * @param results the results to parse
-	 * @return the parsed applicant opjects
+	 * @param results the results
+	 * @return the recheck currently selected
 	 * @throws SQLException if a sql-exception occurs
 	 */
-	private List<Applicant> getApplicants(ResultSet results) throws SQLException {
-		List<Applicant> result = new ArrayList<>();
-		
-		while(results.next()) {
-			result.add(new Applicant(
-					results.getString("timestamp"), 
-					results.getString("username"),
-					results.getString("email"), 
-					results.getString("first_name"), 
-					results.getString("last_name"),
-					results.getString("street_address"),
-					results.getString("city"),
-					results.getString("zip"),
-					results.getString("state"),
-					results.getString("country"),
-					results.getString("payment_method"),
-					results.getString("method_of_use")));
+	private Recheck getRecheckFromSet(ResultSet results) throws SQLException {
+		return new Recheck(results.getInt("id"), results.getString("fullname"), results.getTimestamp("created_at"), results.getTimestamp("updated_at"));
+	}
+	
+	// ===========================================================
+	// |                                                         |
+	// |                          USERS                          |
+	// |                                                         |
+	// ===========================================================
+
+	/*
+	 * users
+	 *   id - int primary key
+	 *   username - varchar(255)
+	 *   password_digest - text
+	 *   claimed - tinyint(1)
+	 *   claim_code - varchar(255)
+	 *   claim_link_sent_at - datetime
+	 *   created_at - datetime
+	 *   updated_at - datetime 
+	 *   
+	 *   email - text
+	 *   name - text
+	 *   street_address - text
+	 *   city - text
+	 *   state - text
+	 *   zip - text
+	 *   country - text
+	 */
+	
+	/**
+	 * Equivalent SQL: {@code SELECT * FROM users WHERE username=? LIMIT 1}
+	 * 
+	 * @param username the user to get
+	 * @return that user or null
+	 */
+	public User getUserByUsername(String username) {
+		try {
+			PreparedStatement prep = connection
+					.prepareStatement("SELECT * FROM users WHERE username=? LIMIT 1");
+			prep.setString(1, username);
+			ResultSet results = prep.executeQuery();
 			
-			result.get(result.size() - 1).setId(results.getInt("id"));
+			if(results == null || !results.next())
+				return null;
+			
+			User result = getUserFromSet(results);
+			results.close();
+			return result;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 * Equivalent SQL: {@code SELECT * FROM users WHERE id=? LIMIT 1}
+	 * 
+	 * @param id the user to get
+	 * @return that user or null
+	 */
+	public User getUserById(int id) {
+		try {
+			PreparedStatement prep = connection
+					.prepareStatement("SELECT * FROM users WHERE id=? LIMIT 1");
+			prep.setInt(1, id);
+			ResultSet results = prep.executeQuery();
+			
+			if(results == null || !results.next())
+				return null;
+			
+			User result = getUserFromSet(results);
+			results.close();
+			return result;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 * Gets all users that are <i>unclaimed</i>, have a <i>claim code</i>, and
+	 * do not have a <i>claim link sent at</i> date
+	 * @return list of users to pm a code
+	 */
+	public List<User> getUsersToSendCode() {
+		try {
+			PreparedStatement prep = connection
+					.prepareStatement("SELECT * FROM users WHERE (claimed=false OR claimed IS NULL) AND claim_code IS NOT NULL AND claim_link_sent_at IS NULL");
+			ResultSet results = prep.executeQuery();
+			
+			List<User> result = new ArrayList<>();
+			while(results.next()) {
+				result.add(getUserFromSet(results));
+			}
+			
+			results.close();
+			return result;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 * Gets the user by the specified username, or if it doesn't exist creates
+	 * and saves a new user and returns that
+	 * @param username the username of the user
+	 * @return that user or a new one created with that username
+	 */
+	public User getOrCreateUserByUsername(String username) {
+		User result = getUserByUsername(username);
+		
+		if(result == null) {
+			result = new User(username);
+			Date now = new Date();
+			result.createdAt = new Timestamp(now.getTime());
+			result.updatedAt = new Timestamp(now.getTime());
+			addOrUpdateUser(result);
 		}
 		
 		return result;
 	}
-	public static void initMysql() throws ClassNotFoundException {
-		Class.forName("com.mysql.jdbc.Driver");
+	
+	/**
+	 * Adds the user if the id is -1, which also updates the id
+	 * to reflect the newly generated one. Otherwise just updates the
+	 * user
+	 * 
+	 * @param user the user to add or update
+	 * @throws IllegalArgumentException if the user is not valid
+	 */
+	public void addOrUpdateUser(User user) {
+		if(!user.isValid())
+			throw new IllegalArgumentException("invalid users cannot be saved");
+		try {
+			PreparedStatement statement;
+			int counter = 1;
+			if(user.id == -1) {
+				statement = connection.prepareStatement("INSERT INTO users (username, password_digest, claimed, claim_code, " +
+						"claim_link_sent_at, created_at, updated_at, email, name, street_address, " +
+						"city, state, zip, country) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+			}else {
+				statement = connection.prepareStatement("UPDATE users SET username=?, password_digest=?, claimed=?, claim_code=?, " +
+						"claim_link_sent_at=?, created_at=?, updated_at=?, email=?, name=?, street_address=?, " +
+						"city=?, state=?, zip=?, country=? WHERE id=?");
+			}
+			statement.setString(counter++, user.username);
+			statement.setString(counter++, user.passwordDigest);
+			statement.setBoolean(counter++, user.claimed);
+			statement.setString(counter++, user.claimCode);
+			statement.setTimestamp(counter++, user.claimLinkSetAt);
+			statement.setTimestamp(counter++, user.createdAt);
+			statement.setTimestamp(counter++, user.updatedAt);
+			statement.setString(counter++, user.email);
+			statement.setString(counter++, user.name);
+			statement.setString(counter++, user.streetAddress);
+			statement.setString(counter++, user.city);
+			statement.setString(counter++, user.state);
+			statement.setString(counter++, user.zip);
+			statement.setString(counter++, user.country);
+			if(user.id != -1)
+				statement.setInt(counter++, user.id);
+			
+			statement.executeUpdate();
+			
+			if(user.id == -1) {
+				ResultSet set = statement.getGeneratedKeys();
+				if(set.next())
+					user.id = set.getInt(1);
+				else
+					throw new IllegalStateException("This can't be happening; no generated keys for table user?");
+				set.close();
+			}
+		}catch(SQLException sqlE) {
+			throw new RuntimeException(sqlE);
+		}
 	}
 
 	/**
-	 * @return the spreadsheetIntegration
+	 * Parses the user in the currently selected element of the set
+	 * 
+	 * @param set the set
+	 * @return the user from that set
+	 * @throws SQLException if a sql-exception occurs
 	 */
-	public SpreadsheetIntegration getSpreadsheetIntegration() {
-		return spreadsheetIntegration;
+	private User getUserFromSet(ResultSet set) throws SQLException {
+		User user = new User(set.getInt("id"), set.getString("username"),
+				set.getString("password_digest"), set.getBoolean("claimed"), 
+				set.getString("claim_code"), set.getTimestamp("claim_link_sent_at"),
+				set.getTimestamp("created_at"), set.getTimestamp("updated_at"),
+				set.getString("email"), set.getString("name"), set.getString("street_address"),
+				set.getString("city"), set.getString("state"), set.getString("zip"), 
+				set.getString("country"));
+		
+		if(user.createdAt == null)
+			user.createdAt = new Timestamp(System.currentTimeMillis());
+		if(user.updatedAt == null)
+			user.updatedAt = new Timestamp(System.currentTimeMillis());
+		
+		return user;
+	}
+	
+	// ===========================================================
+	// |                                                         |
+	// |                          LOANS                          |
+	// |                                                         |
+	// ===========================================================
+	
+	/*
+	 * loans
+	 *   id - int primary key
+	 *   lender_id - int mul
+	 *   borrower_id - int mul
+	 *   principal_cents - int
+	 *   principal_repayment_cents - int
+	 *   unpaid - tinyint(1)
+	 *   
+	 *   original_thread - text
+	 *   
+	 *   created_at - datetime
+	 *   updated_at - datetime
+	 */
+
+	/**
+	 * Gets loans matching the specified requirements
+	 * 
+	 * @param borrowerId the borrower id
+	 * @param lenderId the lender id
+	 * @param strict if both lender and borrower have to match, or just either
+	 * @return the matching loans (potentially empty, never null)
+	 */
+	public List<Loan> getLoansWithBorrowerAndOrLender(int borrowerId, int lenderId, boolean strict) {
+		List<Loan> results = new ArrayList<>();
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM loans WHERE lender_id=? " + (strict ? "AND" : "OR") + " borrower_id=?");
+			statement.setInt(1, lenderId);
+			statement.setInt(2, borrowerId);
+			ResultSet set = statement.executeQuery();
+			while(set.next()) {
+				results.add(getLoanFromSet(set));
+			}
+			set.close();
+		}catch(SQLException sqlE) {
+			throw new RuntimeException(sqlE);
+		}
+		return results;
+	}
+	
+	/**
+	 * Add and give an id to loans with id -1, otherwise updates the loan
+	 * 
+	 * @param loan the loan to add or update
+	 */
+	public void addOrUpdateLoan(Loan loan) {
+		if(!loan.isValid())
+			throw new IllegalArgumentException("invalid loans cannot be saved");
+		
+		try {
+			PreparedStatement statement;
+			int counter = 1;
+			if(loan.id == -1) {
+				statement = connection.prepareStatement("INSERT INTO loans (lender_id, borrower_id, " +
+						"principal_cents, principal_repayment_cents, unpaid, original_thread, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+						Statement.RETURN_GENERATED_KEYS);
+			}else {
+				statement = connection.prepareStatement("UPDATE loans SET lender_id=?, borrower_id=?, principal_cents=?, principal_repayment_cents=?, " +
+						"unpaid=?, original_thread=?, created_at=?, updated_at=? WHERE id=?");
+			}
+			
+			statement.setInt(counter++, loan.lenderId);
+			statement.setInt(counter++, loan.borrowerId);
+			statement.setInt(counter++, loan.principalCents);
+			statement.setInt(counter++, loan.principalRepaymentCents);
+			statement.setBoolean(counter++, loan.unpaid);
+			statement.setString(counter++, loan.originalThread);
+			statement.setTimestamp(counter++, loan.createdAt);
+			statement.setTimestamp(counter++, loan.updatedAt);
+			
+			if(loan.id != -1)
+				statement.setInt(counter++, loan.id);
+			
+			statement.executeUpdate();
+			
+			if(loan.id == -1) {
+				ResultSet set = statement.getGeneratedKeys();
+				if(set.next())
+					loan.id = set.getInt(1);
+				else
+					throw new IllegalStateException("This can't be happening; no generated keys for table loans?");
+				set.close();
+			}
+		}catch(SQLException sqlE) {
+			throw new RuntimeException(sqlE);
+		}
 	}
 
 	/**
-	 * @param spreadsheetIntegration the spreadsheetIntegration to set
+	 * Creates a repayment with the specified amount, saves it, and updates the specified
+	 * loan both in memory and in the database while updating the updatedAt for the loan
+	 * <br><br>
+	 * This WILL fail at the database level if the loan is not yet saved, since the repayment
+	 * is saved prior to the loan being updated, and the loan id is required to make the repayment
+	 * 
+	 * @param loan the loan to update
+	 * @param amount amount in pennies
+	 * @param time the timestamp to use
 	 */
-	public void setSpreadsheetIntegration(SpreadsheetIntegration spreadsheetIntegration) {
-		this.spreadsheetIntegration = spreadsheetIntegration;
+	public void payLoan(Loan loan, int amount, long time) {
+		Repayment repayment = new Repayment(-1, loan.id, amount, new Timestamp(time), new Timestamp(time));
+		addRepayment(repayment);
+		
+		loan.principalRepaymentCents += amount;
+		loan.updatedAt = new Timestamp(time);
+		addOrUpdateLoan(loan);
+	}
+	
+	/**
+	 * Sets the specified loan unpaidness, both in the database and in memory
+	 * @param loan the loan to change
+	 * @param unpaid to set or not to set, that is the question
+	 */
+	public void setLoanUnpaid(Loan loan, boolean unpaid) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("UPDATE loans SET unpaid=? WHERE id=?");
+			statement.setBoolean(1, unpaid);
+			statement.setInt(2, loan.id);
+			
+			statement.executeUpdate();
+			
+			loan.unpaid = unpaid;
+		}catch(SQLException sqlE) {
+			throw new RuntimeException(sqlE);
+		}
+	}
+	
+	/**
+	 * Gets the loan from the currently selected row in the set
+	 * @param set the set to parse from
+	 * @return the Java-representation of the row
+	 * @throws SQLException if a sql-exception occurs
+	 */
+	private Loan getLoanFromSet(ResultSet set) throws SQLException {
+		return new Loan(set.getInt("id"), set.getInt("lender_id"), set.getInt("borrower_id"), set.getInt("principal_cents"), 
+				set.getInt("principal_repayment_cents"), set.getBoolean("unpaid"), set.getString("original_thread"), set.getTimestamp("created_at"), 
+				set.getTimestamp("updated_at"));
+	}
+	
+	// ===========================================================
+	// |                                                         |
+	// |                        REPAYMENTS                       |
+	// |                                                         |
+	// ===========================================================
+	
+	/*
+	 * repayments
+	 *   id - int primary key
+	 *   loan_id - int mul
+	 *   amount_cents - int
+	 *   created_at - datetime
+	 *   updated_at - datetime
+	 *   
+	 */
+	
+	/**
+	 * Gets all repayments attached to the specified loan
+	 * @param loanId the loan id
+	 * @return a (potentially empty) list of repayments for the loan
+	 */
+	public List<Repayment> getRepaymentsWithLoan(int loanId) {
+		List<Repayment> result = new ArrayList<>();
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM repayments WHERE loan_id=?");
+			statement.setInt(1, loanId);
+			
+			ResultSet set = statement.executeQuery();
+			while(set.next()) {
+				result.add(getRepaymentFromSet(set));
+			}
+			set.close();
+		}catch(SQLException sqlE) {
+			throw new RuntimeException(sqlE);
+		}
+		return result;
+	}
+	
+	/**
+	 * Adds the specified repayment to the database. Does not
+	 * update the associated loan. Does update the repayment memory
+	 * objects id
+	 * 
+	 * @param repayment the repayment to add
+	 */
+	public void addRepayment(Repayment repayment) {
+		if(!repayment.isValid())
+			throw new IllegalArgumentException("invalid repayments cannot be saved");
+		
+		try {
+			PreparedStatement statement;
+			int counter = 1;
+			statement = connection.prepareStatement("INSERT INTO repayments (loan_id, amount_cents, " +
+					"created_at, updated_at) VALUES(?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+			
+			
+			statement.setInt(counter++, repayment.loanId);
+			statement.setInt(counter++, repayment.amountCents);
+			statement.setTimestamp(counter++, repayment.createdAt);
+			statement.setTimestamp(counter++, repayment.updatedAt);
+			
+			statement.executeUpdate();
+			
+			ResultSet set = statement.getGeneratedKeys();
+			if(set.next())
+				repayment.id = set.getInt(1);
+			else
+				throw new IllegalStateException("This can't be happening; no generated keys for table repayments?");
+			set.close();
+		}catch(SQLException sqlE) {
+			throw new RuntimeException(sqlE);
+		}
+	}
+	
+	/**
+	 * Gets a repayment from the currently selected row in the set
+	 * @param set the set
+	 * @return the repayment
+	 * @throws SQLException if a sql-exception occurs
+	 */
+	private Repayment getRepaymentFromSet(ResultSet set) throws SQLException {
+		return new Repayment(set.getInt("id"), set.getInt("loan_id"), set.getInt("amount_cents"), set.getTimestamp("created_at"), set.getTimestamp("updated_at"));
+	}
+	
+	// ===========================================================
+	// |                                                         |
+	// |                       SHARE CODES                       |
+	// |                                                         |
+	// ===========================================================
+	
+	/*
+	 * share_codes
+	 *   id - int primary key
+	 *   user_id - int mul
+	 *   code - varchar(255)
+	 *   created_at - datetime
+	 *   updated_at - datetime
+	 */
+	
+	/**
+	 * Gets all share codes attached to the specified user (expected only 1)
+	 * @param userId the user
+	 * @return all attached sharecodes (or an empty list if no attached sharecodes)
+	 */
+	public List<ShareCode> getShareCodesForUser(int userId) {
+		List<ShareCode> result = new ArrayList<>();
+		
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM share_codes WHERE user_id=?");
+			statement.setInt(1, userId);
+			ResultSet set = statement.executeQuery();
+			while(set.next()) {
+				result.add(getShareCodeFromSet(set));
+			}
+			set.close();
+		}catch(SQLException sqlE) {
+			throw new RuntimeException(sqlE);
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * The equivalent of {@code DELETE FROM share_codes WHERE id=? LIMIT 1}
+	 * @param id the share code id to delete
+	 */
+	public void deleteCode(int id) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("DELETE FROM share_codes WHERE id=? LIMIT 1");
+			statement.setInt(1, id);
+			statement.executeUpdate();
+		}catch(SQLException sqlE) {
+			throw new RuntimeException(sqlE);
+		}
+	}
+	
+	/**
+	 * Gets the share code from the set 
+	 * @param set the set
+	 * @return the share code
+	 * @throws SQLException if a sql-exception occurs
+	 */
+	private ShareCode getShareCodeFromSet(ResultSet set) throws SQLException {
+		return new ShareCode(set.getInt("id"), set.getInt("user_id"), set.getString("code"), set.getTimestamp("created_at"), set.getTimestamp("updated_at"));
 	}
 }

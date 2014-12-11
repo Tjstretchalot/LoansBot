@@ -1,23 +1,23 @@
 package me.timothy.bots.summon;
 
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import me.timothy.bots.BotUtils;
+import me.timothy.bots.Database;
+import me.timothy.bots.FileConfiguration;
+import me.timothy.bots.LoansBotUtils;
+import me.timothy.bots.LoansDatabase;
+import me.timothy.bots.models.Loan;
+import me.timothy.bots.models.User;
+import me.timothy.jreddit.info.Comment;
+import me.timothy.jreddit.info.Link;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import me.timothy.bots.BotUtils;
-import me.timothy.bots.Database;
-import me.timothy.bots.LoansDatabase;
-import me.timothy.bots.FileConfiguration;
-import me.timothy.bots.Loan;
-import me.timothy.bots.LoansBotUtils;
-import me.timothy.bots.LoansFileConfiguration;
-import me.timothy.jreddit.info.Comment;
-import me.timothy.jreddit.info.Link;
 
 /**
  * A summon for checking all loans made by a user
@@ -40,25 +40,39 @@ public class CheckSummon implements CommentSummon, LinkSummon {
 	public CheckSummon() {
 		logger = LogManager.getLogger();
 	}
-	/**
-	 * @return the doer
-	 */
-	public String getDoer() {
-		return doer;
-	}
+	
+	
+	private String applyChanges(FileConfiguration config, Database db) {
+		LoansDatabase database = (LoansDatabase) db;
+		if(config.getList("banned").contains(doneTo.toLowerCase())) {
+			logger.info("Someone is attempting to check a banned user");
+			return config.getString("action_to_banned");
+		}
 
-	/**
-	 * @return the doneTo
-	 */
-	public String getDoneTo() {
-		return doneTo;
-	}
+		logger.printf(Level.INFO, "%s requested a check on %s", doer, doneTo);
+		User user = database.getUserByUsername(doneTo);
+		
+		List<Loan> relevantLoans1 = user != null ? database.getLoansWithBorrowerAndOrLender(user.id, user.id, false) : new ArrayList<Loan>();
 
-	/* (non-Javadoc)
-	 * @see me.timothy.bots.summon.Summon#parse(com.github.jreddit.comment.Comment)
-	 */
+		return config.getString("check")
+				.replace("<checker>", doer)
+				.replace("<user>", doneTo)
+				.replace("<loans>", LoansBotUtils.getLoansString(relevantLoans1, database, doneTo, config))
+				.replace("<applied>", (user != null && user.claimed) ? "Yes" : "No");
+	}
 	@Override
-	public boolean parse(Comment comment) throws UnsupportedOperationException {
+	public SummonResponse handleLink(Link submission, Database db, FileConfiguration config) {
+		String title = submission.title();
+		if(title.toUpperCase().startsWith("[META]"))
+			return null;
+		
+		
+		this.doer = "AUTOMATIC";
+		this.doneTo = submission.author();
+		return new SummonResponse(SummonResponse.ResponseType.VALID, applyChanges(config, db));
+	}
+	@Override
+	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
 		Matcher matcher = CHECK_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
@@ -66,51 +80,9 @@ public class CheckSummon implements CommentSummon, LinkSummon {
 			
 			this.doer = comment.author();
 			this.doneTo = BotUtils.getUser(text.split("\\s")[1]);
-			return true;
+			return new SummonResponse(SummonResponse.ResponseType.VALID, applyChanges(config, db));
 		}
-		
-		return false;
-	}
-	
-	/* (non-Javadoc)
-	 * @see me.timothy.bots.summon.Summon#parse(com.github.jreddit.submissions.Submission)
-	 */
-	@Override
-	public boolean parse(Link submission)
-			throws UnsupportedOperationException {
-		
-		String title = submission.title();
-		if(title.toUpperCase().startsWith("[META]"))
-			return false;
-		
-		
-		this.doer = "AUTOMATIC";
-		this.doneTo = submission.author();
-		
-		return true;
-	}
-	
-	@Override
-	public String applyChanges(FileConfiguration con, Database db) {
-		LoansFileConfiguration config = (LoansFileConfiguration) con;
-		LoansDatabase database = (LoansDatabase) db;
-		try {
-			if(config.getBannedUsers().contains(doneTo.toLowerCase())) {
-				logger.info("Someone is attempting to check a banned user");
-				return config.getActionToBanned();
-			}
-
-			logger.printf(Level.INFO, "%s requested a check on %s", doer, doneTo);
-			List<Loan> relevantLoans1 = database.getLoansWith(doneTo);
-
-			return config.getCheck()
-					.replace("<checker>", doer)
-					.replace("<user>", doneTo)
-					.replace("<loans>", LoansBotUtils.getLoansString(relevantLoans1, doneTo, config))
-					.replace("<applied>", database.getApplicantByUsername(doneTo).size() > 0 ? "Yes" : "No");
-		}catch(SQLException ex) {
-			throw new RuntimeException(ex);
-		}
+		return null;
 	}
 
 }

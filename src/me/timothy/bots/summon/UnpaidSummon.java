@@ -1,6 +1,5 @@
 package me.timothy.bots.summon;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -8,13 +7,12 @@ import java.util.regex.Pattern;
 
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
-import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.FileConfiguration;
-import me.timothy.bots.Loan;
 import me.timothy.bots.LoansBotUtils;
-import me.timothy.bots.LoansFileConfiguration;
+import me.timothy.bots.LoansDatabase;
+import me.timothy.bots.models.Loan;
+import me.timothy.bots.models.User;
 import me.timothy.jreddit.info.Comment;
-import me.timothy.jreddit.info.Message;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -26,7 +24,7 @@ import org.apache.logging.log4j.Logger;
  * 
  * @author Timothy
  */
-public class UnpaidSummon implements PMSummon, CommentSummon {
+public class UnpaidSummon implements CommentSummon {
 	/**
 	 * Matches things like
 	 * 
@@ -37,85 +35,48 @@ public class UnpaidSummon implements PMSummon, CommentSummon {
 
 	private Logger logger;
 
-	private String doer;
-	private String doneTo;
-
 	public UnpaidSummon() {
 		logger = LogManager.getLogger();
 	}
 	
-	/* (non-Javadoc)
-	 * @see me.timothy.bots.summon.Summon#parse(com.github.jreddit.comment.Comment)
-	 */
+	
 	@Override
-	public boolean parse(Comment comment) throws UnsupportedOperationException {
-		return parse(comment.author(), comment.body());
-	}
-
-	/* (non-Javadoc)
-	 * @see me.timothy.bots.summon.Summon#parse(com.github.jreddit.message.Message)
-	 */
-	@Override
-	public boolean parse(Message message) throws UnsupportedOperationException {
-		return parse(message.author(), message.body());
-	}
-
-	private boolean parse(String author, String text) {
-		Matcher matcher = UNPAID_PATTERN.matcher(text);
+	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
+		Matcher matcher = UNPAID_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
 			String group = matcher.group().trim();
 			String[] split = group.split("\\s");
 			
-			this.doer = author;
-			this.doneTo = BotUtils.getUser(split[1]);
+			String doer = comment.author();
+			String doneTo = BotUtils.getUser(split[1]);
 			
-			return true;
-		}
-		return false;
-	}
 
-	@Override
-	public String applyChanges(FileConfiguration con, Database db) {
-		LoansFileConfiguration config = (LoansFileConfiguration) con;
-		LoansDatabase database = (LoansDatabase) db;
-		try {
-			if(config.getBannedUsers().contains(doneTo.toLowerCase())) {
+			LoansDatabase database = (LoansDatabase) db;
+			if(config.getList("banned").contains(doneTo.toLowerCase())) {
 				logger.info("Someone is attempting to $unpaid a banned user");
-				return config.getActionToBanned();
+				return new SummonResponse(SummonResponse.ResponseType.INVALID, config.getString("action_to_banned"));
 			}
+			
+			User doneToU = database.getUserByUsername(doneTo);
+			User doerU = database.getUserByUsername(doer);
 
-			List<Loan> relevantLoans = database.getLoansWith(doneTo, doer);
+			List<Loan> relevantLoans = (doneToU != null && doerU != null) ? database.getLoansWithBorrowerAndOrLender(doneToU.id, doerU.id, true) : new ArrayList<Loan>();
 			List<Loan> changed = new ArrayList<>();
 
 			for(Loan l : relevantLoans) {
-				if(l.getAmountPaidPennies() != l.getAmountPennies()) {
-					database.setLoanUnpaid(l.getId(), true);
-					l.setUnpaid(true);
+				if(l.principalRepaymentCents != l.principalCents) {
+					database.setLoanUnpaid(l, true);
 					changed.add(l);
 				}
 			}
 
 			logger.printf(Level.INFO, "%s has defaulted on %d loans from %s", doneTo, changed.size(), doer);
 
-			return config.getUnpaid().replace("<lender>", doer).replace("<borrower>", doneTo).replace("<loans>", LoansBotUtils.getLoansAsTable(changed, changed.size()));
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
+			String response = config.getString("unpaid").replace("<lender>", doer).replace("<borrower>", doneTo).replace("<loans>", LoansBotUtils.getLoansAsTable(changed, database, changed.size()));
+			return new SummonResponse(SummonResponse.ResponseType.VALID, response);
 		}
-	}
-
-	/**
-	 * @return the doer
-	 */
-	public String getDoer() {
-		return doer;
-	}
-
-	/**
-	 * @return the doneTo
-	 */
-	public String getDoneTo() {
-		return doneTo;
+		return null;
 	}
 
 }

@@ -1,20 +1,20 @@
 package me.timothy.bots;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.internet.InternetAddress;
-
-import me.timothy.bots.emailsummon.EmailSummon;
+import me.timothy.bots.models.Recheck;
+import me.timothy.bots.models.User;
 import me.timothy.bots.summon.CommentSummon;
 import me.timothy.bots.summon.LinkSummon;
 import me.timothy.bots.summon.PMSummon;
+import me.timothy.jreddit.RedditUtils;
 import me.timothy.jreddit.info.Comment;
 import me.timothy.jreddit.info.Link;
+import me.timothy.jreddit.info.Listing;
+import me.timothy.jreddit.info.Message;
 import me.timothy.jreddit.info.Thing;
 
 import org.json.simple.parser.ParseException;
@@ -26,11 +26,6 @@ import org.json.simple.parser.ParseException;
  */
 public class LoansBotDriver extends BotDriver {
 	/**
-	 * Email summons
-	 */
-	private EmailSummon[] emailSummons;
-
-	/**
 	 * Exact echo of BotDriver constructor 
 	 * @param database database
 	 * @param config config
@@ -41,10 +36,8 @@ public class LoansBotDriver extends BotDriver {
 	 */
 	public LoansBotDriver(Database database, FileConfiguration config, Bot bot,
 			CommentSummon[] commentSummons, PMSummon[] pmSummons,
-			LinkSummon[] submissionSummons, EmailSummon[] emailSummons) {
+			LinkSummon[] submissionSummons) {
 		super(database, config, bot, commentSummons, pmSummons, submissionSummons);
-
-		this.emailSummons = emailSummons;
 	}
 
 	/* (non-Javadoc)
@@ -68,7 +61,7 @@ public class LoansBotDriver extends BotDriver {
 						response = response + "\n\n";
 					}
 
-					String postfix = ((LoansFileConfiguration) config).getSecondarySubredditPostfix();
+					String postfix = ((LoansFileConfiguration) config).getString("secondary_subreddit_postfix");
 					postfix = postfix.replace("<subreddit>", subreddit);
 					postfix = postfix.replace("<primary>", LoansBotUtils.PRIMARY_SUBREDDIT);
 
@@ -85,95 +78,123 @@ public class LoansBotDriver extends BotDriver {
 	@Override
 	protected void doLoop() throws IOException, ParseException,
 	java.text.ParseException {
+		logger.debug("Scanning for new claim codes..");
+		handleClaimCodes();
+		sleepFor(2000);
+		
+		logger.debug("Scanning for recheck requests..");
+		handleRechecks();
+		sleepFor(2000);
+		
 		super.doLoop();
-
-		logger.trace("Checking for pending applicants..");
-		checkPendingApplicants();
-
-		logger.trace("Checking for any emails..");
-		checkEmails();
 	}
-
+	
 	/**
-	 * Check and handle any pending applicants 
-	 * 
+	 * Loops through unclaimed users who have a claim code but no claim
+	 * link sent at and sends them a reddit PM with the claim code, then updates
+	 * the claim link sent at to now.
 	 */
-	protected void checkPendingApplicants() {
+	private void handleClaimCodes() {
 		LoansDatabase ldb = (LoansDatabase) database;
-
-		SpreadsheetIntegration si = ldb.getSpreadsheetIntegration();
-
-		List<Applicant> pendingApplicants = si.getPendingApplicants();
-
-		if(pendingApplicants == null || pendingApplicants.size() == 0)
-			return;
-
-		logger.debug("There are " + pendingApplicants.size() + " pending applicants..");
-		for(Applicant a : pendingApplicants) {
-			List<Applicant> duplicates = new ArrayList<>();
-
-			duplicates.addAll(ldb.getApplicantByUsername(a.getUsername()));
-			duplicates.addAll(ldb.getApplicantsByInfo(a.getFirstName(), a.getLastName(), a.getStreetAddress(), a.getCity(), 
-					a.getState(), a.getCountry()));
-
-			if(duplicates.size() > 0) {
-				logger.info(a.getUsername() + "'s application was denied (duplicate information)");
-				try {
-					si.sendEmail(new InternetAddress(a.getEmail(), a.getFirstName()), "Application Denied", "Your application to /r/Borrow was denied:\n\n- Duplicate Information");
-				} catch (UnsupportedEncodingException e) {
-					logger.error(e);
-				}
-				sleepFor(2000);
-				continue;
-			}
-
-			logger.info(a.getUsername() + "'s application will be accepted if the email works");
-			try {
-				if(si.sendEmail(new InternetAddress(a.getEmail(), a.getFirstName()), "Application Accepted", "Your application to /r/Borrow was accepted, please read the sidebar before posting"))
-					ldb.addApplicant(a);
-				else {
-					logger.info(a.getUsername() + "'s application was denied (invalid email)");
-				}
-			} catch (UnsupportedEncodingException e) {
-				logger.error(e);
-			}
+		List<User> toSendCode = ldb.getUsersToSendCode();
+		
+		for(User user : toSendCode) {
+			logger.info("Sending claim code to " + user.username);
+			
+			String message = config.getString("claim_code");
+			message = message.replace("<user>", user.username);
+			message = message.replace("<code>", user.claimCode);
+			message = message.replace("<codeurl>", "http://redditloans.com/users/" + user.id + "/claim/?code=" + user.claimCode);
+			sendMessage(user.username, "RedditLoans Account Claimed", message);
+			
+			user.claimLinkSetAt = new Timestamp(System.currentTimeMillis());
+			ldb.addOrUpdateUser(user);
 			sleepFor(2000);
+		}
+	}
+	
+	/**
+	 * Loops through all queued rechecks and handles
+	 * them, then removes them from the queue
+	 */
+	private void handleRechecks() {
+		LoansDatabase ldb = (LoansDatabase) database;
+		
+		List<Recheck> rechecks = ldb.getAllRechecks();
+		if(rechecks.size() == 0)
+			return;
+		
+		List<Recheck[]> batches = new ArrayList<Recheck[]>();
+		
+		while(rechecks.size() > 5) {
+			Recheck[] batch = new Recheck[5];
+			for(int i = 0; i < 5; i++) {
+				batch[i] = rechecks.get(0);
+				rechecks.remove(0);
+			}
+			batches.add(batch);
+		}
+		
+		Recheck[] lastBatch = rechecks.toArray(new Recheck[0]);
+		batches.add(lastBatch);
+		
+		logger.info("Performing " + batches.size() + " batches of rechecks");
+		
+		for(Recheck[] batch : batches) {
+			String[] asStr = new String[batch.length];
+			for(int i = 0; i < batch.length; i++) {
+				asStr[i] = batch[i].fullname;
+				ldb.deleteRecheck(batch[i]);
+			}
+			
+			try {
+				Listing listing = RedditUtils.getThings(asStr, bot.getUser());
+				logger.debug(String.format("Batch size %d got %d things", batch.length, listing.numChildren()));
+				for(int i = 0; i < listing.numChildren(); i++) {
+					Thing thing = listing.getChild(i);
+					
+					handleRecheck(thing);
+				}
+			} catch (IOException | ParseException e) {
+				logger.catching(e);
+			}
 		}
 	}
 
 	/**
-	 * Checks if there are any new, unread emails and 
-	 * also checks if that matches any EmailSummons. If it
-	 * does, handles that appropriately
+	 * Handles a particular recheck by determining its type
+	 * and calling the appropriate function in BotDriver
+	 * @param thing the thing to recheck
 	 */
-	protected void checkEmails() {
-		try {
-			SpreadsheetIntegration si = ((LoansDatabase) database).getSpreadsheetIntegration();
-			Folder inbox = si.getInbox();
-
-			Message[] messages = inbox.getMessages();
-			for(Message mess : messages) {
-				// Using a timestamp as a uuid is not the best... but its all I got
-				String timestamp = Long.toString(mess.getReceivedDate().getTime());
-				if(database.containsFullname(timestamp))
-					continue;
-
-				for(EmailSummon eSummon : emailSummons) {
-					try {
-						String body = LoansBotUtils.getMessageBody(mess);
-						if(eSummon.isSummonedBy(mess.getSubject(), body)) {
-							eSummon.parse(mess.getSubject(), body);
-							String response = eSummon.applyDatabaseChanges(config, database);
-							si.sendEmail(mess.getFrom()[0], eSummon.getClass().getSimpleName(), response);
-						}
-					}catch(Exception ex) {
-						logger.error(ex);
-					}
+	private void handleRecheck(Thing thing) {
+		if(database.containsFullname(thing.fullname())) {
+			logger.debug(String.format("Skipping %s because the database contains it", thing.fullname()));
+			return;
+		}
+		
+		if(thing instanceof Comment) {
+			Comment comment = (Comment) thing;
+			
+			try {
+				String linkId = comment.linkID();
+				Listing listing = RedditUtils.getThings(new String[] { linkId }, bot.getUser());
+				
+				if(listing.numChildren() != 1) {
+					logger.warn("Couldn't find link author for comment " + comment.fullname());
+				}else {
+					Link link = (Link) listing.getChild(0);
+					comment.linkAuthor(link.author());
+					comment.linkURL(link.url());
 				}
-				database.addFullname(timestamp);
+			} catch (IOException | ParseException e) {
+				logger.catching(e);
 			}
-		}catch(Exception e) {
-			logger.error(e);
+				
+			handleComment(comment, true);
+		}else if(thing instanceof Link) {
+			handleSubmission((Link) thing);
+		}else if(thing instanceof Message) {
+			handlePM(thing);
 		}
 	}
 
@@ -184,14 +205,14 @@ public class LoansBotDriver extends BotDriver {
 	 * @param title the title of the message
 	 * @param message the text of the message
 	 */
-	@SuppressWarnings("unused")
 	private void sendMessage(final String to, final String title, final String message) {
 		new Retryable<Boolean>("Send PM") {
 
 			@Override
 			protected Boolean runImpl() throws Exception {
-				if(!bot.sendPM(to, title, message)) {
-					logger.warn("Failed to send " + message + " to " + to);
+				String err;
+				if((err = bot.sendPM(to, title, message)) != null ) {
+					logger.warn("Failed to send " + message + " to " + to + ": " + err);
 				}
 				return true;
 			}
