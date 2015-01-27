@@ -3,6 +3,9 @@ package me.timothy.bots.responses;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import me.timothy.bots.FileConfiguration;
+import me.timothy.bots.LoansDatabase;
+
 /**
  * Formats responses using a response info!
  * 
@@ -28,9 +31,11 @@ public class ResponseFormatter {
 	 * Parses the current state of info and 
 	 * gets the nice pretty response
 	 * 
+	 * @param config the current config
+	 * @param db the db
 	 * @return the response
 	 */
-	public String getFormattedResponse() {
+	public String getFormattedResponse(FileConfiguration config, LoansDatabase db) {
 		Matcher matcher = REPLACEMENT_PATTERN.matcher(format);
 		
 		StringBuilder response = new StringBuilder();
@@ -40,7 +45,7 @@ public class ResponseFormatter {
 			
 			String whatToReplace = matcher.group();
 			String keyToReplace = whatToReplace.substring(1, whatToReplace.length() - 1);
-			String whatToReplaceWith = info.getObject(keyToReplace).toFormattedString(keyToReplace, info);
+			String whatToReplaceWith = info.getObject(keyToReplace).toFormattedString(info, keyToReplace, config, db);
 			
 			String theInbetweenText = format.substring(indexThatResponseIsUpToInFormat, startIndexInFormatOfThisGroup);
 			

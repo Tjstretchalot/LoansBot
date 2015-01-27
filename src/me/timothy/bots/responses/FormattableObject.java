@@ -1,5 +1,8 @@
 package me.timothy.bots.responses;
 
+import me.timothy.bots.FileConfiguration;
+import me.timothy.bots.LoansDatabase;
+
 /**
  * Ever response object must implement this interface.
  * Basically, this turns a standard object into one
@@ -9,13 +12,14 @@ package me.timothy.bots.responses;
  *
  */
 public interface FormattableObject {
+
 	/**
-	 * Turns this object into a formatted one via
-	 * a list of objects
-	 * 
-	 * @param myName the name of this object
-	 * @param info the list of all objects
-	 * @return the formatted version of this
+	 * Formats an object using the data given
+	 * @param info the info this object belongs to
+	 * @param myName the name of the key of this object
+	 * @param config the current config
+	 * @param db the db 
+	 * @return the formatted string
 	 */
-	public String toFormattedString(String myName, ResponseInfo info);
+	public String toFormattedString(ResponseInfo info, String myName, FileConfiguration config, LoansDatabase db);
 }

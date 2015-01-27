@@ -24,7 +24,7 @@ public class TestResponseInfoFactory {
 				
 				ResponseInfo respInfo = ResponseInfoFactory.getResponseInfo(format, message);
 				
-				assertEquals(usersToTestExpected[userInd], respInfo.getObject("user1").toFormattedString("user1", respInfo));
+				assertEquals(usersToTestExpected[userInd], respInfo.getObject("user1").toString());
 				assertEquals(moniesToTestExpected[moneyInd], ((MoneyFormattableObject) respInfo.getObject("money1")).getAmount());
 			}
 		}

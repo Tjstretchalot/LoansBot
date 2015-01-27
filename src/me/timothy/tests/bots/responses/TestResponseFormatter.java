@@ -20,7 +20,7 @@ public class TestResponseFormatter {
 		
 		ResponseFormatter respFormatter = new ResponseFormatter(format, respInfo);
 		
-		String response = respFormatter.getFormattedResponse();
+		String response = respFormatter.getFormattedResponse(null, null);
 		Assert.assertEquals(expResult, response);
 	}
 

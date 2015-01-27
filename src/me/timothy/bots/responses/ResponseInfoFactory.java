@@ -5,10 +5,15 @@ import java.util.regex.Pattern;
 
 public class ResponseInfoFactory {
 	private static final Pattern REPLACEMENT_PATTERN = Pattern.compile("<[^>]*>");
-	private static final ResponseInfo base;
+	public static final ResponseInfo base;
 	
 	static {
 		base = new ResponseInfo();
+		
+		for(int i = 1; i <= 3; i++) {
+			base.addLongtermObject("loans" + i, new LoanFormattableObject());
+			base.addLongtermObject("applied" + i, new AppliedFormattableObject());
+		}
 	}
 	
 	/**
