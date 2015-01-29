@@ -1,12 +1,16 @@
 package me.timothy.bots.summon;
 
-import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
+import me.timothy.bots.LoansDatabase;
+import me.timothy.bots.responses.GenericFormattableObject;
+import me.timothy.bots.responses.MoneyFormattableObject;
+import me.timothy.bots.responses.ResponseFormatter;
+import me.timothy.bots.responses.ResponseInfo;
+import me.timothy.bots.responses.ResponseInfoFactory;
 import me.timothy.jreddit.info.Comment;
 
 import org.apache.logging.log4j.Level;
@@ -22,10 +26,12 @@ public class ConfirmSummon implements CommentSummon {
 	/**
 	 * Matches things like
 	 * 
-	 * $unpaid /u/John $unpaid /u/Asdf_Jkl
+	 * $confirm /u/John $10
 	 */
 	private static final Pattern CONFIRM_PATTERN = Pattern
 			.compile("\\s*\\$confirm\\s/u/\\S+\\s\\$?\\d+\\.?\\d*\\$?");
+	
+	private static final String CONFIRM_FORMAT = "$confirm <user1> <money1>";
 
 	private Logger logger;
 
@@ -39,28 +45,15 @@ public class ConfirmSummon implements CommentSummon {
 		
 		if(matcher.find()) {
 			String text = matcher.group().trim();
+			ResponseInfo ri = ResponseInfoFactory.getResponseInfo(CONFIRM_FORMAT, text);
+			ri.addTemporaryObject("author", new GenericFormattableObject(comment.author()));
 			
-			String doer = comment.author();
-			String[] split = text.split("\\s");
-			String doneTo = BotUtils.getUser(split[1]);
-			String number = split[2].replace("$", "");
-
-			int amountPennies;
-			try {
-				amountPennies = BotUtils.getPennies(number);
-			} catch (ParseException e) {
-				logger.warn(e);
-				return null;
-			}
+			logger.printf(Level.INFO, "%s confirmed a $%s transfer from %s", ri.getObject("author").toString(),
+					((MoneyFormattableObject) ri.getObject("money1")).getAmount(), ri.getObject("user1").toString());
 			
-			if(config.getList("banned").contains(doneTo.toLowerCase())) {
-				logger.info("Someone is attempting to $confirm a banned user");
-				return new SummonResponse(SummonResponse.ResponseType.INVALID, config.getString("action_to_banned"));
-			}
-			logger.printf(Level.INFO, "%s confirmed a $%s transfer from %s", doer, BotUtils.getCostString(amountPennies /100.), doneTo);
+			ResponseFormatter formatter = new ResponseFormatter(config.getString("confirm"), ri);
 			
-			String resp = config.getString("confirm").replace("<borrower>", doer).replace("<lender>", doneTo).replace("<amount>", BotUtils.getCostString(amountPennies / 100.));
-			return new SummonResponse(SummonResponse.ResponseType.VALID, resp);
+			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, (LoansDatabase) db));
 		}
 		return null;
 	}

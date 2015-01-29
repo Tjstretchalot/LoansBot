@@ -1,9 +1,12 @@
 package me.timothy.bots.responses;
 
+import java.text.NumberFormat;
+
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansDatabase;
 
 public class MoneyFormattableObject implements FormattableObject {
+	private static final NumberFormat numFormatter = NumberFormat.getCurrencyInstance();
 	private int amount;
 	
 	public MoneyFormattableObject(int am) {
@@ -16,6 +19,6 @@ public class MoneyFormattableObject implements FormattableObject {
 	
 	@Override
 	public String toFormattedString(ResponseInfo info, String myName, FileConfiguration config, LoansDatabase db) {
-		return Integer.toString(amount);
+		return numFormatter.format(amount/100.);
 	}
 }
