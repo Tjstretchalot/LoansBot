@@ -6,7 +6,6 @@ import java.util.regex.Pattern;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansDatabase;
-import me.timothy.bots.responses.GenericFormattableObject;
 import me.timothy.bots.responses.MoneyFormattableObject;
 import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
@@ -45,8 +44,7 @@ public class ConfirmSummon implements CommentSummon {
 		
 		if(matcher.find()) {
 			String text = matcher.group().trim();
-			ResponseInfo ri = ResponseInfoFactory.getResponseInfo(CONFIRM_FORMAT, text);
-			ri.addTemporaryObject("author", new GenericFormattableObject(comment.author()));
+			ResponseInfo ri = ResponseInfoFactory.getResponseInfo(CONFIRM_FORMAT, text, comment);
 			
 			logger.printf(Level.INFO, "%s confirmed a $%s transfer from %s", ri.getObject("author").toString(),
 					((MoneyFormattableObject) ri.getObject("money1")).getAmount(), ri.getObject("user1").toString());

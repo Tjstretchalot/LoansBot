@@ -61,6 +61,10 @@ public class ResponseInfo {
 		map.put(key, obj);
 	}
 	
+	public void addLongtermString(String key, String obj) {
+		addLongtermObject(key, new GenericFormattableObject(obj));
+	}
+	
 	/**
 	 * Adds a temporary object to the response info
 	 * 
@@ -70,6 +74,10 @@ public class ResponseInfo {
 	public void addTemporaryObject(String key, FormattableObject obj) {
 		map.put(key, obj);
 		tempKeys.add(key);
+	}
+	
+	public void addTemporaryString(String key, String obj) {
+		addTemporaryObject(key, new GenericFormattableObject(obj));
 	}
 	
 	/**

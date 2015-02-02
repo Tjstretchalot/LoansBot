@@ -3,6 +3,8 @@ package me.timothy.bots.responses;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import me.timothy.jreddit.info.Comment;
+
 public class ResponseInfoFactory {
 	private static final Pattern REPLACEMENT_PATTERN = Pattern.compile("<[^>]*>");
 	public static final ResponseInfo base;
@@ -63,12 +65,25 @@ public class ResponseInfoFactory {
 				String username = param.toString();
 				if(username.startsWith("/u/"))
 					username = username.substring(3);
-				result.addTemporaryObject(key, new GenericFormattableObject(username));
+				result.addTemporaryString(key, username);
 			}else if(key.startsWith("money")) {
 				String moneyString = param.toString().replace("$", "");
 				int amount = (int) Math.round(Double.parseDouble(moneyString) * 100);
 				result.addTemporaryObject(key, new MoneyFormattableObject(amount));
 			}
+		}
+		return result;
+	}
+
+	public static ResponseInfo getResponseInfo(String format, String message, Comment comment) {
+		ResponseInfo result = getResponseInfo(format, message);
+		result.addTemporaryString("author", comment.author());
+		result.addTemporaryString("body", comment.body());
+		result.addTemporaryString("quotable_body", comment.body().replace("\n", "\n>"));
+		result.addTemporaryString("created_utc", Double.toString(comment.createdUTC()));
+		if(comment.linkAuthor() != null) {
+			result.addTemporaryString("link_author", comment.linkAuthor());
+			result.addTemporaryString("link_url", comment.linkURL());
 		}
 		return result;
 	}

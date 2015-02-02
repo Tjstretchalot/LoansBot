@@ -63,8 +63,7 @@ public class CheckSummon implements CommentSummon, LinkSummon {
 		if(matcher.find()) {
 			String text = matcher.group().trim();
 			String author = comment.author();
-			ResponseInfo respInfo = ResponseInfoFactory.getResponseInfo(CHECK_FORMAT, text);
-			respInfo.addTemporaryObject("author", new GenericFormattableObject(author));
+			ResponseInfo respInfo = ResponseInfoFactory.getResponseInfo(CHECK_FORMAT, text, comment);
 			logger.printf(Level.INFO, "%s requested a check on %s", author, respInfo.getObject("user1").toString());
 			ResponseFormatter respFormatter = new ResponseFormatter(config.getString("check"), respInfo);
 			return new SummonResponse(SummonResponse.ResponseType.VALID, respFormatter.getFormattedResponse(config, (LoansDatabase) db));

@@ -1,16 +1,19 @@
 package me.timothy.bots.summon;
 
 import java.sql.Timestamp;
-import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
-import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.FileConfiguration;
+import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.User;
+import me.timothy.bots.responses.MoneyFormattableObject;
+import me.timothy.bots.responses.ResponseFormatter;
+import me.timothy.bots.responses.ResponseInfo;
+import me.timothy.bots.responses.ResponseInfoFactory;
 import me.timothy.jreddit.info.Comment;
 
 import org.apache.logging.log4j.Level;
@@ -33,12 +36,9 @@ public class LoanSummon implements CommentSummon {
 	 * $loan 50.00$
 	 */
 	private static final Pattern LOAN_PATTERN = Pattern.compile("\\s*\\$loan\\s\\$?\\d+\\.?\\d*\\$?");
+	private static final String LOAN_FORMAT = "$loan <money1>";
 	
 	private Logger logger;
-	
-	private String doer;
-	private String doneTo;
-	private int amountPennies;
 	
 	public LoanSummon() {
 		logger = LogManager.getLogger();
@@ -48,37 +48,26 @@ public class LoanSummon implements CommentSummon {
 		Matcher matcher = LOAN_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
-			this.doer = comment.author();
-			this.doneTo = comment.linkAuthor();
+			ResponseInfo respInfo = ResponseInfoFactory.getResponseInfo(LOAN_FORMAT, matcher.group().trim(), comment);
 			
-			if(doer.toLowerCase().equals(doneTo.toLowerCase()))
+			if(respInfo.getObject("author").toString().equals(respInfo.getObject("link_author").toString()))
 				return null;
-			String url = comment.linkURL();
-			
-			String text = matcher.group().trim();
-			String[] split = text.split("\\s");
-			String number = split[1].replace("$", "");
-			
-			try {
-				this.amountPennies = BotUtils.getPennies(number);
-			} catch (ParseException e) {
-				logger.warn(e);
-				return null;
-			}
+
+			String author = respInfo.getObject("author").toString();
+			String linkAuthor = respInfo.getObject("link_author").toString();
+			String url = respInfo.getObject("link_url").toString();
+			int amountPennies = ((MoneyFormattableObject) respInfo.getObject("money1")).getAmount();
 			
 			LoansDatabase database = (LoansDatabase) db;
-			User doerU = database.getOrCreateUserByUsername(doer);
-			User doneToU = database.getOrCreateUserByUsername(doneTo);
+			User doerU = database.getOrCreateUserByUsername(author);
+			User doneToU = database.getOrCreateUserByUsername(linkAuthor);
 			long now = System.currentTimeMillis();
 			Loan loan = new Loan(-1, doerU.id, doneToU.id, amountPennies, 0, false, url, new Timestamp(now), new Timestamp(now));
-
 			database.addOrUpdateLoan(loan);
-			logger.printf(Level.INFO, "%s just lent %s to %s [loan %d]", doer, BotUtils.getCostString(amountPennies / 100.), doneTo, loan.id);
-			String resp = config.getString("successful_loan")
-					.replace("<lender>", doerU.username)
-					.replace("<borrower>", doneToU.username)
-					.replace("<amount>", BotUtils.getCostString(loan.principalCents/100.));
-			return new SummonResponse(SummonResponse.ResponseType.VALID, resp);
+			logger.printf(Level.INFO, "%s just lent %s to %s [loan %d]", author, BotUtils.getCostString(amountPennies / 100.), linkAuthor, loan.id);
+			
+			String resp = config.getString("successful_loan");
+			return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(resp, respInfo).getFormattedResponse(config, database));
 		}
 		return null;
 	}

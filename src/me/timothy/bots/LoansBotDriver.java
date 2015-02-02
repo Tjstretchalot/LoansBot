@@ -12,6 +12,7 @@ import me.timothy.bots.summon.LinkSummon;
 import me.timothy.bots.summon.PMSummon;
 import me.timothy.jreddit.RedditUtils;
 import me.timothy.jreddit.info.Comment;
+import me.timothy.jreddit.info.Errorable;
 import me.timothy.jreddit.info.Link;
 import me.timothy.jreddit.info.Listing;
 import me.timothy.jreddit.info.Message;
@@ -210,9 +211,10 @@ public class LoansBotDriver extends BotDriver {
 
 			@Override
 			protected Boolean runImpl() throws Exception {
-				String err;
-				if((err = bot.sendPM(to, title, message)) != null ) {
-					logger.warn("Failed to send " + message + " to " + to + ": " + err);
+				Errorable errors = bot.sendPM(to, title, message);
+				List<?> errorsList = errors.getErrors();
+				if(!errorsList.isEmpty()) {
+					logger.warn("Failed to send " + message + " to " + to + ": " + errorsList.toString());
 				}
 				return true;
 			}
