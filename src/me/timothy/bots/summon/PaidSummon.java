@@ -1,20 +1,24 @@
 package me.timothy.bots.summon;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansBotUtils;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.User;
+import me.timothy.bots.responses.GenericFormattableObject;
+import me.timothy.bots.responses.MoneyFormattableObject;
+import me.timothy.bots.responses.ResponseFormatter;
+import me.timothy.bots.responses.ResponseInfo;
+import me.timothy.bots.responses.ResponseInfoFactory;
 import me.timothy.jreddit.info.Comment;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -33,62 +37,29 @@ public class PaidSummon implements CommentSummon {
 	 * $paid /u/Jk_jl 50.00$
 	 */
 	private static final Pattern PAID_PATTERN = Pattern.compile("\\s*\\$paid\\s/u/\\S+\\s\\$?\\d+\\.?\\d*\\$?");
+	private static final String PAID_FORMAT = "$paid <user1> <money1>";
 
 	private Logger logger;
-
-	private String doer;
-	private String doneTo;
-
-	private int amountPennies;
-
+	
 	public PaidSummon() {
 		logger = LogManager.getLogger();
 	}
 
-	private boolean parse(String author, String text) {
-		Matcher matcher = PAID_PATTERN.matcher(text);
-		
-		if(matcher.find()) {
-			String group = matcher.group().trim();
-			String[] split = group.split("\\s");
-			
-			this.doer = author;
-			this.doneTo = BotUtils.getUser(split[1]);
-			String number = split[2].replace("$", "");
-
-			try {
-				amountPennies = BotUtils.getPennies(number);
-			} catch (ParseException e) {
-				logger.warn(e);
-				return false;
-			}
-
-			if(amountPennies <= 0)
-				return false;
-			
-			return true;
-		}
-		return false;
-	}
-
-	public SummonResponse applyChanges(FileConfiguration config, Database db) {
-		LoansDatabase database = (LoansDatabase) db;
-		if(amountPennies <= 0) {
-			logger.warn("User attempted to pay back a negative amount of money, ignoring");
-			return null;
-		}
-		User doneToU = database.getUserByUsername(doneTo);
-		User doerU = database.getUserByUsername(doer);
-		List<Loan> relevantLoans = (doneToU != null && doerU != null) ? database.getLoansWithBorrowerAndOrLender(doneToU.id, doerU.id, true) : new ArrayList<Loan>();
-
-		if(relevantLoans.isEmpty()) {
-			logger.warn("???, Someone tried to pay someone who never lent money to him!");
-			return new SummonResponse(SummonResponse.ResponseType.INVALID, config.getString("no_loans_to_repay").replace("<borrower>", doneTo).replace("<author>", doer));
-		}
-
-
-
-		int remainingPennies = amountPennies;
+	/**
+	 * Goes through each relevant loan and attempts to add as
+	 * much as possible to the principal repayment without 
+	 * setting the repayment to more than the principal or
+	 * using more than the remaining pennies (in total)
+	 * <br><br>
+	 * When this function completes, <i>relevantLoans</i> only contains
+	 * the number of CHANGED LOANS
+	 * 
+	 * @param relevantLoans relevant loans
+	 * @param remainingPennies remaining pennies
+	 * @param database database
+	 * @return money remaining and changed loans (indirectly)
+	 */
+	private int updateLoans(List<Loan> relevantLoans, int remainingPennies, LoansDatabase database) {
 		List<Loan> changedLoans = new ArrayList<>();
 
 		long time = System.currentTimeMillis();
@@ -116,47 +87,71 @@ public class PaidSummon implements CommentSummon {
 			}
 		}
 		
-		String rem = BotUtils.getCostString(remainingPennies / 100.);
-		String interest = 
-				remainingPennies == 0 ? String.format("/u/%s has opted not to tell us the interest", doer) :
-				String.format("In addition, /u/%s has paid $%s in interest", doneTo, rem);
-
-		String response = config.getString("repayment");
-		response = response.replace("<lender>", doer);
-		response = response.replace("<borrower>", doneTo);
-		response = response.replace("<amount paid>", BotUtils.getCostString(amountPennies / 100.));
-		response = response.replace("<interest>", interest);
-		response = response.replace("<loans>", LoansBotUtils.getLoansString(changedLoans, database, doer, config));
-
-		logger.info(doer + " has been repaid " + amountPennies + " by " + doneTo);
-		return new SummonResponse(SummonResponse.ResponseType.VALID, response);
+		relevantLoans.clear();
+		relevantLoans.addAll(changedLoans);
+		return remainingPennies;
 	}
 
 	/**
-	 * @return the person who performed the summon
+	 * Removes all loans where pricipalCents == principalRepaymentCents
+	 * 
+	 * @param loans
 	 */
-	public String getDoer() {
-		return doer;
+	private void removeFinishedLoans(List<Loan> loans) {
+		for(int i = 0; i < loans.size(); i++) {
+			if(loans.get(i).principalCents == loans.get(i).principalRepaymentCents) {
+				loans.remove(i);
+				i--;
+			}
+		}
 	}
-
-	/**
-	 * @return the person the summon was done to
-	 */
-	public String getDoneTo() {
-		return doneTo;
-	}
-
-	/**
-	 * @return the amount, in pennies, of the loan
-	 */
-	public int getAmountPennies() {
-		return amountPennies;
-	}
-
+	
 	@Override
 	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
-		if(parse(comment.author(), comment.body())) {
-			return applyChanges(config, db);
+		LoansDatabase database = (LoansDatabase) db;
+		Matcher matcher = PAID_PATTERN.matcher(comment.body());
+		
+		if(matcher.find()) {
+			ResponseInfo respInfo = ResponseInfoFactory.getResponseInfo(PAID_FORMAT, matcher.group().trim(), comment);
+			
+			String author = respInfo.getObject("author").toString();
+			int amountRepaid = ((MoneyFormattableObject) respInfo.getObject("money1")).getAmount();
+			String user1 = respInfo.getObject("user1").toString();
+			
+			User authorUser = database.getUserByUsername(author);
+			User user1User = database.getUserByUsername(user1);
+			
+			if(authorUser == null || user1User == null) {
+				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but author is %s and user 1 is %s",
+						author, user1, amountRepaid, (authorUser == null ? "null" : "not null"), (user1User == null ? "null" : "not null"));
+				ResponseFormatter formatter = new ResponseFormatter(config.getString("no_loans_to_repay"), respInfo);
+				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));//.replace("<borrower>", doneTo).replace("<author>", doer));
+			}
+			
+			if(amountRepaid <= 0) {
+				logger.printf(Level.WARN, "Ridiculous amount repaid of %d, ignoring", amountRepaid);
+				return null;
+			}
+			
+			List<Loan> relevantLoans = database.getLoansWithBorrowerAndOrLender(user1User.id, authorUser.id, true);
+			removeFinishedLoans(relevantLoans);
+			
+			if(relevantLoans.size() == 0) {
+				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but there are no ongoing loans");
+				ResponseFormatter formatter = new ResponseFormatter(config.getString("no_loans_to_repay"), respInfo);
+				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));
+			}
+			
+			
+			
+			int interest = updateLoans(relevantLoans, amountRepaid, database);
+			respInfo.addTemporaryObject("interest", new MoneyFormattableObject(interest));
+			respInfo.addTemporaryObject("changed loans", new GenericFormattableObject(LoansBotUtils.getLoansString(relevantLoans, database, author, config)));
+			logger.printf(Level.INFO, "%s has repaid %s by %s over %d loans", user1, author,
+					respInfo.getObject("interest").toFormattedString(respInfo, "interest", config, database), relevantLoans.size());
+			
+			ResponseFormatter formatter = new ResponseFormatter(config.getString("repayment"), respInfo);
+			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, database));
 		}
 		return null;
 	}
