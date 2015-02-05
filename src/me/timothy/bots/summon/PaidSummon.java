@@ -137,7 +137,7 @@ public class PaidSummon implements CommentSummon {
 			removeFinishedLoans(relevantLoans);
 			
 			if(relevantLoans.size() == 0) {
-				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but there are no ongoing loans");
+				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but there are no ongoing loans", author, user1, amountRepaid);
 				ResponseFormatter formatter = new ResponseFormatter(config.getString("no_loans_to_repay"), respInfo);
 				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));
 			}

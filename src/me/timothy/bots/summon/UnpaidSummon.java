@@ -49,7 +49,7 @@ public class UnpaidSummon implements CommentSummon {
 		
 		if(matcher.find()) {
 			String group = matcher.group().trim();
-			ResponseInfo responseInfo = ResponseInfoFactory.getResponseInfo(UNPAID_FORMAT, group);
+			ResponseInfo responseInfo = ResponseInfoFactory.getResponseInfo(UNPAID_FORMAT, group, comment);
 			LoansDatabase database = (LoansDatabase) db;
 
 			User author = database.getUserByUsername(responseInfo.getObject("author").toString());
