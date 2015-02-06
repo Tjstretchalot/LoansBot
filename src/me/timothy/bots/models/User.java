@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 public class User {
 	public int id;
 	public String username;
+	public int auth;
 	public String passwordDigest;
 	public boolean claimed;
 	public String claimCode;
@@ -26,10 +27,11 @@ public class User {
 	public String zip;
 	public String country;
   
-	public User(int id, String username, String passwordDigest, boolean claimed, String claimCode, Timestamp claimLinkSetAt, Timestamp createdAt,
+	public User(int id, String username, int auth, String passwordDigest, boolean claimed, String claimCode, Timestamp claimLinkSetAt, Timestamp createdAt,
 			Timestamp updatedAt, String email, String name, String streetAddress, String city, String state, String zip, String country) {
 		this.id = id;
 		this.username = username;
+		this.auth = auth;
 		this.passwordDigest = passwordDigest;
 		this.claimed = claimed;
 		this.claimCode = claimCode;
@@ -47,7 +49,7 @@ public class User {
 	}
 	
 	public User(String username) {
-		this(-1, username, null, false, null, null, null, null, null, null, null, null, null, null, null);
+		this(-1, username, 0, null, false, null, null, null, null, null, null, null, null, null, null, null);
 	}
 	
 	public User() {

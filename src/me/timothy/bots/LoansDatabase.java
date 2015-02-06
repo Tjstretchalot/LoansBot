@@ -181,6 +181,7 @@ public class LoansDatabase extends Database {
 	 * users
 	 *   id - int primary key
 	 *   username - varchar(255)
+	 *   auth - int
 	 *   password_digest - text
 	 *   claimed - tinyint(1)
 	 *   claim_code - varchar(255)
@@ -303,15 +304,16 @@ public class LoansDatabase extends Database {
 			PreparedStatement statement;
 			int counter = 1;
 			if(user.id == -1) {
-				statement = connection.prepareStatement("INSERT INTO users (username, password_digest, claimed, claim_code, " +
+				statement = connection.prepareStatement("INSERT INTO users (username, auth, password_digest, claimed, claim_code, " +
 						"claim_link_sent_at, created_at, updated_at, email, name, street_address, " +
 						"city, state, zip, country) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 			}else {
-				statement = connection.prepareStatement("UPDATE users SET username=?, password_digest=?, claimed=?, claim_code=?, " +
+				statement = connection.prepareStatement("UPDATE users SET username=?, auth=?, password_digest=?, claimed=?, claim_code=?, " +
 						"claim_link_sent_at=?, created_at=?, updated_at=?, email=?, name=?, street_address=?, " +
 						"city=?, state=?, zip=?, country=? WHERE id=?");
 			}
 			statement.setString(counter++, user.username);
+			statement.setInt(counter++, user.auth);
 			statement.setString(counter++, user.passwordDigest);
 			statement.setBoolean(counter++, user.claimed);
 			statement.setString(counter++, user.claimCode);
@@ -351,7 +353,7 @@ public class LoansDatabase extends Database {
 	 * @throws SQLException if a sql-exception occurs
 	 */
 	private User getUserFromSet(ResultSet set) throws SQLException {
-		User user = new User(set.getInt("id"), set.getString("username"),
+		User user = new User(set.getInt("id"), set.getString("username"), set.getInt("auth"),
 				set.getString("password_digest"), set.getBoolean("claimed"), 
 				set.getString("claim_code"), set.getTimestamp("claim_link_sent_at"),
 				set.getTimestamp("created_at"), set.getTimestamp("updated_at"),
