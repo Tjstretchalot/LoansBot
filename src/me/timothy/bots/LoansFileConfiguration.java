@@ -22,19 +22,5 @@ public class LoansFileConfiguration extends FileConfiguration {
 		super.load();
 		
 		addProperties("database", true, "url", "username", "password");
-		
-		addString("successful_loan", true);
-		addString("no_loans_to_repay", true);
-		addString("repayment", true);
-		addString("action_to_banned", true);
-		addString("check", true);
-		addString("check_truncated", true);
-		addString("unpaid", true);
-		addString("confirm", true);
-		addString("secondary_subreddit_postfix", true);
-		addString("bad_verify_summon", true);
-		addString("bad_loan_summon", true);
-		addString("claim_code", true);
-		addString("suicide", true);
 	}
 }

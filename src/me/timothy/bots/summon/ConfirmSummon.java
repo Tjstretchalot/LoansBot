@@ -48,8 +48,9 @@ public class ConfirmSummon implements CommentSummon {
 			
 			logger.printf(Level.INFO, "%s confirmed a $%s transfer from %s", ri.getObject("author").toString(),
 					((MoneyFormattableObject) ri.getObject("money1")).getAmount(), ri.getObject("user1").toString());
-			
-			ResponseFormatter formatter = new ResponseFormatter(config.getString("confirm"), ri);
+
+			LoansDatabase database = (LoansDatabase) db;
+			ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName("confirm").responseBody, ri);
 			
 			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, (LoansDatabase) db));
 		}

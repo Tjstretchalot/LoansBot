@@ -14,6 +14,8 @@ import java.util.List;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.Recheck;
 import me.timothy.bots.models.Repayment;
+import me.timothy.bots.models.Response;
+import me.timothy.bots.models.ResponseHistory;
 import me.timothy.bots.models.ShareCode;
 import me.timothy.bots.models.User;
 
@@ -59,7 +61,7 @@ public class LoansDatabase extends Database {
 	
 	/*
 	 * fullnames
-	 *   id - int primary key
+	 *   id       - int primary key
 	 *   fullname - varchar(50)
 	 */
 	
@@ -113,8 +115,8 @@ public class LoansDatabase extends Database {
 	
 	/*
 	 * rechecks 
-	 *   id - int
-	 *   fullname - string
+	 *   id         - int
+	 *   fullname   - string
 	 *   
 	 *   created_at - datetime
 	 *   updated_at - datetime
@@ -179,23 +181,23 @@ public class LoansDatabase extends Database {
 
 	/*
 	 * users
-	 *   id - int primary key
-	 *   username - varchar(255)
-	 *   auth - int
-	 *   password_digest - text
-	 *   claimed - tinyint(1)
-	 *   claim_code - varchar(255)
+	 *   id                 - int primary key
+	 *   username           - varchar(255)
+	 *   auth               - int
+	 *   password_digest    - text
+	 *   claimed            - tinyint(1)
+	 *   claim_code         - varchar(255)
 	 *   claim_link_sent_at - datetime
-	 *   created_at - datetime
-	 *   updated_at - datetime 
+	 *   created_at         - datetime
+	 *   updated_at         - datetime 
 	 *   
-	 *   email - text
-	 *   name - text
+	 *   email          - text
+	 *   name           - text
 	 *   street_address - text
-	 *   city - text
-	 *   state - text
-	 *   zip - text
-	 *   country - text
+	 *   city           - text
+	 *   state          - text
+	 *   zip            - text
+	 *   country        - text
 	 */
 	
 	/**
@@ -290,7 +292,7 @@ public class LoansDatabase extends Database {
 	}
 	
 	/**
-	 * Adds the user if the id is -1, which also updates the id
+	 * Adds the user if the id is <=0, which also updates the id
 	 * to reflect the newly generated one. Otherwise just updates the
 	 * user
 	 * 
@@ -303,7 +305,7 @@ public class LoansDatabase extends Database {
 		try {
 			PreparedStatement statement;
 			int counter = 1;
-			if(user.id == -1) {
+			if(user.id <= 0) {
 				statement = connection.prepareStatement("INSERT INTO users (username, auth, password_digest, claimed, claim_code, " +
 						"claim_link_sent_at, created_at, updated_at, email, name, street_address, " +
 						"city, state, zip, country) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
@@ -327,12 +329,12 @@ public class LoansDatabase extends Database {
 			statement.setString(counter++, user.state);
 			statement.setString(counter++, user.zip);
 			statement.setString(counter++, user.country);
-			if(user.id != -1)
+			if(user.id > 0)
 				statement.setInt(counter++, user.id);
 			
 			statement.executeUpdate();
 			
-			if(user.id == -1) {
+			if(user.id <= 0) {
 				ResultSet set = statement.getGeneratedKeys();
 				if(set.next())
 					user.id = set.getInt(1);
@@ -377,17 +379,17 @@ public class LoansDatabase extends Database {
 	
 	/*
 	 * loans
-	 *   id - int primary key
-	 *   lender_id - int mul
-	 *   borrower_id - int mul
-	 *   principal_cents - int
+	 *   id                        - int primary key
+	 *   lender_id                 - int mul
+	 *   borrower_id               - int mul
+	 *   principal_cents           - int
 	 *   principal_repayment_cents - int
-	 *   unpaid - tinyint(1)
+	 *   unpaid                    - tinyint(1)
 	 *   
-	 *   original_thread - text
+	 *   original_thread           - text
 	 *   
-	 *   created_at - datetime
-	 *   updated_at - datetime
+	 *   created_at                - datetime
+	 *   updated_at                - datetime
 	 */
 
 	/**
@@ -416,7 +418,7 @@ public class LoansDatabase extends Database {
 	}
 	
 	/**
-	 * Add and give an id to loans with id -1, otherwise updates the loan
+	 * Add and give an id to loans with id <=0, otherwise updates the loan
 	 * 
 	 * @param loan the loan to add or update
 	 */
@@ -427,7 +429,7 @@ public class LoansDatabase extends Database {
 		try {
 			PreparedStatement statement;
 			int counter = 1;
-			if(loan.id == -1) {
+			if(loan.id <= 0) {
 				statement = connection.prepareStatement("INSERT INTO loans (lender_id, borrower_id, " +
 						"principal_cents, principal_repayment_cents, unpaid, original_thread, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
 						Statement.RETURN_GENERATED_KEYS);
@@ -445,12 +447,12 @@ public class LoansDatabase extends Database {
 			statement.setTimestamp(counter++, loan.createdAt);
 			statement.setTimestamp(counter++, loan.updatedAt);
 			
-			if(loan.id != -1)
+			if(loan.id > 0)
 				statement.setInt(counter++, loan.id);
 			
 			statement.executeUpdate();
 			
-			if(loan.id == -1) {
+			if(loan.id <= 0) {
 				ResultSet set = statement.getGeneratedKeys();
 				if(set.next())
 					loan.id = set.getInt(1);
@@ -522,11 +524,11 @@ public class LoansDatabase extends Database {
 	
 	/*
 	 * repayments
-	 *   id - int primary key
-	 *   loan_id - int mul
+	 *   id           - int primary key
+	 *   loan_id      - int mul
 	 *   amount_cents - int
-	 *   created_at - datetime
-	 *   updated_at - datetime
+	 *   created_at   - datetime
+	 *   updated_at   - datetime
 	 *   
 	 */
 	
@@ -606,9 +608,9 @@ public class LoansDatabase extends Database {
 	
 	/*
 	 * share_codes
-	 *   id - int primary key
-	 *   user_id - int mul
-	 *   code - varchar(255)
+	 *   id        -  int primary key
+	 *   user_id    - int mul
+	 *   code       - varchar(255)
 	 *   created_at - datetime
 	 *   updated_at - datetime
 	 */
@@ -658,5 +660,152 @@ public class LoansDatabase extends Database {
 	 */
 	private ShareCode getShareCodeFromSet(ResultSet set) throws SQLException {
 		return new ShareCode(set.getInt("id"), set.getInt("user_id"), set.getString("code"), set.getTimestamp("created_at"), set.getTimestamp("updated_at"));
+	}
+	
+	// ===========================================================
+	// |                                                         |
+	// |                        RESPONSES                        |
+	// |                                                         |
+	// ===========================================================
+	
+	/*
+	 * responses
+	 *   id            - int primary key
+	 *   name          - varchar(255)
+	 *   response_body - text
+	 *   created_at    - datetime
+	 *   updated_at    - datetime
+	 */
+	
+	/**
+	 * Adds or updates the response, assuming it is valid.
+	 * The results id will be updated if it is <= 0, since
+	 * that implies its a new response.
+	 * 
+	 * @param response the response
+	 */
+	public void addOrUpdateResponse(Response response) {
+		if(!response.isValid()) 
+			throw new IllegalArgumentException("Invalid responses cannot be saved!");
+		
+		try {
+			PreparedStatement statement = null;
+			if(response.id <= 0) {
+				statement = connection.prepareStatement("INSERT INTO responses (name, response_body, created_at, updated_at) " +
+						"VALUES(?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+			}else {
+				statement = connection.prepareStatement("UPDATE responses SET name=?, response_body=?, created_at=?, updated_at=? WHERE id=?");
+			}
+			int counter = 1;
+			
+			statement.setString(counter++, response.name);
+			statement.setString(counter++, response.responseBody);
+			statement.setTimestamp(counter++, response.createdAt);
+			statement.setTimestamp(counter++, response.updatedAt);
+			
+			statement.executeUpdate();
+			
+			if(response.id <= 0) {
+				ResultSet set = statement.getGeneratedKeys();
+				if(set.next())
+					response.id = set.getInt(1);
+				else
+					throw new IllegalStateException("This can't be happening; no generated keys for table responses?");
+				set.close();
+			}
+		}catch(SQLException exc) {
+			throw new RuntimeException(exc);
+		}
+	}
+	
+	/**
+	 * Gets the response from the database by name if it exists,
+	 * or null otherwise
+	 * 
+	 * @param name name to search for
+	 * @return the response, or null
+	 * @throws RuntimeException as a wrapper for SQLExceptions
+	 */
+	public Response getResponseByName(String name) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM responses WHERE name LIKE ? LIMIT 1");
+			statement.setString(1, name);
+			
+			ResultSet results = statement.executeQuery();
+			if(!results.first()) {
+				results.close();
+				return null;
+			}
+			Response response = getResponseFromSet(results);
+			results.close();
+			return response;
+		}catch(SQLException exc) {
+			throw new RuntimeException(exc);
+		}
+	}
+	/**
+	 * Gets the response from the set
+	 * @param set the set
+	 * @return the response
+	 * @throws SQLException if a sql-exception occurs
+	 */
+	private Response getResponseFromSet(ResultSet set) throws SQLException {
+		return new Response(set.getInt("id"), set.getString("name"), set.getString("response_body"), set.getTimestamp("created_at"), set.getTimestamp("updated_at"));
+	}
+	
+	// ===========================================================
+	// |                                                         |
+	// |                    RESPONSE HISTORIES                   |
+	// |                                                         |
+	// ===========================================================
+	
+	/*
+	 * response_histories
+	 *   id          - int primary key
+	 *   response_id - int mul
+	 *   user_id     - int mul
+	 *   old_raw     - text 
+	 *   new_raw     - text
+	 *   reason      - text
+	 *   created_at  - datetime
+	 *   updated_at  - datetime
+	 */
+	
+	/**
+	 * Get the response history from the id of the
+	 * response
+	 * @param responseId the response id
+	 * @return a list (potentially empty) of history to the response
+	 */
+	public List<ResponseHistory> getResponseHistory(int responseId) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM response_histories WHERE response_id=?");
+			statement.setInt(1, responseId);
+			
+			ResultSet set = statement.executeQuery();
+			
+			List<ResponseHistory> result = new ArrayList<>();
+			
+			while(set.next()) {
+				result.add(getResponseHistoryFromSet(set));
+			}
+			
+			set.close();
+			
+			return result;
+		}catch(SQLException exc) {
+			throw new RuntimeException(exc);
+		}
+	}
+	
+	/**
+	 * Get the response history from the set
+	 * @param set the set
+	 * @return the response history
+	 * @throws SQLException if a sql-exception occurs
+	 */
+	private ResponseHistory getResponseHistoryFromSet(ResultSet set) throws SQLException {
+		return new ResponseHistory(set.getInt("id"), set.getInt("response_id"), set.getInt("user_id"), set.getString("old_raw"),
+				set.getString("new_raw"), set.getString("reason"), set.getTimestamp("created_at"), set.getTimestamp("updated_at"));
 	}
 }

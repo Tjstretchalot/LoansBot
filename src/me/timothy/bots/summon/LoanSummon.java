@@ -48,6 +48,7 @@ public class LoanSummon implements CommentSummon {
 		Matcher matcher = LOAN_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
+			LoansDatabase database = (LoansDatabase) db;
 			ResponseInfo respInfo = ResponseInfoFactory.getResponseInfo(LOAN_FORMAT, matcher.group().trim(), comment);
 			
 			if(respInfo.getObject("author").toString().equals(respInfo.getObject("link_author").toString()))
@@ -58,7 +59,6 @@ public class LoanSummon implements CommentSummon {
 			String url = respInfo.getObject("link_url").toString();
 			int amountPennies = ((MoneyFormattableObject) respInfo.getObject("money1")).getAmount();
 			
-			LoansDatabase database = (LoansDatabase) db;
 			User doerU = database.getOrCreateUserByUsername(author);
 			User doneToU = database.getOrCreateUserByUsername(linkAuthor);
 			long now = System.currentTimeMillis();
@@ -66,7 +66,7 @@ public class LoanSummon implements CommentSummon {
 			database.addOrUpdateLoan(loan);
 			logger.printf(Level.INFO, "%s just lent %s to %s [loan %d]", author, BotUtils.getCostString(amountPennies / 100.), linkAuthor, loan.id);
 			
-			String resp = config.getString("successful_loan");
+			String resp = database.getResponseByName("successful_loan").responseBody;
 			return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(resp, respInfo).getFormattedResponse(config, database));
 		}
 		return null;

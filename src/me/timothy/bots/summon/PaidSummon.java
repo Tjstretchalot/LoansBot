@@ -124,7 +124,7 @@ public class PaidSummon implements CommentSummon {
 			if(authorUser == null || user1User == null) {
 				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but author is %s and user 1 is %s",
 						author, user1, amountRepaid, (authorUser == null ? "null" : "not null"), (user1User == null ? "null" : "not null"));
-				ResponseFormatter formatter = new ResponseFormatter(config.getString("no_loans_to_repay"), respInfo);
+				ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName("no_loans_to_repay").responseBody, respInfo);
 				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));//.replace("<borrower>", doneTo).replace("<author>", doer));
 			}
 			
@@ -138,7 +138,7 @@ public class PaidSummon implements CommentSummon {
 			
 			if(relevantLoans.size() == 0) {
 				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but there are no ongoing loans", author, user1, amountRepaid);
-				ResponseFormatter formatter = new ResponseFormatter(config.getString("no_loans_to_repay"), respInfo);
+				ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName("no_loans_to_repay").responseBody, respInfo);
 				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));
 			}
 			
@@ -150,7 +150,7 @@ public class PaidSummon implements CommentSummon {
 			logger.printf(Level.INFO, "%s has repaid %s by %s over %d loans", user1, author,
 					respInfo.getObject("interest").toFormattedString(respInfo, "interest", config, database), relevantLoans.size());
 			
-			ResponseFormatter formatter = new ResponseFormatter(config.getString("repayment"), respInfo);
+			ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName("repayment").responseBody, respInfo);
 			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, database));
 		}
 		return null;

@@ -62,7 +62,7 @@ public class LoansBotDriver extends BotDriver {
 						response = response + "\n\n";
 					}
 
-					String postfix = ((LoansFileConfiguration) config).getString("secondary_subreddit_postfix");
+					String postfix = ((LoansDatabase) database).getResponseByName("secondary_subreddit_postfix").responseBody;
 					postfix = postfix.replace("<subreddit>", subreddit);
 					postfix = postfix.replace("<primary>", LoansBotUtils.PRIMARY_SUBREDDIT);
 
@@ -102,7 +102,7 @@ public class LoansBotDriver extends BotDriver {
 		for(User user : toSendCode) {
 			logger.info("Sending claim code to " + user.username);
 			
-			String message = config.getString("claim_code");
+			String message = ((LoansDatabase) database).getResponseByName("claim_code").responseBody;
 			message = message.replace("<user>", user.username);
 			message = message.replace("<code>", user.claimCode);
 			message = message.replace("<codeurl>", "http://redditloans.com/users/" + user.id + "/claim/?code=" + user.claimCode);

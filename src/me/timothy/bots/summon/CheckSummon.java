@@ -48,11 +48,12 @@ public class CheckSummon implements CommentSummon, LinkSummon {
 		if(title.toUpperCase().startsWith("[META]"))
 			return null;
 		
-
+		LoansDatabase database = (LoansDatabase) db;
+		
 		ResponseInfo respInfo = new ResponseInfo(ResponseInfoFactory.base);
 		respInfo.addTemporaryObject("author", new GenericFormattableObject(submission.author()));
 		respInfo.addTemporaryObject("user1", new GenericFormattableObject(submission.author()));
-		ResponseFormatter formatter = new ResponseFormatter(config.getString("check"), respInfo);
+		ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName("check").responseBody, respInfo);
 		logger.printf(Level.DEBUG, "%s posted a non-meta submission and recieved a check", respInfo.getObject("author").toString());
 		return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, (LoansDatabase) db));
 	}
@@ -61,12 +62,14 @@ public class CheckSummon implements CommentSummon, LinkSummon {
 		Matcher matcher = CHECK_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
+			LoansDatabase database = (LoansDatabase) db;
+			
 			String text = matcher.group().trim();
 			String author = comment.author();
 			ResponseInfo respInfo = ResponseInfoFactory.getResponseInfo(CHECK_FORMAT, text, comment);
 			logger.printf(Level.INFO, "%s requested a check on %s", author, respInfo.getObject("user1").toString());
-			ResponseFormatter respFormatter = new ResponseFormatter(config.getString("check"), respInfo);
-			return new SummonResponse(SummonResponse.ResponseType.VALID, respFormatter.getFormattedResponse(config, (LoansDatabase) db));
+			ResponseFormatter respFormatter = new ResponseFormatter(database.getResponseByName("check").responseBody, respInfo);
+			return new SummonResponse(SummonResponse.ResponseType.VALID, respFormatter.getFormattedResponse(config, database));
 		}
 		
 		return null;

@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
+import me.timothy.bots.LoansDatabase;
 import me.timothy.jreddit.info.Comment;
 import me.timothy.jreddit.info.Link;
 
@@ -23,8 +24,9 @@ public class SuicideSummon implements LinkSummon, CommentSummon {
 	
 	private String user;
 
-	private SummonResponse getReply(FileConfiguration config, Database database) {
-		return new SummonResponse(SummonResponse.ResponseType.VALID, config.getString("suicide").replace("<user>", user));
+	private SummonResponse getReply(FileConfiguration config, Database db) {
+		LoansDatabase database = (LoansDatabase) db;
+		return new SummonResponse(SummonResponse.ResponseType.VALID, database.getResponseByName("suicide").responseBody.replace("<user>", user));
 	}
 
 	@Override

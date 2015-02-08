@@ -4,6 +4,7 @@ import java.util.regex.Pattern;
 
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
+import me.timothy.bots.LoansDatabase;
 import me.timothy.jreddit.info.Comment;
 
 /**
@@ -20,7 +21,8 @@ public class BadLoanSummon implements CommentSummon {
 	@Override
 	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
 		if(BAD_LOAN_PATTERN.matcher(comment.body()).find()) {
-			return new SummonResponse(SummonResponse.ResponseType.INVALID, config.getString("bad_loan_summon"));
+			LoansDatabase database = (LoansDatabase) db;
+			return new SummonResponse(SummonResponse.ResponseType.INVALID, database.getResponseByName("bad_loan_summon").responseBody);
 		}
 		return null;
 	}

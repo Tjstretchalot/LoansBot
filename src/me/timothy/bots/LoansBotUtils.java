@@ -72,7 +72,7 @@ public class LoansBotUtils {
 			long amountBorrowedDonePen = getTotalLentPen(asBorrowerDone);
 			long amountLenderDonePen = getTotalLentPen(asLenderDone);
 			
-			loansString = config.getString("check_truncated");
+			loansString = db.getResponseByName("check_truncated").responseBody;
 			
 			loansString = loansString.replace("<relevant user>", relevantUser);
 			loansString = loansString.replace("<num borrowed done>", Integer.toString(asBorrowerDone.size()));
