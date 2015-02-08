@@ -105,7 +105,7 @@ public class LoansBotDriver extends BotDriver {
 			String message = ((LoansDatabase) database).getResponseByName("claim_code").responseBody;
 			message = message.replace("<user>", user.username);
 			message = message.replace("<code>", user.claimCode);
-			message = message.replace("<codeurl>", "http://redditloans.com/users/" + user.id + "/claim/?code=" + user.claimCode);
+			message = message.replace("<codeurl>", "https://redditloans.com/users/" + user.id + "/claim/?code=" + user.claimCode);
 			sendMessage(user.username, "RedditLoans Account Claimed", message);
 			
 			user.claimLinkSetAt = new Timestamp(System.currentTimeMillis());
