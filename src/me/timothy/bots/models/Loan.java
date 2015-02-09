@@ -15,12 +15,11 @@ public class Loan {
 	public int principalCents;
 	public int principalRepaymentCents;
 	public boolean unpaid;
-	public String originalThread;
 	public Timestamp createdAt;
 	public Timestamp updatedAt;
 	
 	public Loan(int id, int lenderId, int borrowerId, int principalCents, int principalRepaymentCents, boolean unpaid, 
-			String originalThread, Timestamp createdAt, Timestamp updatedAt) {
+			Timestamp createdAt, Timestamp updatedAt) {
 		super();
 		this.id = id;
 		this.lenderId = lenderId;
@@ -28,13 +27,12 @@ public class Loan {
 		this.principalCents = principalCents;
 		this.principalRepaymentCents = principalRepaymentCents;
 		this.unpaid = unpaid;
-		this.originalThread = originalThread;
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
 	}
 	
 	public Loan() {
-		this(-1, -1, -1, -1, -1, false, null, new Timestamp(new Date().getTime()), new Timestamp(new Date().getTime()));
+		this(-1, -1, -1, -1, -1, false, new Timestamp(new Date().getTime()), new Timestamp(new Date().getTime()));
 	}
 	
 	/**
@@ -44,9 +42,9 @@ public class Loan {
 	 * @return if this loan isn't obviously wrong
 	 */
 	public boolean isValid() {
-		if(lenderId < 0)
+		if(lenderId <= 0)
 			return false;
-		else if(borrowerId < 0)
+		else if(borrowerId <= 0)
 			return false;
 		else if(principalCents < 0)
 			return false;

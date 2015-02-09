@@ -8,6 +8,7 @@ import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansDatabase;
+import me.timothy.bots.models.CreationInfo;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.User;
 import me.timothy.bots.responses.MoneyFormattableObject;
@@ -62,8 +63,12 @@ public class LoanSummon implements CommentSummon {
 			User doerU = database.getOrCreateUserByUsername(author);
 			User doneToU = database.getOrCreateUserByUsername(linkAuthor);
 			long now = System.currentTimeMillis();
-			Loan loan = new Loan(-1, doerU.id, doneToU.id, amountPennies, 0, false, url, new Timestamp(now), new Timestamp(now));
+			
+			Loan loan = new Loan(-1, doerU.id, doneToU.id, amountPennies, 0, false, new Timestamp(now), new Timestamp(now));
 			database.addOrUpdateLoan(loan);
+			CreationInfo cInfo = new CreationInfo(-1, loan.id, CreationInfo.CreationType.REDDIT, url, null, -1, new Timestamp(now), new Timestamp(now));
+			database.addOrUpdateCreationInfo(cInfo);
+			
 			logger.printf(Level.INFO, "%s just lent %s to %s [loan %d]", author, BotUtils.getCostString(amountPennies / 100.), linkAuthor, loan.id);
 			
 			String resp = database.getResponseByName("successful_loan").responseBody;

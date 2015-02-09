@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import me.timothy.bots.models.CreationInfo;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.User;
 
@@ -115,9 +116,11 @@ public class LoansBotUtils {
 			Loan l = loans.get(i);
 			User uLend = db.getUserById(l.lenderId);
 			User uBorr = db.getUserById(l.borrowerId);
+			CreationInfo cInfo = db.getCreationInfoByLoanId(l.id);
+			
 			table.addRow(uLend.username, uBorr.username, BotUtils.getCostString(l.principalCents/100.), 
 					BotUtils.getCostString(l.principalRepaymentCents/100.), l.unpaid ? "***UNPAID***" : "", 
-							l.originalThread != null ? String.format("[Original Thread](%s)", l.originalThread) : "",
+							(cInfo != null && cInfo.type == CreationInfo.CreationType.REDDIT) ? String.format("[Original Thread](%s)", cInfo.thread) : "",
 							l.createdAt != null ? BotUtils.getDateStringFromJUTC(l.createdAt.getTime()) : "",
 							(l.principalRepaymentCents == l.principalCents && l.updatedAt != null) ? BotUtils.getDateStringFromJUTC(l.updatedAt.getTime()) : "");
 		}

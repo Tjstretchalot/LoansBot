@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import me.timothy.bots.models.CreationInfo;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.Recheck;
 import me.timothy.bots.models.Repayment;
@@ -385,9 +386,7 @@ public class LoansDatabase extends Database {
 	 *   principal_cents           - int
 	 *   principal_repayment_cents - int
 	 *   unpaid                    - tinyint(1)
-	 *   
-	 *   original_thread           - text
-	 *   
+	 *   creation_info_id          - int mul
 	 *   created_at                - datetime
 	 *   updated_at                - datetime
 	 */
@@ -431,11 +430,11 @@ public class LoansDatabase extends Database {
 			int counter = 1;
 			if(loan.id <= 0) {
 				statement = connection.prepareStatement("INSERT INTO loans (lender_id, borrower_id, " +
-						"principal_cents, principal_repayment_cents, unpaid, original_thread, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+						"principal_cents, principal_repayment_cents, unpaid, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
 						Statement.RETURN_GENERATED_KEYS);
 			}else {
 				statement = connection.prepareStatement("UPDATE loans SET lender_id=?, borrower_id=?, principal_cents=?, principal_repayment_cents=?, " +
-						"unpaid=?, original_thread=?, created_at=?, updated_at=? WHERE id=?");
+						"unpaid=?, created_at=?, updated_at=? WHERE id=?");
 			}
 			
 			statement.setInt(counter++, loan.lenderId);
@@ -443,7 +442,6 @@ public class LoansDatabase extends Database {
 			statement.setInt(counter++, loan.principalCents);
 			statement.setInt(counter++, loan.principalRepaymentCents);
 			statement.setBoolean(counter++, loan.unpaid);
-			statement.setString(counter++, loan.originalThread);
 			statement.setTimestamp(counter++, loan.createdAt);
 			statement.setTimestamp(counter++, loan.updatedAt);
 			
@@ -512,10 +510,116 @@ public class LoansDatabase extends Database {
 	 */
 	private Loan getLoanFromSet(ResultSet set) throws SQLException {
 		return new Loan(set.getInt("id"), set.getInt("lender_id"), set.getInt("borrower_id"), set.getInt("principal_cents"), 
-				set.getInt("principal_repayment_cents"), set.getBoolean("unpaid"), set.getString("original_thread"), set.getTimestamp("created_at"), 
+				set.getInt("principal_repayment_cents"), set.getBoolean("unpaid"), set.getTimestamp("created_at"), 
 				set.getTimestamp("updated_at"));
 	}
 	
+	// ===========================================================
+	// |                                                         |
+	// |                      CREATION_INFO                      |
+	// |                                                         |
+	// ===========================================================
+	
+	/*
+	 * creation_infos
+	 *   id         - int primary key
+	 *   loan_id    - int mul
+	 *   type       - int not null
+	 *   
+	 *   -- type 0; reddit --
+	 *   thread     - text
+	 *   
+	 *   -- type 1; redditloans admin --
+	 *   reason     - text
+	 *   user_id    - int mul
+	 *   
+	 *   created_at - datetime
+	 *   updated_at - datetime
+	 */
+	
+	/**
+	 * If the infos id is unset (<= 0) then inserts it into the database
+	 * and sets the id to the generated key.
+	 * <br><br>
+	 * If the infos id is set (> 0) then updates the info in the database
+	 * 
+	 * @param info the info to insert or update
+	 */
+	public void addOrUpdateCreationInfo(CreationInfo info) {
+		if(!info.isValid())
+			throw new RuntimeException("Cannot add or update invalid creation infos");
+		
+		try {
+			PreparedStatement statement = null;
+			
+			if(info.id <= 0) {
+				statement = connection.prepareStatement("INSERT INTO creation_infos (loan_id, type, thread, reason, " +
+						"user_id, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+			}else {
+				statement = connection.prepareStatement("UPDATE creation_infos SET loan_id=?, type=?, thread=?, reason=?, user_id=?, " +
+						"created_at=?, updated_at=? WHERE id=?");
+			}
+			
+			int counter = 1;
+			statement.setInt(counter++, info.type.getTypeNum());
+			statement.setInt(counter++, info.loanId);
+			statement.setString(counter++, info.thread);
+			statement.setString(counter++, info.reason);
+			statement.setInt(counter++, info.userId);
+			statement.setTimestamp(counter++, info.createdAt);
+			statement.setTimestamp(counter++, info.updatedAt);
+			
+			if(info.id > 0) 
+				statement.setInt(counter++, info.id);
+			
+			statement.executeUpdate();
+			
+			if(info.id <= 0) {
+				ResultSet set = statement.getGeneratedKeys();
+				if(set.next())
+					info.id = set.getInt(1);
+				else
+					throw new IllegalStateException("This can't be happening; no generated keys for table creation_infos?");
+				set.close();
+			}
+		}catch(SQLException exc) {
+			throw new RuntimeException(exc);
+		}
+	}
+	
+	/**
+	 * Get the creation info with the specified id
+	 * @param id the id
+	 * @return the creation info with that id if it exists, null otherwise
+	 */
+	public CreationInfo getCreationInfoByLoanId(int loanId) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM creation_infos WHERE loan_id=? LIMIT 1");
+			statement.setInt(1, loanId);
+			
+			ResultSet set = statement.executeQuery();
+			
+			CreationInfo result = (set.next() ? getCreationInfoFromSet(set) : null);
+			
+			set.close();
+			return result;
+		}catch(SQLException exc) {
+			throw new RuntimeException(exc);
+		}
+	}
+	
+	private CreationInfo getCreationInfoFromSet(ResultSet set) throws SQLException {
+		return new CreationInfo(
+				set.getInt("id"),
+				set.getInt("loan_id"),
+				CreationInfo.CreationType.getByTypeNum(set.getInt("type")),
+				set.getString("thread"),
+				set.getString("reason"),
+				set.getInt("user_id"),
+				set.getTimestamp("created_at"),
+				set.getTimestamp("updated_at")
+				);
+	}
 	// ===========================================================
 	// |                                                         |
 	// |                        REPAYMENTS                       |
