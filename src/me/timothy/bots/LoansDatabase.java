@@ -386,7 +386,6 @@ public class LoansDatabase extends Database {
 	 *   principal_cents           - int
 	 *   principal_repayment_cents - int
 	 *   unpaid                    - tinyint(1)
-	 *   creation_info_id          - int mul
 	 *   created_at                - datetime
 	 *   updated_at                - datetime
 	 */
