@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -309,7 +310,7 @@ public class LoansDatabase extends Database {
 			if(user.id <= 0) {
 				statement = connection.prepareStatement("INSERT INTO users (username, auth, password_digest, claimed, claim_code, " +
 						"claim_link_sent_at, created_at, updated_at, email, name, street_address, " +
-						"city, state, zip, country) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+						"city, state, zip, country) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 			}else {
 				statement = connection.prepareStatement("UPDATE users SET username=?, auth=?, password_digest=?, claimed=?, claim_code=?, " +
 						"claim_link_sent_at=?, created_at=?, updated_at=?, email=?, name=?, street_address=?, " +
@@ -429,7 +430,7 @@ public class LoansDatabase extends Database {
 			int counter = 1;
 			if(loan.id <= 0) {
 				statement = connection.prepareStatement("INSERT INTO loans (lender_id, borrower_id, " +
-						"principal_cents, principal_repayment_cents, unpaid, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+						"principal_cents, principal_repayment_cents, unpaid, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?)",
 						Statement.RETURN_GENERATED_KEYS);
 			}else {
 				statement = connection.prepareStatement("UPDATE loans SET lender_id=?, borrower_id=?, principal_cents=?, principal_repayment_cents=?, " +
@@ -560,11 +561,14 @@ public class LoansDatabase extends Database {
 			}
 			
 			int counter = 1;
-			statement.setInt(counter++, info.type.getTypeNum());
 			statement.setInt(counter++, info.loanId);
+			statement.setInt(counter++, info.type.getTypeNum());
 			statement.setString(counter++, info.thread);
 			statement.setString(counter++, info.reason);
-			statement.setInt(counter++, info.userId);
+			if(info.userId == -1)
+				statement.setNull(counter++, Types.INTEGER);
+			else
+				statement.setInt(counter++, info.userId);
 			statement.setTimestamp(counter++, info.createdAt);
 			statement.setTimestamp(counter++, info.updatedAt);
 			
