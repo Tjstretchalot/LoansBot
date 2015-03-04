@@ -16,6 +16,7 @@ import me.timothy.bots.models.CreationInfo;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.Recheck;
 import me.timothy.bots.models.Repayment;
+import me.timothy.bots.models.ResetPasswordRequest;
 import me.timothy.bots.models.Response;
 import me.timothy.bots.models.ResponseHistory;
 import me.timothy.bots.models.ShareCode;
@@ -405,7 +406,7 @@ public class LoansDatabase extends Database {
 	public List<Loan> getLoansWithBorrowerAndOrLender(int borrowerId, int lenderId, boolean strict) {
 		List<Loan> results = new ArrayList<>();
 		try {
-			PreparedStatement statement = connection.prepareStatement("SELECT * FROM loans WHERE lender_id=? " + (strict ? "AND" : "OR") + " borrower_id=? AND deleted=0");
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM loans WHERE deleted=0 AND (lender_id=? " + (strict ? "AND" : "OR") + " borrower_id=?)");
 			statement.setInt(1, lenderId);
 			statement.setInt(2, borrowerId);
 			ResultSet set = statement.executeQuery();
@@ -497,9 +498,10 @@ public class LoansDatabase extends Database {
 	 */
 	public void setLoanUnpaid(Loan loan, boolean unpaid) {
 		try {
-			PreparedStatement statement = connection.prepareStatement("UPDATE loans SET unpaid=? WHERE id=?");
+			PreparedStatement statement = connection.prepareStatement("UPDATE loans SET unpaid=?, updated_at=? WHERE id=?");
 			statement.setBoolean(1, unpaid);
-			statement.setInt(2, loan.id);
+			statement.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
+			statement.setInt(3, loan.id);
 			
 			statement.executeUpdate();
 			
@@ -922,5 +924,87 @@ public class LoansDatabase extends Database {
 	private ResponseHistory getResponseHistoryFromSet(ResultSet set) throws SQLException {
 		return new ResponseHistory(set.getInt("id"), set.getInt("response_id"), set.getInt("user_id"), set.getString("old_raw"),
 				set.getString("new_raw"), set.getString("reason"), set.getTimestamp("created_at"), set.getTimestamp("updated_at"));
+	}
+	
+	// ===========================================================
+	// |                                                         |
+	// |                 RESET PASSWORD REQUESTS                 |
+	// |                                                         |
+	// ===========================================================
+	
+	/*
+	 * reset_password_requests
+	 *   id              - int primary key 
+	 *   user_id         - int mul
+	 *   reset_code      - varchar(255)
+	 *   reset_code_sent - tinyint(1)
+	 *   reset_code_used - tinyint(1)
+	 *   created_at      - datetime
+	 *   updated_at      - datetime
+	 */
+	
+	/**
+	 * Gets a list of all current reset password requests that have not
+	 * yet been sent out.
+	 *
+	 * @return all reset password requests where reset_code_sent=0. Not null, potentially empty
+	 */
+	public List<ResetPasswordRequest> getUnsentResetPasswordRequests() {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM reset_password_requests WHERE reset_code_sent=0");
+			
+			ResultSet set = statement.getResultSet();
+			List<ResetPasswordRequest> result = new ArrayList<>();
+			while(set.next()) {
+				result.add(getResetPasswordRequestFromSet(set));
+			}
+			set.close();
+			return result;
+		}catch(SQLException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
+	
+	/**
+	 * Saves a reset password request to the database, if and only 
+	 * if the request is valid.
+	 * 
+	 * @param request the request to save
+	 * @throws IllegalArgumentException if the request is not valid
+	 */
+	public void updateResetPasswordRequest(ResetPasswordRequest request) throws IllegalArgumentException {
+		if(!request.isValid()) {
+			throw new IllegalArgumentException("Request is not valid");
+		}
+		try {
+			PreparedStatement statement = connection.prepareStatement("UPDATE reset_password_requests SET user_id=?, reset_code=?, " +
+					"reset_code_sent=?, reset_code_used=?, created_at=?, updated_at=? WHERE id=?");
+			
+			int counter = 1;
+			statement.setInt(counter++, request.userId);
+			statement.setString(counter++, request.resetCode);
+			statement.setBoolean(counter++, request.resetCodeSent);
+			statement.setBoolean(counter++, request.resetCodeUsed);
+			statement.setTimestamp(counter++, request.createdAt);
+			statement.setTimestamp(counter++, request.updatedAt);
+			
+			statement.setInt(counter++, request.id);
+			
+			statement.executeUpdate();
+		}catch(SQLException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
+	
+	/**
+	 * Gets the reset password request from the set 
+	 * @param set the set
+	 * @return the reset password request
+	 * @throws SQLException if a sql-exception occurs
+	 */
+	private ResetPasswordRequest getResetPasswordRequestFromSet(ResultSet set) throws SQLException {
+		return new ResetPasswordRequest(set.getInt("id"), set.getInt("user_id"), set.getString("reset_code"),
+				set.getBoolean("reset_code_sent"), set.getBoolean("reset_code_used"), set.getTimestamp("created_at"),
+				set.getTimestamp("updated_at"));
 	}
 }

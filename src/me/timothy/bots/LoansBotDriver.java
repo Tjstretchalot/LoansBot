@@ -6,7 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.timothy.bots.models.Recheck;
+import me.timothy.bots.models.ResetPasswordRequest;
+import me.timothy.bots.models.Response;
 import me.timothy.bots.models.User;
+import me.timothy.bots.responses.ResponseFormatter;
+import me.timothy.bots.responses.ResponseInfo;
 import me.timothy.bots.summon.CommentSummon;
 import me.timothy.bots.summon.LinkSummon;
 import me.timothy.bots.summon.PMSummon;
@@ -85,6 +89,10 @@ public class LoansBotDriver extends BotDriver {
 		
 		logger.debug("Scanning for recheck requests..");
 		handleRechecks();
+		sleepFor(2000);
+		
+		logger.debug("Scanning for reset password requests..");
+		handleResetPasswordRequests();
 		sleepFor(2000);
 		
 		super.doLoop();
@@ -196,6 +204,38 @@ public class LoansBotDriver extends BotDriver {
 			handleSubmission((Link) thing);
 		}else if(thing instanceof Message) {
 			handlePM(thing);
+		}
+	}
+	/**
+	 * Sends reset password links out to reddit users who requested
+	 * a reset password link
+	 */
+	private void handleResetPasswordRequests() {
+		LoansDatabase db = ((LoansDatabase) database);
+		List<ResetPasswordRequest> resetPasswordRequests = db.getUnsentResetPasswordRequests();
+		
+		if(resetPasswordRequests.size() == 0) {
+			return;
+		}
+		
+		logger.debug(String.format("There are %d pending reset password requests", resetPasswordRequests.size()));
+		
+		for(ResetPasswordRequest rpr : resetPasswordRequests) {
+			User user = db.getUserById(rpr.userId);
+			if(user == null) {
+				logger.warn(String.format("Reset Password Request id=%d has user_id=%d, which is not correlated with any user", rpr.id, rpr.userId));
+				continue;
+			}
+			
+			Response resp = db.getResponseByName("reset_password");
+			ResponseInfo rInfo = new ResponseInfo();
+			rInfo.addTemporaryString("userid", Integer.toString(user.id));
+			rInfo.addTemporaryString("code", rpr.resetCode);
+			logger.info(String.format("Sending reset password code to %s", user.username));
+			sendMessage(user.username, "RedditLoans Reset Password", new ResponseFormatter(resp.responseBody, rInfo).getFormattedResponse(config, db));
+			
+			rpr.resetCodeSent = true;
+			db.updateResetPasswordRequest(rpr);
 		}
 	}
 
