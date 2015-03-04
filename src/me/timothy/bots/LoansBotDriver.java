@@ -220,7 +220,13 @@ public class LoansBotDriver extends BotDriver {
 		
 		logger.debug(String.format("There are %d pending reset password requests", resetPasswordRequests.size()));
 		
+		boolean first = true;
 		for(ResetPasswordRequest rpr : resetPasswordRequests) {
+			if(!first)
+				sleepFor(2000);
+			else
+				first = false;
+			
 			User user = db.getUserById(rpr.userId);
 			if(user == null) {
 				logger.warn(String.format("Reset Password Request id=%d has user_id=%d, which is not correlated with any user", rpr.id, rpr.userId));
