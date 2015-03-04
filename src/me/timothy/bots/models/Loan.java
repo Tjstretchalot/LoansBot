@@ -15,11 +15,14 @@ public class Loan {
 	public int principalCents;
 	public int principalRepaymentCents;
 	public boolean unpaid;
+	public boolean deleted;
+	public String deletedReason;
 	public Timestamp createdAt;
 	public Timestamp updatedAt;
+	public Timestamp deletedAt;
 	
 	public Loan(int id, int lenderId, int borrowerId, int principalCents, int principalRepaymentCents, boolean unpaid, 
-			Timestamp createdAt, Timestamp updatedAt) {
+			boolean deleted, String deletedReason, Timestamp createdAt, Timestamp updatedAt, Timestamp deletedAt) {
 		super();
 		this.id = id;
 		this.lenderId = lenderId;
@@ -27,12 +30,15 @@ public class Loan {
 		this.principalCents = principalCents;
 		this.principalRepaymentCents = principalRepaymentCents;
 		this.unpaid = unpaid;
+		this.deleted = deleted;
+		this.deletedReason = deletedReason;
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
+		this.deletedAt = deletedAt;
 	}
 	
 	public Loan() {
-		this(-1, -1, -1, -1, -1, false, new Timestamp(new Date().getTime()), new Timestamp(new Date().getTime()));
+		this(-1, -1, -1, -1, -1, false, false, null, new Timestamp(new Date().getTime()), new Timestamp(new Date().getTime()), null);
 	}
 	
 	/**

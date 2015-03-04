@@ -64,7 +64,7 @@ public class LoanSummon implements CommentSummon {
 			User doneToU = database.getOrCreateUserByUsername(linkAuthor);
 			long now = System.currentTimeMillis();
 			
-			Loan loan = new Loan(-1, doerU.id, doneToU.id, amountPennies, 0, false, new Timestamp(now), new Timestamp(now));
+			Loan loan = new Loan(-1, doerU.id, doneToU.id, amountPennies, 0, false, false, null, new Timestamp(now), new Timestamp(now), null);
 			database.addOrUpdateLoan(loan);
 			CreationInfo cInfo = new CreationInfo(-1, loan.id, CreationInfo.CreationType.REDDIT, url, null, -1, new Timestamp(now), new Timestamp(now));
 			database.addOrUpdateCreationInfo(cInfo);

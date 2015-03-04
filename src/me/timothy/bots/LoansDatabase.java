@@ -387,8 +387,11 @@ public class LoansDatabase extends Database {
 	 *   principal_cents           - int
 	 *   principal_repayment_cents - int
 	 *   unpaid                    - tinyint(1)
+	 *   deleted                   - tinyint(1)
+	 *   deleted_reason            - text
 	 *   created_at                - datetime
 	 *   updated_at                - datetime
+	 *   deleted_at                - datetime
 	 */
 
 	/**
@@ -402,7 +405,7 @@ public class LoansDatabase extends Database {
 	public List<Loan> getLoansWithBorrowerAndOrLender(int borrowerId, int lenderId, boolean strict) {
 		List<Loan> results = new ArrayList<>();
 		try {
-			PreparedStatement statement = connection.prepareStatement("SELECT * FROM loans WHERE lender_id=? " + (strict ? "AND" : "OR") + " borrower_id=?");
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM loans WHERE lender_id=? " + (strict ? "AND" : "OR") + " borrower_id=? AND deleted=0");
 			statement.setInt(1, lenderId);
 			statement.setInt(2, borrowerId);
 			ResultSet set = statement.executeQuery();
@@ -430,11 +433,12 @@ public class LoansDatabase extends Database {
 			int counter = 1;
 			if(loan.id <= 0) {
 				statement = connection.prepareStatement("INSERT INTO loans (lender_id, borrower_id, " +
-						"principal_cents, principal_repayment_cents, unpaid, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?)",
+						"principal_cents, principal_repayment_cents, unpaid, deleted, deleted_reason, " +
+						"created_at, updated_at, deleted_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 						Statement.RETURN_GENERATED_KEYS);
 			}else {
 				statement = connection.prepareStatement("UPDATE loans SET lender_id=?, borrower_id=?, principal_cents=?, principal_repayment_cents=?, " +
-						"unpaid=?, created_at=?, updated_at=? WHERE id=?");
+						"unpaid=?, deleted=?, deleted_reason=?, created_at=?, updated_at=?, deleted_at=? WHERE id=?");
 			}
 			
 			statement.setInt(counter++, loan.lenderId);
@@ -442,8 +446,11 @@ public class LoansDatabase extends Database {
 			statement.setInt(counter++, loan.principalCents);
 			statement.setInt(counter++, loan.principalRepaymentCents);
 			statement.setBoolean(counter++, loan.unpaid);
+			statement.setBoolean(counter++, loan.deleted);
+			statement.setString(counter++, loan.deletedReason);
 			statement.setTimestamp(counter++, loan.createdAt);
 			statement.setTimestamp(counter++, loan.updatedAt);
+			statement.setTimestamp(counter++, loan.deletedAt);
 			
 			if(loan.id > 0)
 				statement.setInt(counter++, loan.id);
@@ -510,8 +517,9 @@ public class LoansDatabase extends Database {
 	 */
 	private Loan getLoanFromSet(ResultSet set) throws SQLException {
 		return new Loan(set.getInt("id"), set.getInt("lender_id"), set.getInt("borrower_id"), set.getInt("principal_cents"), 
-				set.getInt("principal_repayment_cents"), set.getBoolean("unpaid"), set.getTimestamp("created_at"), 
-				set.getTimestamp("updated_at"));
+				set.getInt("principal_repayment_cents"), set.getBoolean("unpaid"), set.getBoolean("deleted"),
+				set.getString("deleted_reason"), set.getTimestamp("created_at"), set.getTimestamp("updated_at"),
+				set.getTimestamp("deleted_at"));
 	}
 	
 	// ===========================================================
