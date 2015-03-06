@@ -953,7 +953,7 @@ public class LoansDatabase extends Database {
 		try {
 			PreparedStatement statement = connection.prepareStatement("SELECT * FROM reset_password_requests WHERE reset_code_sent=0");
 			
-			ResultSet set = statement.getResultSet();
+			ResultSet set = statement.executeQuery();
 			List<ResetPasswordRequest> result = new ArrayList<>();
 			while(set.next()) {
 				result.add(getResetPasswordRequestFromSet(set));

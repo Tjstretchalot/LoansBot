@@ -8,6 +8,6 @@ LoansBot was created for /r/loans, now renamed to /r/borrow. It is intended to k
 1. Keeps track of loans
 2. Keeps track of repayments
 3. Can be interacted with on /r/borrow and other authorized subreddits
-4. Maintains its own history - deleting a comment on reddit does not affect the LoansBot once the LoansBot ahs seen it.
+4. Maintains its own history - deleting a comment on reddit does not affect the LoansBot once the LoansBot has seen it.
 5. Secure, the LoansBot is by nature safe from SQL injections and other tomfoolery.
 
