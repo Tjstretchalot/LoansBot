@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansBotUtils;
@@ -147,8 +148,8 @@ public class PaidSummon implements CommentSummon {
 			int interest = updateLoans(relevantLoans, amountRepaid, database);
 			respInfo.addTemporaryObject("interest", new MoneyFormattableObject(interest));
 			respInfo.addTemporaryObject("changed loans", new GenericFormattableObject(LoansBotUtils.getLoansString(relevantLoans, database, author, config)));
-			logger.printf(Level.INFO, "%s has repaid %s by %s over %d loans", user1, author,
-					respInfo.getObject("interest").toFormattedString(respInfo, "interest", config, database), relevantLoans.size());
+			logger.printf(Level.INFO, "%s has repaid %s by $%s with %s interest over %d loans", user1, author,
+					BotUtils.getCostString(amountRepaid), respInfo.getObject("interest").toFormattedString(respInfo, "interest", config, database), relevantLoans.size());
 			
 			ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName("repayment").responseBody, respInfo);
 			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, database));

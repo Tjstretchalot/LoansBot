@@ -1,7 +1,6 @@
 package me.timothy.tests.bots.responses;
 
-import static org.junit.Assert.*;
-
+import static org.junit.Assert.assertEquals;
 import me.timothy.bots.responses.MoneyFormattableObject;
 import me.timothy.bots.responses.ResponseInfo;
 import me.timothy.bots.responses.ResponseInfoFactory;

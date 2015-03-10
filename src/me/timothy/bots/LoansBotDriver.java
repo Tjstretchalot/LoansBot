@@ -1,10 +1,12 @@
 package me.timothy.bots;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.timothy.bots.diagnostics.Diagnostics;
 import me.timothy.bots.models.Recheck;
 import me.timothy.bots.models.ResetPasswordRequest;
 import me.timothy.bots.models.Response;
@@ -30,8 +32,9 @@ import org.json.simple.parser.ParseException;
  * @author Timothy
  */
 public class LoansBotDriver extends BotDriver {
+	private Diagnostics diagnostics;
 	/**
-	 * Exact echo of BotDriver constructor 
+	 * Exact echo of BotDriver constructor; initializes diagnostics
 	 * @param database database
 	 * @param config config
 	 * @param bot the bot
@@ -43,6 +46,8 @@ public class LoansBotDriver extends BotDriver {
 			CommentSummon[] commentSummons, PMSummon[] pmSummons,
 			LinkSummon[] submissionSummons) {
 		super(database, config, bot, commentSummons, pmSummons, submissionSummons);
+		
+		diagnostics = new Diagnostics(new File("diagnostics.log"));
 	}
 
 	/* (non-Javadoc)
@@ -94,6 +99,9 @@ public class LoansBotDriver extends BotDriver {
 		logger.debug("Scanning for reset password requests..");
 		handleResetPasswordRequests();
 		sleepFor(2000);
+		
+		logger.debug("Performing self-assessment...");
+		handleDiagnostics();
 		
 		super.doLoop();
 	}
@@ -243,6 +251,13 @@ public class LoansBotDriver extends BotDriver {
 			rpr.resetCodeSent = true;
 			db.updateResetPasswordRequest(rpr);
 		}
+	}
+	
+	/**
+	 * Handles diagnosing the diagnostics 
+	 */
+	private void handleDiagnostics() {
+		diagnostics.diagnose();
 	}
 
 	/**

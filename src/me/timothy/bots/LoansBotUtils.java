@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import me.timothy.bots.models.CreationInfo;
 import me.timothy.bots.models.Loan;
@@ -33,7 +34,24 @@ public class LoansBotUtils {
 	 * The secondary subreddits the bot is for
 	 */
 	public static final List<String> SECONDARY_SUBREDDITS = Collections.unmodifiableList(Arrays.asList("loans", "loansbot"));
-	
+
+	/*
+	 * Acquired from http://stackoverflow.com/questions/6710094/how-to-format-an-elapsed-time-interval-in-hhmmss-sss-format-in-java
+	 */
+	/**
+	 * Format the interval in milliseconds to hours, minutes, seconds, and milliseconds
+	 * @param l the interval in milliseconds
+	 * @return the formatted version
+	 */
+	public static String formatInterval(final long l)
+	{
+		final long hr = TimeUnit.MILLISECONDS.toHours(l);
+		final long min = TimeUnit.MILLISECONDS.toMinutes(l - TimeUnit.HOURS.toMillis(hr));
+		final long sec = TimeUnit.MILLISECONDS.toSeconds(l - TimeUnit.HOURS.toMillis(hr) - TimeUnit.MINUTES.toMillis(min));
+		final long ms = TimeUnit.MILLISECONDS.toMillis(l - TimeUnit.HOURS.toMillis(hr) - TimeUnit.MINUTES.toMillis(min) - TimeUnit.SECONDS.toMillis(sec));
+		return String.format("%02d:%02d:%02d.%03d", hr, min, sec, ms);
+	}
+	 
 	/**
 	 * Gets a string that represents the specified loan such that it is readily
 	 * readable. If there are less than 5 loans this is equivalent to getLoansStringRaw,
