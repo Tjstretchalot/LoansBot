@@ -74,14 +74,15 @@ public class LoansDatabase extends Database {
 	 * @param id the fullname to add
 	 */
 	public void addFullname(String id) {
-		PreparedStatement prep;
+		PreparedStatement statement;
 		try {
-			prep = connection
+			statement = connection
 					.prepareStatement("INSERT INTO fullnames (fullname) VALUES(?)");
 
-			prep.setString(1, id);
+			statement.setString(1, id);
 
-			prep.executeUpdate();
+			statement.executeUpdate();
+			statement.close();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -95,14 +96,15 @@ public class LoansDatabase extends Database {
 	 */
 	public boolean containsFullname(String id) {
 		try {
-			PreparedStatement prep = connection
+			PreparedStatement statement = connection
 					.prepareStatement("SELECT * FROM fullnames WHERE fullname=?");
 
-			prep.setString(1, id);
+			statement.setString(1, id);
 
-			ResultSet results = prep.executeQuery();
+			ResultSet results = statement.executeQuery();
 			boolean hasFirst = results.first();
 			results.close();
+			statement.close();
 
 			return hasFirst;
 		} catch (SQLException e) {
@@ -142,6 +144,7 @@ public class LoansDatabase extends Database {
 			}
 			
 			set.close();
+			statement.close();
 			return results;
 		}catch(SQLException sqlE) {
 			throw new RuntimeException(sqlE);
@@ -159,6 +162,7 @@ public class LoansDatabase extends Database {
 			statement.setInt(1, recheck.id);
 			
 			statement.executeUpdate();
+			statement.close();
 		}catch(SQLException sqlE) {
 			throw new RuntimeException(sqlE);
 		}
@@ -211,16 +215,17 @@ public class LoansDatabase extends Database {
 	 */
 	public User getUserByUsername(String username) {
 		try {
-			PreparedStatement prep = connection
+			PreparedStatement statement = connection
 					.prepareStatement("SELECT * FROM users WHERE username=? LIMIT 1");
-			prep.setString(1, username);
-			ResultSet results = prep.executeQuery();
+			statement.setString(1, username);
+			ResultSet results = statement.executeQuery();
 			
 			if(results == null || !results.next())
 				return null;
 			
 			User result = getUserFromSet(results);
 			results.close();
+			statement.close();
 			return result;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
@@ -235,16 +240,17 @@ public class LoansDatabase extends Database {
 	 */
 	public User getUserById(int id) {
 		try {
-			PreparedStatement prep = connection
+			PreparedStatement statement = connection
 					.prepareStatement("SELECT * FROM users WHERE id=? LIMIT 1");
-			prep.setInt(1, id);
-			ResultSet results = prep.executeQuery();
+			statement.setInt(1, id);
+			ResultSet results = statement.executeQuery();
 			
 			if(results == null || !results.next())
 				return null;
 			
 			User result = getUserFromSet(results);
 			results.close();
+			statement.close();
 			return result;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
@@ -258,9 +264,9 @@ public class LoansDatabase extends Database {
 	 */
 	public List<User> getUsersToSendCode() {
 		try {
-			PreparedStatement prep = connection
+			PreparedStatement statement = connection
 					.prepareStatement("SELECT * FROM users WHERE (claimed=false OR claimed IS NULL) AND claim_code IS NOT NULL AND claim_link_sent_at IS NULL");
-			ResultSet results = prep.executeQuery();
+			ResultSet results = statement.executeQuery();
 			
 			List<User> result = new ArrayList<>();
 			while(results.next()) {
@@ -268,6 +274,7 @@ public class LoansDatabase extends Database {
 			}
 			
 			results.close();
+			statement.close();
 			return result;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
@@ -345,6 +352,7 @@ public class LoansDatabase extends Database {
 					throw new IllegalStateException("This can't be happening; no generated keys for table user?");
 				set.close();
 			}
+			statement.close();
 		}catch(SQLException sqlE) {
 			throw new RuntimeException(sqlE);
 		}
@@ -414,6 +422,7 @@ public class LoansDatabase extends Database {
 				results.add(getLoanFromSet(set));
 			}
 			set.close();
+			statement.close();
 		}catch(SQLException sqlE) {
 			throw new RuntimeException(sqlE);
 		}
@@ -466,6 +475,7 @@ public class LoansDatabase extends Database {
 					throw new IllegalStateException("This can't be happening; no generated keys for table loans?");
 				set.close();
 			}
+			statement.close();
 		}catch(SQLException sqlE) {
 			throw new RuntimeException(sqlE);
 		}
@@ -506,6 +516,7 @@ public class LoansDatabase extends Database {
 			statement.executeUpdate();
 			
 			loan.unpaid = unpaid;
+			statement.close();
 		}catch(SQLException sqlE) {
 			throw new RuntimeException(sqlE);
 		}
@@ -595,6 +606,7 @@ public class LoansDatabase extends Database {
 					throw new IllegalStateException("This can't be happening; no generated keys for table creation_infos?");
 				set.close();
 			}
+			statement.close();
 		}catch(SQLException exc) {
 			throw new RuntimeException(exc);
 		}
@@ -615,6 +627,7 @@ public class LoansDatabase extends Database {
 			CreationInfo result = (set.next() ? getCreationInfoFromSet(set) : null);
 			
 			set.close();
+			statement.close();
 			return result;
 		}catch(SQLException exc) {
 			throw new RuntimeException(exc);
@@ -665,6 +678,7 @@ public class LoansDatabase extends Database {
 				result.add(getRepaymentFromSet(set));
 			}
 			set.close();
+			statement.close();
 		}catch(SQLException sqlE) {
 			throw new RuntimeException(sqlE);
 		}
@@ -702,6 +716,7 @@ public class LoansDatabase extends Database {
 			else
 				throw new IllegalStateException("This can't be happening; no generated keys for table repayments?");
 			set.close();
+			statement.close();
 		}catch(SQLException sqlE) {
 			throw new RuntimeException(sqlE);
 		}
@@ -748,6 +763,7 @@ public class LoansDatabase extends Database {
 				result.add(getShareCodeFromSet(set));
 			}
 			set.close();
+			statement.close();
 		}catch(SQLException sqlE) {
 			throw new RuntimeException(sqlE);
 		}
@@ -764,6 +780,7 @@ public class LoansDatabase extends Database {
 			PreparedStatement statement = connection.prepareStatement("DELETE FROM share_codes WHERE id=? LIMIT 1");
 			statement.setInt(1, id);
 			statement.executeUpdate();
+			statement.close();
 		}catch(SQLException sqlE) {
 			throw new RuntimeException(sqlE);
 		}
@@ -830,6 +847,8 @@ public class LoansDatabase extends Database {
 					throw new IllegalStateException("This can't be happening; no generated keys for table responses?");
 				set.close();
 			}
+			
+			statement.close();
 		}catch(SQLException exc) {
 			throw new RuntimeException(exc);
 		}
@@ -855,6 +874,7 @@ public class LoansDatabase extends Database {
 			}
 			Response response = getResponseFromSet(results);
 			results.close();
+			statement.close();
 			return response;
 		}catch(SQLException exc) {
 			throw new RuntimeException(exc);
@@ -908,7 +928,7 @@ public class LoansDatabase extends Database {
 			}
 			
 			set.close();
-			
+			statement.close();
 			return result;
 		}catch(SQLException exc) {
 			throw new RuntimeException(exc);
@@ -959,6 +979,7 @@ public class LoansDatabase extends Database {
 				result.add(getResetPasswordRequestFromSet(set));
 			}
 			set.close();
+			statement.close();
 			return result;
 		}catch(SQLException ex) {
 			throw new RuntimeException(ex);
@@ -991,6 +1012,7 @@ public class LoansDatabase extends Database {
 			statement.setInt(counter++, request.id);
 			
 			statement.executeUpdate();
+			statement.close();
 		}catch(SQLException ex) {
 			throw new RuntimeException(ex);
 		}
