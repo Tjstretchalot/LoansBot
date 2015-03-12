@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import me.timothy.bots.models.AdminUpdate;
 import me.timothy.bots.models.CreationInfo;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.Recheck;
@@ -1027,6 +1028,45 @@ public class LoansDatabase extends Database {
 	private ResetPasswordRequest getResetPasswordRequestFromSet(ResultSet set) throws SQLException {
 		return new ResetPasswordRequest(set.getInt("id"), set.getInt("user_id"), set.getString("reset_code"),
 				set.getBoolean("reset_code_sent"), set.getBoolean("reset_code_used"), set.getTimestamp("created_at"),
+				set.getTimestamp("updated_at"));
+	}
+	
+
+	// ===========================================================
+	// |                                                         |
+	// |                      ADMIN UPDATES                      |
+	// |                                                         |
+	// ===========================================================
+	
+	/*
+	 * admin_updates
+	 *   id                            - int primary key
+	 *   loan_id                       - int mul
+	 *   user_id                       - int mul
+	 *   reason                        - text
+	 *   
+	 *   old_lender_id                 - int mul
+	 *   old_borrower_id               - int mul
+	 *   old_principal_cents           - int not null
+	 *   old_principal_repayment_cents - int not null
+	 *   old_unpaid                    - tinyint(1)
+	 *   
+	 *   new_lender_id                 - int mul
+	 *   new_borrower_id               - int mul
+	 *   new_principal_cents           - int not null
+	 *   new_principal_repayment_cents - int not null
+	 *   new_unpaid                    - tinyint(1)
+	 *   
+	 *   created_at                    - datetime
+	 *   updated_at                    - datetime
+	 */
+	
+	@SuppressWarnings("unused")
+	private AdminUpdate getAdminUpdate(ResultSet set) throws SQLException {
+		return new AdminUpdate(set.getInt("id"), set.getInt("loan_id"), set.getInt("user_id"),
+				set.getString("reason"), set.getInt("old_lender_id"), set.getInt("old_borrower_id"), set.getInt("old_principal_cents"),
+				set.getInt("old_principal_repayment_cents"), set.getBoolean("old_unpaid"), set.getInt("new_lender_id"), set.getInt("new_borrower_id"),
+				set.getInt("new_principal_cents"), set.getInt("new_principal_repayment_cents"), set.getBoolean("new_unpaid"), set.getTimestamp("created_at"),
 				set.getTimestamp("updated_at"));
 	}
 }
