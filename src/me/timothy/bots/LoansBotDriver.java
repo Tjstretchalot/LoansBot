@@ -24,6 +24,7 @@ import me.timothy.jreddit.info.Listing;
 import me.timothy.jreddit.info.Message;
 import me.timothy.jreddit.info.Thing;
 
+import org.apache.logging.log4j.Level;
 import org.json.simple.parser.ParseException;
 
 /**
@@ -275,7 +276,7 @@ public class LoansBotDriver extends BotDriver {
 				Errorable errors = bot.sendPM(to, title, message);
 				List<?> errorsList = errors.getErrors();
 				if(!errorsList.isEmpty()) {
-					logger.warn("Failed to send " + message + " to " + to + ": " + errorsList.toString());
+					logger.printf(Level.WARN, "Failed to send (to=%s, title=%s, message=%s): %s", to, title, message, errorsList.toString());
 				}
 				return true;
 			}

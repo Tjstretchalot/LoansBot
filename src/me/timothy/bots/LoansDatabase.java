@@ -865,7 +865,7 @@ public class LoansDatabase extends Database {
 	 */
 	public Response getResponseByName(String name) {
 		try {
-			PreparedStatement statement = connection.prepareStatement("SELECT * FROM responses WHERE name LIKE ? LIMIT 1");
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM responses WHERE name = ? LIMIT 1");
 			statement.setString(1, name);
 			
 			ResultSet results = statement.executeQuery();
