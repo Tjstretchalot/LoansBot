@@ -22,6 +22,7 @@ import me.timothy.bots.models.Response;
 import me.timothy.bots.models.ResponseHistory;
 import me.timothy.bots.models.ShareCode;
 import me.timothy.bots.models.User;
+import me.timothy.bots.models.Warning;
 
 /**
  * Contains the connection to the MySQL database, both for remembering loans and
@@ -1068,5 +1069,99 @@ public class LoansDatabase extends Database {
 				set.getInt("old_principal_repayment_cents"), set.getBoolean("old_unpaid"), set.getInt("new_lender_id"), set.getInt("new_borrower_id"),
 				set.getInt("new_principal_cents"), set.getInt("new_principal_repayment_cents"), set.getBoolean("new_unpaid"), set.getTimestamp("created_at"),
 				set.getTimestamp("updated_at"));
+	}
+	
+
+	// ===========================================================
+	// |                                                         |
+	// |                        WARNINGS                         |
+	// |                                                         |
+	// ===========================================================
+	
+	/*
+	 * warnings
+	 *   id              - int primary key
+	 *   warned_user_id  - int mul
+	 *   warning_user_id - int mul
+	 *   violation       - text
+	 *   action_taken    - text
+	 *   next_action     - text
+	 *   notes           - text
+	 *   
+	 *   created_at      - datetime
+	 *   updated_at      - datetime
+	 */
+	
+	/**
+	 * Adds the warning if its id is less than 1, otherwise updates
+	 * the warning with that id. If it is inserted, the new id is
+	 * placed into {@code warning}
+	 * 
+	 * @param warning the warning to add or update
+	 */
+	public void addOrUpdateWarning(Warning warning) {
+		if(!warning.isValid()) 
+			throw new IllegalArgumentException("That's not a valid warning");
+		try {
+			PreparedStatement statement;
+			if(warning.id < 1) {
+				statement = connection.prepareStatement("INSERT INTO warnings (warned_user_id, warning_user_id, violation, action_taken, " +
+						"next_action, notes, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+			}else {
+				statement = connection.prepareStatement("UPDATE warnings SET warned_user_id=?, warning_user_id=?, violation=?, action_taken=?, " +
+						"next_action=?, notes=?, created_at=?, updated_at=? WHERE id=?");
+			}
+			int index = 1;
+			statement.setInt(index++, warning.warnedUserId);
+			statement.setInt(index++, warning.warningUserId);
+			statement.setString(index++, warning.violation);
+			statement.setString(index++, warning.nextAction);
+			statement.setString(index++, warning.notes);
+			statement.setTimestamp(index++, warning.createdAt);
+			statement.setTimestamp(index++, warning.updatedAt);
+			
+			if(warning.id >= 1)
+				statement.setInt(index++, warning.id);
+			
+			statement.executeUpdate();
+			
+			if(warning.id < 1) {
+				ResultSet set = statement.getGeneratedKeys();
+				if(set.next())
+					warning.id = set.getInt(1);
+				else
+					throw new IllegalStateException("This can't be happening; no generated keys for table warnings?");
+				set.close();
+			}
+			statement.close();
+		}catch(SQLException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
+	
+	/**
+	 * Get all warnings where the warned user is {@code userId}
+	 * @param userId the user id
+	 * @return the list of warnings for that user
+	 */
+	public List<Warning> getWarningsForUser(int userId) {
+		try(PreparedStatement statement = connection.prepareStatement("SELECT * FROM warnings WHERE warned_user_id=?")) {
+			statement.setInt(1, userId);
+			
+			ResultSet set = statement.executeQuery();
+			List<Warning> result = new ArrayList<>();
+			while(set.next()) {
+				result.add(getWarning(set));
+			}
+			set.close();
+			return result;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private Warning getWarning(ResultSet set) throws SQLException {
+		return new Warning(set.getInt("id"), set.getInt("warned_user_id"), set.getInt("warning_user_id"), set.getString("violation"),
+				set.getString("action_taken"), set.getString("next_action"), set.getString("notes"), set.getTimestamp("created_at"), set.getTimestamp("updated_at"));
 	}
 }

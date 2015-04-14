@@ -3,6 +3,9 @@ package me.timothy.bots;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import me.timothy.bots.responses.AppliedFormattableObject;
+import me.timothy.bots.responses.LoanFormattableObject;
+import me.timothy.bots.responses.ResponseInfoFactory;
 import me.timothy.bots.summon.BadLoanSummon;
 import me.timothy.bots.summon.CheckSummon;
 import me.timothy.bots.summon.CommentSummon;
@@ -27,6 +30,12 @@ import org.apache.logging.log4j.Logger;
  */
 public class LoansBotMain {
 	public static void main(String[] args) {
+		for(int i = 1; i <= 3; i++) {
+			ResponseInfoFactory.base.addLongtermObject("loans" + i, new LoanFormattableObject());
+			ResponseInfoFactory.base.addLongtermObject("applied" + i, new AppliedFormattableObject());
+		}
+		
+		
 		Logger logger = LogManager.getLogger();
 		
 		Utils.USER_AGENT = "LoansBot by /u/Tjstretchalot";
