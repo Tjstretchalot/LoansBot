@@ -10,6 +10,7 @@ import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansBotUtils;
 import me.timothy.bots.LoansDatabase;
+import me.timothy.bots.currencies.CurrencyHandler;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.User;
 import me.timothy.bots.responses.GenericFormattableObject;
@@ -36,8 +37,10 @@ public class PaidSummon implements CommentSummon {
 	 * $paid /u/John 50.00
 	 * $paid /u/Asdf $50.00
 	 * $paid /u/Jk_jl 50.00$
+	 * $paid /u/asdf 50.00 EUR
+	 * $paid /u/fdaa 5 USD
 	 */
-	private static final Pattern PAID_PATTERN = Pattern.compile("\\s*\\$paid\\s/u/\\S+\\s\\$?\\d+\\.?\\d*\\$?");
+	private static final Pattern PAID_PATTERN_WITH_CURRENCY = Pattern.compile("\\s*(\\$paid\\s/u/\\S+\\s\\$?\\d+\\.?\\d*\\$?)(\\s[A-Z]{3})?");
 	private static final String PAID_FORMAT = "$paid <user1> <money1>";
 
 	private Logger logger;
@@ -110,15 +113,26 @@ public class PaidSummon implements CommentSummon {
 	@Override
 	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
 		LoansDatabase database = (LoansDatabase) db;
-		Matcher matcher = PAID_PATTERN.matcher(comment.body());
+		Matcher matcher = PAID_PATTERN_WITH_CURRENCY.matcher(comment.body());
 		
 		if(matcher.find()) {
-			ResponseInfo respInfo = ResponseInfoFactory.getResponseInfo(PAID_FORMAT, matcher.group().trim(), comment);
+			ResponseInfo respInfo = ResponseInfoFactory.getResponseInfo(PAID_FORMAT, matcher.group(1).trim(), comment);
 			
 			String author = respInfo.getObject("author").toString();
-			int amountRepaid = ((MoneyFormattableObject) respInfo.getObject("money1")).getAmount();
 			String user1 = respInfo.getObject("user1").toString();
-			
+			MoneyFormattableObject moneyObj = (MoneyFormattableObject) respInfo.getObject("money1");
+			int amountRepaid = moneyObj.getAmount();
+			boolean hasConversion = matcher.group(2) != null; 
+			if(hasConversion) {
+				String convertFrom = matcher.group(2).trim();
+				double conversionRate = CurrencyHandler.getConversionRate(convertFrom, "USD");
+				logger.debug("Converting from " + convertFrom + " to USD using rate " + conversionRate);
+				respInfo.addTemporaryString("convert_from", convertFrom);
+				respInfo.addTemporaryString("conversion_rate", Double.toString(conversionRate));
+				amountRepaid *= conversionRate;
+				
+				moneyObj.setAmount(amountRepaid);
+			}
 			User authorUser = database.getUserByUsername(author);
 			User user1User = database.getUserByUsername(user1);
 			
@@ -150,8 +164,16 @@ public class PaidSummon implements CommentSummon {
 			respInfo.addTemporaryObject("changed loans", new GenericFormattableObject(LoansBotUtils.getLoansString(relevantLoans, database, author, config)));
 			logger.printf(Level.INFO, "%s has repaid %s by $%s with %s interest over %d loans", user1, author,
 					BotUtils.getCostString(amountRepaid), respInfo.getObject("interest").toFormattedString(respInfo, "interest", config, database), relevantLoans.size());
+			String response = null;
 			
-			ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName("repayment").responseBody, respInfo);
+			if(hasConversion) {
+				response = database.getResponseByName("repayment_with_conversion").responseBody;
+			}else {
+				response = database.getResponseByName("repayment").responseBody;
+			}
+			
+			
+			ResponseFormatter formatter = new ResponseFormatter(response, respInfo);
 			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, database));
 		}
 		return null;
