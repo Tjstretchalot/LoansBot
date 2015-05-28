@@ -1,11 +1,14 @@
 package me.timothy.bots.summon;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansDatabase;
+import me.timothy.bots.models.Loan;
+import me.timothy.bots.models.User;
 import me.timothy.bots.responses.MoneyFormattableObject;
 import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
@@ -46,11 +49,30 @@ public class ConfirmSummon implements CommentSummon {
 			String text = matcher.group().trim();
 			ResponseInfo ri = ResponseInfoFactory.getResponseInfo(CONFIRM_FORMAT, text, comment);
 			
-			logger.printf(Level.INFO, "%s confirmed a $%s transfer from %s", ri.getObject("author").toString(),
-					((MoneyFormattableObject) ri.getObject("money1")).getAmount(), ri.getObject("user1").toString());
+			String borrower = ri.getObject("author").toString().toLowerCase();
+			String lender = ri.getObject("user1").toString().toLowerCase();
+			int money = ((MoneyFormattableObject) ri.getObject("money1")).getAmount();
+			if(borrower.equals(lender)) {
+				logger.printf(Level.INFO, "Ignoring %s confirming he sent money to himself!");
+				return null;
+			}
+		
+			logger.printf(Level.INFO, "%s confirmed a $%s transfer from %s", borrower,
+					money, lender);
 
 			LoansDatabase database = (LoansDatabase) db;
-			ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName("confirm").responseBody, ri);
+			
+			User lenderUser = database.getUserByUsername(borrower);
+			User borrowerUser = database.getUserByUsername(lender);
+			
+			List<Loan> loans = database.getLoansWithBorrowerAndOrLender(lenderUser.id, borrowerUser.id, true);
+			boolean validConfirm = false;
+			for(Loan loan : loans) {
+				if(loan.principalCents != loan.principalRepaymentCents && loan.principalCents >= money) {
+					validConfirm = true;
+				}
+			}
+			ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName(validConfirm ? "confirm" : "confirmNoLoan").responseBody, ri);
 			
 			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, (LoansDatabase) db));
 		}
