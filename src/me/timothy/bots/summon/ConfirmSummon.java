@@ -62,16 +62,22 @@ public class ConfirmSummon implements CommentSummon {
 
 			LoansDatabase database = (LoansDatabase) db;
 			
-			User lenderUser = database.getUserByUsername(borrower);
-			User borrowerUser = database.getUserByUsername(lender);
-			
-			List<Loan> loans = database.getLoansWithBorrowerAndOrLender(lenderUser.id, borrowerUser.id, true);
+			User lenderUser = database.getUserByUsername(lender);
+			User borrowerUser = database.getUserByUsername(borrower);
+
 			boolean validConfirm = false;
-			for(Loan loan : loans) {
-				if(loan.principalCents != loan.principalRepaymentCents && loan.principalCents >= money) {
-					validConfirm = true;
+			int numLoans = 0;
+			if(lenderUser != null && borrowerUser != null) {
+				List<Loan> loans = database.getLoansWithBorrowerAndOrLender(borrowerUser.id, lenderUser.id, true);
+				numLoans = loans.size();
+				for(Loan loan : loans) {
+					if(loan.principalCents != loan.principalRepaymentCents && loan.principalCents >= money) {
+						validConfirm = true;
+					}
 				}
 			}
+			ri.addTemporaryString("numloans", Integer.toString(numLoans));
+			
 			ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName(validConfirm ? "confirm" : "confirmNoLoan").responseBody, ri);
 			
 			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, (LoansDatabase) db));
