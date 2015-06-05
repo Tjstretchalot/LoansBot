@@ -67,6 +67,9 @@ public class CurrencyHandler {
 	 * @return the conversion factor ( from * conversion_factor = to )
 	 */
 	public static double getConversionRate(String from, String to) {
+		if(from.equals(to))
+			return 1;
+		
 		String convId = from + "_" + to;
 		final String apiParams = "q=" + convId + "&compact=ultra";
 		
