@@ -74,8 +74,12 @@ public class CurrencyHandler {
 		final String apiParams = "q=" + convId + "&compact=ultra";
 		
 		Retryable<JSONObject> retryable = new Retryable<JSONObject>("Convert " + convId) {
+			private int times = 0;
 			@Override
 			protected JSONObject runImpl() throws Exception {
+				times++;
+				if(times > 3)
+					return new JSONObject();
 				return (JSONObject) Utils.get(apiParams, new URL(CONVERT), null);
 			}
 		};
