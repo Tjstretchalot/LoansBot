@@ -10,7 +10,7 @@ import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansBotUtils;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.models.Loan;
-import me.timothy.bots.models.User;
+import me.timothy.bots.models.Username;
 import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
 import me.timothy.bots.responses.ResponseInfoFactory;
@@ -52,10 +52,15 @@ public class UnpaidSummon implements CommentSummon {
 			ResponseInfo responseInfo = ResponseInfoFactory.getResponseInfo(UNPAID_FORMAT, group, comment);
 			LoansDatabase database = (LoansDatabase) db;
 
-			User author = database.getUserByUsername(responseInfo.getObject("author").toString());
-			User user1U = database.getUserByUsername(responseInfo.getObject("user1").toString());
+			String author = responseInfo.getObject("author").toString();
+			String user1 = responseInfo.getObject("user1").toString();
+			Username authorUsername = database.getUsernameByUsername(author);
+			Username user1Username = database.getUsernameByUsername(user1);
 			
-			List<Loan> relevantLoans = (author != null && user1U != null) ? database.getLoansWithBorrowerAndOrLender(user1U.id, author.id, true) : new ArrayList<Loan>();
+			List<Loan> relevantLoans = new ArrayList<Loan>();
+			if(authorUsername != null && user1Username != null) {
+				relevantLoans = database.getLoansWithBorrowerAndOrLender(user1Username.userId, authorUsername.userId, true);
+			}
 			List<Loan> changed = new ArrayList<>();
 			
 			for(Loan l : relevantLoans) {
@@ -65,7 +70,8 @@ public class UnpaidSummon implements CommentSummon {
 				}
 			}
 			responseInfo.addTemporaryString("changed loans", LoansBotUtils.getLoansAsTable(changed, database, changed.size()));
-			logger.printf(Level.INFO, "%s has defaulted on %d loans from %s", user1U.username, changed.size(), author.username);
+			
+			logger.printf(Level.INFO, "%s has defaulted on %d loans from %s", user1Username.username, changed.size(), authorUsername == null ? ("null user '" + author + "'") : authorUsername.username);
 			
 			String responseFormat = database.getResponseByName("unpaid").responseBody;
 			return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(responseFormat, responseInfo).getFormattedResponse(config, database));

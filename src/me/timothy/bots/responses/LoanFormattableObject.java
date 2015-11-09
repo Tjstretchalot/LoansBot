@@ -9,6 +9,7 @@ import me.timothy.bots.LoansBotUtils;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.User;
+import me.timothy.bots.models.Username;
 
 /**
  * If you have user1, you can also have loans1 automatically
@@ -22,7 +23,8 @@ public class LoanFormattableObject implements FormattableObject {
 	public String toFormattedString(ResponseInfo info, String myName, FileConfiguration config, Database database) {
 		LoansDatabase db = (LoansDatabase) database;
 		String username = info.getObject(myName.replace("loans", "user")).toString();
-		User userToGetLoansOf = db.getUserByUsername(username);
+		Username usernameModel = db.getUsernameByUsername(username);
+		User userToGetLoansOf = db.getUserById(usernameModel.userId);
 		List<Loan> relevantLoans1 = userToGetLoansOf != null ? db.getLoansWithBorrowerAndOrLender(userToGetLoansOf.id, userToGetLoansOf.id, false) : new ArrayList<Loan>();
 		
 		return LoansBotUtils.getLoansString(relevantLoans1, db, username, config);

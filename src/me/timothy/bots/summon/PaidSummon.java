@@ -13,6 +13,7 @@ import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.currencies.CurrencyHandler;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.User;
+import me.timothy.bots.models.Username;
 import me.timothy.bots.responses.GenericFormattableObject;
 import me.timothy.bots.responses.MoneyFormattableObject;
 import me.timothy.bots.responses.ResponseFormatter;
@@ -133,15 +134,18 @@ public class PaidSummon implements CommentSummon {
 				
 				moneyObj.setAmount(amountRepaid);
 			}
-			User authorUser = database.getUserByUsername(author);
-			User user1User = database.getUserByUsername(user1);
+			Username authorUsername = database.getUsernameByUsername(author);
+			Username user1Username = database.getUsernameByUsername(user1);
 			
-			if(authorUser == null || user1User == null) {
+			if(authorUsername == null || user1Username == null) {
 				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but author is %s and user 1 is %s",
-						author, user1, amountRepaid, (authorUser == null ? "null" : "not null"), (user1User == null ? "null" : "not null"));
+						author, user1, amountRepaid, (authorUsername == null ? "null" : "not null"), (user1Username == null ? "null" : "not null"));
 				ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName("no_loans_to_repay").responseBody, respInfo);
 				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));//.replace("<borrower>", doneTo).replace("<author>", doer));
 			}
+			
+			User authorUser = database.getUserById(authorUsername.userId);
+			User user1User = database.getUserById(user1Username.userId);
 			
 			if(amountRepaid <= 0) {
 				logger.printf(Level.WARN, "Ridiculous amount repaid of %d, ignoring", amountRepaid);

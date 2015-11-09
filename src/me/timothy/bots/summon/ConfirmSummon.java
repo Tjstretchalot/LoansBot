@@ -9,6 +9,7 @@ import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.User;
+import me.timothy.bots.models.Username;
 import me.timothy.bots.responses.MoneyFormattableObject;
 import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
@@ -62,12 +63,15 @@ public class ConfirmSummon implements CommentSummon {
 
 			LoansDatabase database = (LoansDatabase) db;
 			
-			User lenderUser = database.getUserByUsername(lender);
-			User borrowerUser = database.getUserByUsername(borrower);
+			Username lenderUsername = database.getUsernameByUsername(lender);
+			Username borrowerUsername = database.getUsernameByUsername(borrower);
 
 			boolean validConfirm = false;
 			int numLoans = 0;
-			if(lenderUser != null && borrowerUser != null) {
+			if(lenderUsername != null && borrowerUsername != null) {
+				User lenderUser = database.getUserById(lenderUsername.userId);
+				User borrowerUser = database.getUserById(borrowerUsername.userId);
+				
 				List<Loan> loans = database.getLoansWithBorrowerAndOrLender(borrowerUser.id, lenderUser.id, true);
 				numLoans = loans.size();
 				for(Loan loan : loans) {

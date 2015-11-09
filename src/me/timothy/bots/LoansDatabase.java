@@ -256,6 +256,30 @@ public class LoansDatabase extends Database {
 			throw new RuntimeException(e);
 		}
 	}
+	/**
+	 * Gets the user by the specified username, or if it doesn't exist creates
+	 * and saves a new user and the associated username and returns the user. 
+	 * 
+	 * @param username the username of the user
+	 * @return that user or a new one created with that username
+	 */
+	public User getOrCreateUserByUsername(String username) {
+		Username usernameModel = getUsernameByUsername(username);
+		
+		if(usernameModel == null) {
+			Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
+			User result = new User();
+			result.createdAt = currentTimestamp;
+			result.updatedAt = currentTimestamp;
+			addOrUpdateUser(result);
+			usernameModel = new Username(-1, result.id, username, currentTimestamp, currentTimestamp);
+			addOrUpdateUsername(usernameModel);
+			return result;
+		}else {
+			return getUserById(usernameModel.id);
+		}
+		
+	}
 	
 	/**
 	 * Adds the user if the id is <=0, which also updates the id
