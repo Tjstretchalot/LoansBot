@@ -412,6 +412,35 @@ public class LoansDatabase extends Database {
 			throw new RuntimeException(sqlE);
 		}
 	}
+
+	/**
+	 * Fetches a username by the string username.
+	 * 
+	 * @param username the username to search for
+	 * @return the username model or null
+	 */
+	public Username getUsernameByUsername(String username) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM usernames WHERE username=?");
+			statement.setString(1, username);
+			
+			ResultSet results = statement.executeQuery();
+			if(results == null) {
+				statement.close();
+				return null;
+			}else if(!results.next()) {
+				results.close();
+				statement.close();
+				return null;
+			}
+			Username result = getUsernameFromSet(results);
+			results.close();
+			statement.close();
+			return result;
+		}catch(SQLException sqlE) {
+			throw new RuntimeException(sqlE);
+		}
+	}
 	
 	/**
 	 * Adds the username if the id is <=0, which also updates the id
