@@ -10,7 +10,6 @@ import java.sql.Timestamp;
 
 public class User {
 	public int id;
-	public String username;
 	public int auth;
 	public String passwordDigest;
 	public boolean claimed;
@@ -27,10 +26,9 @@ public class User {
 	public String zip;
 	public String country;
   
-	public User(int id, String username, int auth, String passwordDigest, boolean claimed, String claimCode, Timestamp claimLinkSetAt, Timestamp createdAt,
+	public User(int id, int auth, String passwordDigest, boolean claimed, String claimCode, Timestamp claimLinkSetAt, Timestamp createdAt,
 			Timestamp updatedAt, String email, String name, String streetAddress, String city, String state, String zip, String country) {
 		this.id = id;
-		this.username = username;
 		this.auth = auth;
 		this.passwordDigest = passwordDigest;
 		this.claimed = claimed;
@@ -48,12 +46,8 @@ public class User {
 		this.country = country;
 	}
 	
-	public User(String username) {
-		this(-1, username, 0, null, false, null, null, null, null, null, null, null, null, null, null, null);
-	}
-	
 	public User() {
-		this(null);
+		this(-1, 0, null, false, null, null, null, null, null, null, null, null, null, null, null);
 	}
 	
 	/**
@@ -63,9 +57,7 @@ public class User {
 	 * @return if this user is not obviously wrong
 	 */
 	public boolean isValid() {
-		if(username == null)
-			return false;
-		else if(createdAt == null) 
+		if(createdAt == null) 
 			return false;
 		else if(updatedAt == null)
 			return false;

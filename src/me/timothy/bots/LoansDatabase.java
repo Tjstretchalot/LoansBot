@@ -9,7 +9,6 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import me.timothy.bots.models.AdminUpdate;
@@ -22,6 +21,7 @@ import me.timothy.bots.models.Response;
 import me.timothy.bots.models.ResponseHistory;
 import me.timothy.bots.models.ShareCode;
 import me.timothy.bots.models.User;
+import me.timothy.bots.models.Username;
 import me.timothy.bots.models.Warning;
 
 /**
@@ -191,7 +191,6 @@ public class LoansDatabase extends Database {
 	/*
 	 * users
 	 *   id                 - int primary key
-	 *   username           - varchar(255)
 	 *   auth               - int
 	 *   password_digest    - text
 	 *   claimed            - tinyint(1)
@@ -208,31 +207,6 @@ public class LoansDatabase extends Database {
 	 *   zip            - text
 	 *   country        - text
 	 */
-	
-	/**
-	 * Equivalent SQL: {@code SELECT * FROM users WHERE username=? LIMIT 1}
-	 * 
-	 * @param username the user to get
-	 * @return that user or null
-	 */
-	public User getUserByUsername(String username) {
-		try {
-			PreparedStatement statement = connection
-					.prepareStatement("SELECT * FROM users WHERE username=? LIMIT 1");
-			statement.setString(1, username);
-			ResultSet results = statement.executeQuery();
-			
-			if(results == null || !results.next())
-				return null;
-			
-			User result = getUserFromSet(results);
-			results.close();
-			statement.close();
-			return result;
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
-	}
 	
 	/**
 	 * Equivalent SQL: {@code SELECT * FROM users WHERE id=? LIMIT 1}
@@ -284,26 +258,6 @@ public class LoansDatabase extends Database {
 	}
 	
 	/**
-	 * Gets the user by the specified username, or if it doesn't exist creates
-	 * and saves a new user and returns that
-	 * @param username the username of the user
-	 * @return that user or a new one created with that username
-	 */
-	public User getOrCreateUserByUsername(String username) {
-		User result = getUserByUsername(username);
-		
-		if(result == null) {
-			result = new User(username);
-			Date now = new Date();
-			result.createdAt = new Timestamp(now.getTime());
-			result.updatedAt = new Timestamp(now.getTime());
-			addOrUpdateUser(result);
-		}
-		
-		return result;
-	}
-	
-	/**
 	 * Adds the user if the id is <=0, which also updates the id
 	 * to reflect the newly generated one. Otherwise just updates the
 	 * user
@@ -318,15 +272,14 @@ public class LoansDatabase extends Database {
 			PreparedStatement statement;
 			int counter = 1;
 			if(user.id <= 0) {
-				statement = connection.prepareStatement("INSERT INTO users (username, auth, password_digest, claimed, claim_code, " +
+				statement = connection.prepareStatement("INSERT INTO users (auth, password_digest, claimed, claim_code, " +
 						"claim_link_sent_at, created_at, updated_at, email, name, street_address, " +
-						"city, state, zip, country) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+						"city, state, zip, country) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 			}else {
-				statement = connection.prepareStatement("UPDATE users SET username=?, auth=?, password_digest=?, claimed=?, claim_code=?, " +
+				statement = connection.prepareStatement("UPDATE users SET auth=?, password_digest=?, claimed=?, claim_code=?, " +
 						"claim_link_sent_at=?, created_at=?, updated_at=?, email=?, name=?, street_address=?, " +
 						"city=?, state=?, zip=?, country=? WHERE id=?");
 			}
-			statement.setString(counter++, user.username);
 			statement.setInt(counter++, user.auth);
 			statement.setString(counter++, user.passwordDigest);
 			statement.setBoolean(counter++, user.claimed);
@@ -368,7 +321,7 @@ public class LoansDatabase extends Database {
 	 * @throws SQLException if a sql-exception occurs
 	 */
 	private User getUserFromSet(ResultSet set) throws SQLException {
-		User user = new User(set.getInt("id"), set.getString("username"), set.getInt("auth"),
+		User user = new User(set.getInt("id"), set.getInt("auth"),
 				set.getString("password_digest"), set.getBoolean("claimed"), 
 				set.getString("claim_code"), set.getTimestamp("claim_link_sent_at"),
 				set.getTimestamp("created_at"), set.getTimestamp("updated_at"),
@@ -382,6 +335,150 @@ public class LoansDatabase extends Database {
 			user.updatedAt = new Timestamp(System.currentTimeMillis());
 		
 		return user;
+	}
+	
+	// ===========================================================
+	// |                                                         |
+	// |                        USERNAMES                        |
+	// |                                                         |
+	// ===========================================================
+	
+	/*
+	 * usernames
+	 *   id			- int primary key
+	 *   user_id	- int mul
+	 *   username	- varchar(255)
+	 *   
+	 *   created_at	- timestamp
+	 *   updated_at	- timestamp
+	 */
+	
+	/**
+	 * Gets the username with the specified id (referring
+	 * to the id of the username)
+	 * 
+	 * @param id username's id
+	 * @return the username with that id if it exists, otherwise null
+	 */
+	public Username getUsernameById(int id) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM usernames WHERE id=?");
+			statement.setInt(1, id);
+			
+			ResultSet results = statement.executeQuery();
+			if(results == null) {
+				statement.close();
+				return null;
+			}else if(!results.next()) {
+				results.close();
+				statement.close();
+				return null;
+			}
+			Username result = getUsernameFromSet(results);
+			results.close();
+			statement.close();
+			return result;
+		}catch(SQLException sqlE) {
+			throw new RuntimeException(sqlE);
+		}
+	}
+	
+	/**
+	 * Gets the usernames associated with the specified users id
+	 * 
+	 * @param userId the users id
+	 * @return the usernames associated with it. (may be an empty list, not null)
+	 */
+	public List<Username> getUsernamesForUserId(int userId) {
+		List<Username> result = new ArrayList<>();
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM usernames WHERE user_id=?");
+			statement.setInt(1,  userId);
+			
+			ResultSet results = statement.executeQuery();
+			if(results == null) {
+				statement.close();
+				return result;
+			}
+			
+			while(results.next()) {
+				result.add(getUsernameFromSet(results));
+			}
+			
+			results.close();
+			statement.close();
+			return result;
+		}catch(SQLException sqlE) {
+			throw new RuntimeException(sqlE);
+		}
+	}
+	
+	/**
+	 * Adds the username if the id is <=0, which also updates the id
+	 * to reflect the newly generated one. Otherwise just updates the
+	 * username
+	 * 
+	 * @param username the username to add or update
+	 */
+	public void addOrUpdateUsername(Username username) {
+		try {
+			PreparedStatement statement;
+			
+			if(username.id <= 0) {
+				statement = connection.prepareStatement(
+						"INSERT INTO usernames (user_id, username, created_at, updated_at) "
+						+ "VALUES(?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+			}else {
+				statement = connection.prepareStatement(
+						"UPDATE usernames SET user_id=?, username=?, created_at=?, updated_at=? "
+						+ "WHERE id=?"
+						);
+			}
+			int counter = 1;
+			statement.setInt(counter++, username.userId);
+			statement.setString(counter++, username.username);
+			statement.setTimestamp(counter++, username.createdAt);
+			statement.setTimestamp(counter++, username.updatedAt);
+			
+			if(username.id > 0) {
+				statement.setInt(counter++, username.id);
+			}
+			
+			statement.executeUpdate();
+			
+			if(username.id <= 0) {
+				ResultSet set = statement.getGeneratedKeys();
+				if(set.next())
+					username.id = set.getInt(1);
+				else
+					throw new IllegalStateException("This can't be happening; no generated keys for table usernames?");
+				set.close();
+			}
+			statement.close();
+		}catch(SQLException sqlE) {
+			throw new RuntimeException(sqlE);
+		}
+	}
+	
+	/**
+	 * Parses the username currently in the set, and initializes createdAt and
+	 * updatedAt if necessary.
+	 * @param set the set to fetch a username from
+	 * @return the fetched username as seen in the database
+	 * @throws SQLException if a sql exception occurs
+	 */
+	private Username getUsernameFromSet(ResultSet set) throws SQLException {
+		Username username = new Username(set.getInt("id"), set.getInt("user_id"), 
+				set.getString("username"), set.getTimestamp("created_at"), set.getTimestamp("updated_at"));
+		
+		if(username.createdAt == null) {
+			username.createdAt = new Timestamp(System.currentTimeMillis());
+		}
+		if(username.updatedAt == null) {
+			username.updatedAt = new Timestamp(System.currentTimeMillis());
+		}
+		
+		return username;
 	}
 	
 	// ===========================================================
