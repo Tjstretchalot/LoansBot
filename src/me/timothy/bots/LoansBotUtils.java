@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import me.timothy.bots.models.CreationInfo;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.User;
+import me.timothy.bots.models.Username;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -136,7 +137,8 @@ public class LoansBotUtils {
 			User uBorr = db.getUserById(l.borrowerId);
 			CreationInfo cInfo = db.getCreationInfoByLoanId(l.id);
 			
-			table.addRow(uLend.username, uBorr.username, BotUtils.getCostString(l.principalCents/100.), 
+			
+			table.addRow(getUsernamesSeperatedWith(uLend, db, " aka "), getUsernamesSeperatedWith(uBorr, db, " aka "), BotUtils.getCostString(l.principalCents/100.), 
 					BotUtils.getCostString(l.principalRepaymentCents/100.), l.unpaid ? "***UNPAID***" : "", 
 							(cInfo != null && cInfo.type == CreationInfo.CreationType.REDDIT) ? String.format("[Original Thread](%s)", cInfo.thread) : "",
 							l.createdAt != null ? BotUtils.getDateStringFromJUTC(l.createdAt.getTime()) : "",
@@ -158,6 +160,35 @@ public class LoansBotUtils {
 	}
 	
 	/**
+	 * <p>Fetches the username of the specified user and returns them seperated
+	 * with the specified string.</p>
+	 * 
+	 * <p>Ex. if the user had the username Bob and no other usernames, and this was called
+	 * with the seperator " / ", then the result would be Bob</p>
+	 * 
+	 * <p>Ex. if the username had the usernames Bob and Alice and no other usernames, and this
+	 * was called with the seperator " / ", then the result would be Bob / Alice</p>
+	 * @param user the user to fetch usernames of
+	 * @param db the database to use to fetch the usernames
+	 * @param seperator the seperator between usernames
+	 * @return
+	 */
+	public static String getUsernamesSeperatedWith(User user, LoansDatabase db, String seperator) {
+		List<Username> usernames = db.getUsernamesForUserId(user.id);
+		
+		StringBuilder result = new StringBuilder();
+		boolean first = true;
+		for(Username username : usernames) {
+			if(first)
+				first = false;
+			else
+				result.append(seperator);
+			
+			result.append(username);
+		}
+		return result.toString();
+	}
+	/**
 	 * Searches a big list of loans and selectively grabs the loans where
 	 * {@code borrower} is the borrower
 	 * 
@@ -169,9 +200,11 @@ public class LoansBotUtils {
 	private static List<Loan> getLoansWithBorrower(List<Loan> bigList, LoansDatabase db, String borrower) {
 		List<Loan> result = new ArrayList<>();
 		for(Loan l : bigList) {
-			User borrowerU = db.getUserById(l.borrowerId);
-			if(borrowerU.username.equalsIgnoreCase(borrower)) {
-				result.add(l);
+			List<Username> borrowerUsernames = db.getUsernamesForUserId(l.borrowerId);
+			for(Username borrowerUsername : borrowerUsernames) {
+				if(borrowerUsername.username.equalsIgnoreCase(borrower)) {
+					result.add(l);
+				}
 			}
 		}
 		return result;
@@ -188,9 +221,11 @@ public class LoansBotUtils {
 	private static List<Loan> getLoansWithLender(List<Loan> bigList, LoansDatabase db, String lender) {
 		List<Loan> result = new ArrayList<>();
 		for(Loan l : bigList) {
-			User lenderU = db.getUserById(l.lenderId);
-			if(lenderU.username.equalsIgnoreCase(lender)) {
-				result.add(l);
+			List<Username> lenderUsernames = db.getUsernamesForUserId(l.lenderId);
+			for(Username lenderUsername : lenderUsernames) {
+				if(lenderUsername.username.equalsIgnoreCase(lender)) {
+					result.add(l);
+				}
 			}
 		}
 		return result;
