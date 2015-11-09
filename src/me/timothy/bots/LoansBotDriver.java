@@ -11,6 +11,7 @@ import me.timothy.bots.models.Recheck;
 import me.timothy.bots.models.ResetPasswordRequest;
 import me.timothy.bots.models.Response;
 import me.timothy.bots.models.User;
+import me.timothy.bots.models.Username;
 import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
 import me.timothy.bots.summon.CommentSummon;
@@ -117,17 +118,21 @@ public class LoansBotDriver extends BotDriver {
 		List<User> toSendCode = ldb.getUsersToSendCode();
 		
 		for(User user : toSendCode) {
-			logger.info("Sending claim code to " + user.username);
+			List<Username> usernames = ldb.getUsernamesForUserId(user.id);
 			
-			String message = ((LoansDatabase) database).getResponseByName("claim_code").responseBody;
-			message = message.replace("<user>", user.username);
-			message = message.replace("<code>", user.claimCode);
-			message = message.replace("<codeurl>", "https://redditloans.com/users/" + user.id + "/claim/?code=" + user.claimCode);
-			sendMessage(user.username, "RedditLoans Account Claimed", message);
-			
-			user.claimLinkSetAt = new Timestamp(System.currentTimeMillis());
-			ldb.addOrUpdateUser(user);
-			sleepFor(2000);
+			for(Username username : usernames) {
+				logger.info("Sending claim code to " + username.username);
+				
+				String message = ((LoansDatabase) database).getResponseByName("claim_code").responseBody;
+				message = message.replace("<user>", username.username);
+				message = message.replace("<code>", user.claimCode);
+				message = message.replace("<codeurl>", "https://redditloans.com/users/" + user.id + "/claim/?code=" + user.claimCode);
+				sendMessage(username.username, "RedditLoans Account Claimed", message);
+				
+				user.claimLinkSetAt = new Timestamp(System.currentTimeMillis());
+				ldb.addOrUpdateUser(user);
+				sleepFor(2000);
+			}
 		}
 	}
 	
@@ -246,11 +251,17 @@ public class LoansBotDriver extends BotDriver {
 			ResponseInfo rInfo = new ResponseInfo();
 			rInfo.addTemporaryString("userid", Integer.toString(user.id));
 			rInfo.addTemporaryString("code", rpr.resetCode);
-			logger.info(String.format("Sending reset password code to %s", user.username));
-			sendMessage(user.username, "RedditLoans Reset Password", new ResponseFormatter(resp.responseBody, rInfo).getFormattedResponse(config, db));
 			
-			rpr.resetCodeSent = true;
-			db.updateResetPasswordRequest(rpr);
+			String message = new ResponseFormatter(resp.responseBody, rInfo).getFormattedResponse(config, db);
+			
+			List<Username> usernames = db.getUsernamesForUserId(user.id);
+			for(Username username : usernames) {
+				logger.info(String.format("Sending reset password code to %s", username.username));
+				sendMessage(username.username, "RedditLoans Reset Password", message);
+				
+				rpr.resetCodeSent = true;
+				db.updateResetPasswordRequest(rpr);
+			}
 		}
 	}
 	
