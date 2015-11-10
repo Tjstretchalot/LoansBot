@@ -276,7 +276,7 @@ public class LoansDatabase extends Database {
 			addOrUpdateUsername(usernameModel);
 			return result;
 		}else {
-			return getUserById(usernameModel.id);
+			return getUserById(usernameModel.userId);
 		}
 		
 	}
