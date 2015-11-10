@@ -8,7 +8,6 @@ import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansBotUtils;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.models.Loan;
-import me.timothy.bots.models.User;
 import me.timothy.bots.models.Username;
 
 /**
