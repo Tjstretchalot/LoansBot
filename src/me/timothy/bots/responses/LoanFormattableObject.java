@@ -24,9 +24,10 @@ public class LoanFormattableObject implements FormattableObject {
 		LoansDatabase db = (LoansDatabase) database;
 		String username = info.getObject(myName.replace("loans", "user")).toString();
 		Username usernameModel = db.getUsernameByUsername(username);
-		User userToGetLoansOf = db.getUserById(usernameModel.userId);
-		List<Loan> relevantLoans1 = userToGetLoansOf != null ? db.getLoansWithBorrowerAndOrLender(userToGetLoansOf.id, userToGetLoansOf.id, false) : new ArrayList<Loan>();
-		
+		List<Loan> relevantLoans1 = new ArrayList<>();
+		if(usernameModel != null) {
+			relevantLoans1 = db.getLoansWithBorrowerAndOrLender(usernameModel.userId, usernameModel.userId, false);
+		}
 		return LoansBotUtils.getLoansString(relevantLoans1, db, username, config);
 	}
 
