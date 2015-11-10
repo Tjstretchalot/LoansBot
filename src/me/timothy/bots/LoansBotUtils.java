@@ -184,7 +184,7 @@ public class LoansBotUtils {
 			else
 				result.append(seperator);
 			
-			result.append(username);
+			result.append(username.username);
 		}
 		return result.toString();
 	}

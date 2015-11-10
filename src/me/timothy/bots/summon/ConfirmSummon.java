@@ -71,7 +71,7 @@ public class ConfirmSummon implements CommentSummon {
 			if(lenderUsername != null && borrowerUsername != null) {
 				User lenderUser = database.getUserById(lenderUsername.userId);
 				User borrowerUser = database.getUserById(borrowerUsername.userId);
-				
+					
 				List<Loan> loans = database.getLoansWithBorrowerAndOrLender(borrowerUser.id, lenderUser.id, true);
 				numLoans = loans.size();
 				for(Loan loan : loans) {
