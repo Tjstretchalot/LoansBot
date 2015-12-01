@@ -54,7 +54,7 @@ public class ConfirmSummon implements CommentSummon {
 			String lender = ri.getObject("user1").toString().toLowerCase();
 			int money = ((MoneyFormattableObject) ri.getObject("money1")).getAmount();
 			if(borrower.equals(lender)) {
-				logger.printf(Level.INFO, "Ignoring %s confirming he sent money to himself!");
+				logger.printf(Level.INFO, "Ignoring %s confirming he sent money to himself!", borrower);
 				return null;
 			}
 		
@@ -84,7 +84,7 @@ public class ConfirmSummon implements CommentSummon {
 			
 			ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName(validConfirm ? "confirm" : "confirmNoLoan").responseBody, ri);
 			
-			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, (LoansDatabase) db));
+			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, (LoansDatabase) db), "991c8042-3ecc-11e4-8052-12313d05258a");
 		}
 		return null;
 	}
