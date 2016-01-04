@@ -235,6 +235,30 @@ public class LoansDatabase extends Database {
 	}
 	
 	/**
+	 * Gets the current highest user id
+	 * 
+	 * @return the highest user id
+	 */
+	public int getMaxUserId() {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT max(id) FROM users");
+			ResultSet set = statement.executeQuery();
+			
+			int result = -1;
+			if(set.next()) {
+				result = set.getInt(1);
+			}else {
+				throw new IllegalStateException("select max(id) had no results");
+			}
+			set.close();
+			statement.close();
+			return result;
+		}catch(SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
 	 * Gets all users that are <i>unclaimed</i>, have a <i>claim code</i>, and
 	 * do not have a <i>claim link sent at</i> date
 	 * @return list of users to pm a code

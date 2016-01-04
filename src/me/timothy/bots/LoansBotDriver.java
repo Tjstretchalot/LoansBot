@@ -335,6 +335,8 @@ public class LoansBotDriver extends BotDriver {
 		
 		int numAdditional = 10 - userIdsToCheck.size();
 		for(int i = 0; i < numAdditional; i++) {
+			if(idNext > ldb.getMaxUserId())
+				break;
 			userIdsToCheck.add(idNext);
 			idNext++;
 		}
