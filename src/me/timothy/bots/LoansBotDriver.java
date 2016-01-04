@@ -1,10 +1,14 @@
 package me.timothy.bots;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 import me.timothy.bots.diagnostics.Diagnostics;
 import me.timothy.bots.models.Recheck;
@@ -18,6 +22,7 @@ import me.timothy.bots.summon.CommentSummon;
 import me.timothy.bots.summon.LinkSummon;
 import me.timothy.bots.summon.PMSummon;
 import me.timothy.jreddit.RedditUtils;
+import me.timothy.jreddit.info.Account;
 import me.timothy.jreddit.info.Comment;
 import me.timothy.jreddit.info.Errorable;
 import me.timothy.jreddit.info.Link;
@@ -102,12 +107,16 @@ public class LoansBotDriver extends BotDriver {
 		handleResetPasswordRequests();
 		sleepFor(2000);
 		
+		logger.debug("Scanning for new lenders camp contributors..");
+		handleLendersCampContributors();
+		sleepFor(2000);
+		
 		logger.debug("Performing self-assessment...");
 		handleDiagnostics();
 		
 		super.doLoop();
 	}
-	
+
 	/**
 	 * Loops through unclaimed users who have a claim code but no claim
 	 * link sent at and sends them a reddit PM with the claim code, then updates
@@ -262,6 +271,103 @@ public class LoansBotDriver extends BotDriver {
 				rpr.resetCodeSent = true;
 				db.updateResetPasswordRequest(rpr);
 			}
+		}
+	}
+
+	/**
+	 * Checks reddits list of lenders camp contributors and verifies we
+	 * aren't missing any
+	 */
+	private void updateLendersCampContributors() {
+		LoansDatabase ldb = (LoansDatabase) database;
+		
+		Listing contribs = new Retryable<Listing>("Get lenderscamp contributors"){
+			@Override
+			protected Listing runImpl() throws Exception {
+				return RedditUtils.getContributorsForSubreddit("lenderscamp", bot.getUser());
+			}
+		}.run();
+		sleepFor(2000);
+		
+		for(int i = 0; i < contribs.numChildren(); i++) {
+			Account contribAcc = (Account) contribs.getChild(i);
+			String usernameStr = contribAcc.name();
+			
+			Username username = ldb.getUsernameByUsername(usernameStr);
+			if(username != null) {
+				if(!ldb.hasLendersCampContributor(username.userId)) {
+					logger.info(String.format("Detected outside person added contributor %s to lenderscamp", usernameStr));
+					ldb.addLenderCampContributor(username.userId, false);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Handles lenders camp contributors
+	 */
+	private void handleLendersCampContributors() {
+		updateLendersCampContributors();
+		
+		LoansDatabase ldb = (LoansDatabase) database;
+		// This can take an extremely long time to catch up - lets make sure it doesn't lose its
+		// progress on restarts
+		Properties defaultProps = new Properties();
+		defaultProps.setProperty("id_next", "1");
+		defaultProps.setProperty("last_check", "-1");
+		Properties lccProgressProps = new Properties(defaultProps);
+		File checkFile = new File("lenders_camp_contributors_progress.properties");
+		if(checkFile.exists()) {
+			try(FileReader fr = new FileReader(checkFile)) {
+				lccProgressProps.load(fr);
+			}catch(IOException ex) {
+				logger.catching(ex);
+			}
+		}
+		int idNext = Integer.valueOf(lccProgressProps.getProperty("id_next"));
+		long lastCheck = Long.valueOf(lccProgressProps.getProperty("last_check"));
+		long theTime = new Date().getTime();
+		
+		List<Integer> userIdsToCheck = new ArrayList<>();
+		if(lastCheck > 0) {
+			userIdsToCheck.addAll(ldb.getUserIdsWithNewLoanAsLenderSince(new Timestamp(lastCheck)));
+		}
+		
+		int numAdditional = 10 - userIdsToCheck.size();
+		for(int i = 0; i < numAdditional; i++) {
+			userIdsToCheck.add(idNext);
+			idNext++;
+		}
+		
+		for(Integer userToCheckId : userIdsToCheck) {
+			User userToCheck = ldb.getUserById(userToCheckId);
+			if(userToCheck == null)
+				continue;
+			
+			List<Username> usernames = ldb.getUsernamesForUserId(userToCheck.id);
+			int numberOfLoansAsLender = ldb.getNumberOfLoansAsLender(userToCheck.id);
+			if(numberOfLoansAsLender >= 7 && !ldb.hasLendersCampContributor(userToCheck.id)) {
+				logger.info(String.format("Inviting user %d (%s) as a contributor to lenderscamp (%d loans as lender)", userToCheck.id, usernames.get(0).username, numberOfLoansAsLender));
+				for(final Username username : usernames) {
+					new Retryable<Boolean>("Add contributor") {
+						@Override
+						protected Boolean runImpl() throws Exception {
+							RedditUtils.addContributor("lenderscamp", username.username, bot.getUser());
+							return Boolean.TRUE;
+						}
+					}.run();
+				}
+				sleepFor(2000);
+				ldb.addLenderCampContributor(userToCheck.id, true);
+			}
+		}
+		
+		lccProgressProps.setProperty("id_next", String.valueOf(idNext));
+		lccProgressProps.setProperty("last_check", String.valueOf(theTime));
+		try(FileWriter fw = new FileWriter(checkFile)) {
+			lccProgressProps.store(fw, "Lenders Camp Contributors Progress Information");
+		}catch(IOException ex) {
+			logger.catching(ex);
 		}
 	}
 	

@@ -13,6 +13,7 @@ import java.util.List;
 
 import me.timothy.bots.models.AdminUpdate;
 import me.timothy.bots.models.CreationInfo;
+import me.timothy.bots.models.LendersCampContributor;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.Recheck;
 import me.timothy.bots.models.Repayment;
@@ -253,6 +254,30 @@ public class LoansDatabase extends Database {
 			statement.close();
 			return result;
 		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 * Gets all users ids that have a new loan as lender since the specified timestamp
+	 * @param timestamp the timestamp
+	 * @return distinct user ids with new loans since then or an empty set
+	 */
+	public List<Integer> getUserIdsWithNewLoanAsLenderSince(Timestamp timestamp) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT DISTINCT lender_id FROM loans WHERE created_at>?");
+			statement.setTimestamp(1, timestamp);
+			ResultSet set = statement.executeQuery();
+			
+			List<Integer> result = new ArrayList<>();
+			while(set.next()) {
+				int lenderId = set.getInt(1);
+				result.add(lenderId);
+			}
+			set.close();
+			statement.close();
+			return result;
+		}catch(SQLException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -579,6 +604,32 @@ public class LoansDatabase extends Database {
 			throw new RuntimeException(sqlE);
 		}
 		return results;
+	}
+	
+	/**
+	 * Gets the number of loans a user has done as a lender in
+	 * one sql query
+	 * 
+	 * @param userId the user id
+	 * @return the number of loans as lender
+	 */
+	public int getNumberOfLoansAsLender(int userId) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM (SELECT * FROM loans "
+					+ "WHERE lender_id=? AND deleted=0) as T2");
+			statement.setInt(1, userId);
+			ResultSet set = statement.executeQuery();
+			int result = 0;
+			if(set.next()) 
+				result = set.getInt(1);
+			else
+				throw new IllegalStateException("No results from COUNT(*)");
+			set.close();
+			statement.close();
+			return result;
+		}catch(SQLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	/**
@@ -1313,5 +1364,94 @@ public class LoansDatabase extends Database {
 	private Warning getWarning(ResultSet set) throws SQLException {
 		return new Warning(set.getInt("id"), set.getInt("warned_user_id"), set.getInt("warning_user_id"), set.getString("violation"),
 				set.getString("action_taken"), set.getString("next_action"), set.getString("notes"), set.getTimestamp("created_at"), set.getTimestamp("updated_at"));
+	}
+	
+	// ===========================================================
+	// |                                                         |
+	// |                LENDERS CAMP CONTRIBUTORS                |
+	// |                                                         |
+	// ===========================================================
+	
+	/*
+	 * lenders_camp_contributors
+	 *   id         - int primary key
+	 *   user_id    - int not null mul uni
+	 *   bot_added	- tinyint(1)
+	 *   created_at	- datetime
+	 *   updated_at - datetime
+	 */
+	
+	/**
+	 * Adds a lender camp contributor to the database, will fail if user id is
+	 * not unique. Updates the contributors id to match the newly generated id.
+	 * 
+	 * @param contributor the contributor
+	 */
+	public void addLenderCampContributor(LendersCampContributor contributor) {
+		if(!contributor.isValid())
+			throw new IllegalArgumentException("Cannot save invalid contributor");
+		
+		try {
+			PreparedStatement statement = connection.prepareStatement("INSERT INTO lenders_camp_contributors (user_id, bot_added, created_at, updated_at) "
+					+ "VALUES(?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+			
+			int index = 1;
+			statement.setInt(index++, contributor.userId);
+			statement.setBoolean(index++, contributor.botAdded);
+			statement.setTimestamp(index++, contributor.createdAt);
+			statement.setTimestamp(index++, contributor.updatedAt);
+			
+			statement.executeUpdate();
+			
+			ResultSet set = statement.getGeneratedKeys();
+			if(set.next())
+				contributor.id = set.getInt(1);
+			else
+				throw new IllegalStateException("This can't be happening; no generated keys for table lenders_camp_contributors?");
+			set.close();
+			statement.close();
+		}catch(SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 * Convenience method that creates the lenders camp contributor model
+	 * 
+	 * @param userId the user id to add
+	 * @param botAdded if the bot added this contributor
+	 * @see #addLenderCampContributor(LendersCampContributor)
+	 */
+	public void addLenderCampContributor(int userId, boolean botAdded) {
+		LendersCampContributor lcc = new LendersCampContributor();
+		lcc.userId = userId;
+		lcc.botAdded = botAdded;
+		
+		addLenderCampContributor(lcc);
+	}
+	
+	/**
+	 * Checks if there is a row in the table with a matching user id to the 
+	 * specified user id.
+	 * 
+	 * @param userId the user id
+	 * @return if a row in the table has that user id
+	 */
+	public boolean hasLendersCampContributor(int userId) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT EXISTS(SELECT * FROM lenders_camp_contributors WHERE user_id=?) AS user_exists");
+			statement.setInt(1, userId);
+			ResultSet set = statement.executeQuery();
+			boolean result = false;
+			if(set.next())
+				result = set.getBoolean("user_exists");
+			else
+				throw new IllegalStateException("No results from exists query");
+			set.close();
+			statement.close();
+			return result;
+		}catch(SQLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
