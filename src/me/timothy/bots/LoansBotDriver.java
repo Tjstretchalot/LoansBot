@@ -175,22 +175,23 @@ public class LoansBotDriver extends BotDriver {
 		logger.info("Performing " + batches.size() + " batches of rechecks");
 		
 		for(Recheck[] batch : batches) {
-			String[] asStr = new String[batch.length];
+			final String[] asStr = new String[batch.length];
 			for(int i = 0; i < batch.length; i++) {
 				asStr[i] = batch[i].fullname;
 				ldb.deleteRecheck(batch[i]);
 			}
 			
-			try {
-				Listing listing = RedditUtils.getThings(asStr, bot.getUser());
-				logger.trace(String.format("Batch size %d got %d things", batch.length, listing.numChildren()));
-				for(int i = 0; i < listing.numChildren(); i++) {
-					Thing thing = listing.getChild(i);
-					
-					handleRecheck(thing);
+			Listing listing = new Retryable<Listing>("Get things for rechecks") {
+				@Override
+				protected Listing runImpl() throws Exception {
+					return RedditUtils.getThings(asStr, bot.getUser());
 				}
-			} catch (IOException | ParseException e) {
-				logger.catching(e);
+			}.run();
+			logger.trace(String.format("Batch size %d got %d things", batch.length, listing.numChildren()));
+			for(int i = 0; i < listing.numChildren(); i++) {
+				Thing thing = listing.getChild(i);
+				
+				handleRecheck(thing);
 			}
 		}
 	}
@@ -201,7 +202,6 @@ public class LoansBotDriver extends BotDriver {
 	 * @param thing the thing to recheck
 	 */
 	private void handleRecheck(Thing thing) {
-		LoansDatabase ldb = (LoansDatabase) database;
 		if(database.containsFullname(thing.fullname())) {
 			logger.trace(String.format("Skipping %s because the database contains it", thing.fullname()));
 			return;
@@ -239,13 +239,13 @@ public class LoansBotDriver extends BotDriver {
 			}.run();
 			sleepFor(2000);
 			
-			int numCommentsQueued = 0;
+			List<Comment> commentsToLookAt = new ArrayList<>();
 			for(int i = 0; i < replies.numChildren(); i++) {
 				Thing childThing = replies.getChild(i);
 				if(childThing instanceof Comment) {
 					if(childThing.fullname() != null) {
-						numCommentsQueued++;
-						ldb.addRecheck(childThing.fullname());
+						
+						commentsToLookAt.add((Comment) childThing);
 					}else {
 						logger.trace("(queueing comments of link to recheck) Null fullname for child thing: " + childThing);
 					}
@@ -253,7 +253,13 @@ public class LoansBotDriver extends BotDriver {
 					logger.trace("(queueing comments of link to recheck) Weird child thing: " + childThing);
 				}
 			}
-			logger.trace(String.format("Queued %d comments of %s for rechecks", numCommentsQueued, link.fullname()));
+			logger.trace(String.format("Found %d comments to recheck in %s", commentsToLookAt.size(), link.fullname()));
+			
+			for(Comment com : commentsToLookAt) {
+				com.linkAuthor(link.author());
+				com.linkURL(link.url());
+				handleComment(com, true);
+			}
 		}else if(thing instanceof Message) {
 			handlePM(thing);
 		}
