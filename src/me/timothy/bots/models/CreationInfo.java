@@ -105,6 +105,8 @@ public class CreationInfo {
 			if(thread != null || reason == null || userId <= 0)
 				return false;
 			break;
+		case PAID_SUMMON:
+			break;
 		default:
 			throw new IllegalArgumentException("Unknown creation type " + type.name());
 		}

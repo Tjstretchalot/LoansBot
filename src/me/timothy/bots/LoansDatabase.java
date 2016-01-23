@@ -1,6 +1,5 @@
 package me.timothy.bots;
 
-import java.sql.Array;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -10,6 +9,7 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import me.timothy.bots.models.AdminUpdate;
@@ -861,11 +861,25 @@ public class LoansDatabase extends Database {
 	 * @param loanIds the loan ids
 	 * @return the creation info with that id if it exists, null otherwise
 	 */
-	public List<CreationInfo> getCreationInfoByLoanId(Integer... loanIds) {
+	public List<CreationInfo> getCreationInfoByLoanId(int... loanIds) {
+		if(loanIds.length == 0) {
+			return new ArrayList<>();
+		}
 		try {
-			PreparedStatement statement = connection.prepareStatement("SELECT * FROM creation_infos WHERE loan_id in ? LIMIT 1");
-			Array arr = connection.createArrayOf("int", loanIds);
-			statement.setArray(1, arr);
+			// These are integers and are not prone to sql injection. We also generated them, not user input
+			String ids = "";
+			boolean first = true;
+			for(int loanId : loanIds) {
+				if(first) {
+					ids += "(";
+					first = false;
+				}else {
+					ids += ", ";
+				}
+				ids += loanId;
+			}
+			ids += ")";
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM creation_infos WHERE loan_id in " + ids);
 			
 			ResultSet set = statement.executeQuery();
 			List<CreationInfo> result = new ArrayList<>();
@@ -878,7 +892,7 @@ public class LoansDatabase extends Database {
 			statement.close();
 			return result;
 		}catch(SQLException exc) {
-			throw new RuntimeException(exc);
+			throw new RuntimeException("loan ids: " + Arrays.toString(loanIds), exc);
 		}
 	}
 	

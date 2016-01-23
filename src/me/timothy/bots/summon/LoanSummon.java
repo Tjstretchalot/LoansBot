@@ -115,7 +115,7 @@ public class LoanSummon implements CommentSummon {
 		// We want to find creation infos for a loan that might match this.
 		
 		List<Loan> similarLoans = database.getLoansWithBorrowerAndOrLender(loan.borrowerId, loan.lenderId, true);
-		Integer[] similarLoanIds = new Integer[similarLoans.size()];
+		int[] similarLoanIds = new int[similarLoans.size()];
 		for(int i = 0; i < similarLoans.size(); i++) {
 			similarLoanIds[i] = similarLoans.get(i).id;
 		}
