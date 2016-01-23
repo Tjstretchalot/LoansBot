@@ -135,7 +135,7 @@ public class LoanSummon implements CommentSummon {
 			
 			if(simLoanInfo.type == CreationInfo.CreationType.PAID_SUMMON && simLoan.principalCents >= loan.principalCents) {
 				// This is the loan!
-				loan.id = simLoanInfo.id;
+				loan.id = simLoan.id;
 				return simLoanInfo;
 			}
 		}
