@@ -135,7 +135,7 @@ public class LoansBotUtils {
 			Loan l = loans.get(i);
 			User uLend = db.getUserById(l.lenderId);
 			User uBorr = db.getUserById(l.borrowerId);
-			CreationInfo cInfo = db.getCreationInfoByLoanId(l.id);
+			CreationInfo cInfo = db.getCreationInfoByLoanId(l.id).get(0);
 			
 			
 			table.addRow(getUsernamesSeperatedWith(uLend, db, " aka "), getUsernamesSeperatedWith(uBorr, db, " aka "), BotUtils.getCostString(l.principalCents/100.), 

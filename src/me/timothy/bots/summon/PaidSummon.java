@@ -1,5 +1,6 @@
 package me.timothy.bots.summon;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -11,6 +12,7 @@ import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansBotUtils;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.currencies.CurrencyHandler;
+import me.timothy.bots.models.CreationInfo;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.User;
 import me.timothy.bots.models.Username;
@@ -32,6 +34,8 @@ import org.apache.logging.log4j.Logger;
  * @author Timothy
  */
 public class PaidSummon implements CommentSummon {
+	public static final String CREATED_LOAN_WHEN_PAID = "Loan created when paid - ttfpusffpzpafrcy";
+	
 	/**
 	 * Matches things like
 	 * 
@@ -123,6 +127,7 @@ public class PaidSummon implements CommentSummon {
 			String user1 = respInfo.getObject("user1").toString();
 			MoneyFormattableObject moneyObj = (MoneyFormattableObject) respInfo.getObject("money1");
 			int amountRepaid = moneyObj.getAmount();
+			long now = Math.round(comment.createdUTC() * 1000);
 			boolean hasConversion = matcher.group(2) != null; 
 			if(hasConversion) {
 				String convertFrom = matcher.group(2).trim();
@@ -137,6 +142,22 @@ public class PaidSummon implements CommentSummon {
 			Username authorUsername = database.getUsernameByUsername(author);
 			Username user1Username = database.getUsernameByUsername(user1);
 			
+			if(user1Username == null || authorUsername == null) {
+				// This is to retroactively apply loans when we get the $paid out of order
+				// in rechecks. It can be removed when that is no longer necessary, because
+				// it breaks all the rules.
+				User borrower = database.getOrCreateUserByUsername(user1);
+				user1Username = database.getUsernameByUsername(user1); // fix npe
+				User lender = database.getOrCreateUserByUsername(author);
+				authorUsername = database.getUsernameByUsername(author);
+				
+				Loan loan = new Loan(-1, lender.id, borrower.id, amountRepaid, 0, false, false, null, new Timestamp(now), new Timestamp(now), null);
+				database.addOrUpdateLoan(loan);
+				CreationInfo cInfo = new CreationInfo(-1, loan.id, CreationInfo.CreationType.PAID_SUMMON, null, null, -1, new Timestamp(now), new Timestamp(now));
+				database.addOrUpdateCreationInfo(cInfo);
+				
+				logger.printf(Level.TRACE, "%s did a paid command on %s, but one did't exist. So we retroactively created loan %d", author, user1, loan.id);
+			}
 			if(authorUsername == null || user1Username == null) {
 				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but author is %s and user 1 is %s",
 						author, user1, amountRepaid, (authorUsername == null ? "null" : "not null"), (user1Username == null ? "null" : "not null"));

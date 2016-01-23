@@ -1,5 +1,6 @@
 package me.timothy.bots;
 
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -856,18 +857,22 @@ public class LoansDatabase extends Database {
 	}
 	
 	/**
-	 * Get the creation info with the specified id
-	 * @param id the id
+	 * Get the creation info with any of the specified ids
+	 * @param loanIds the loan ids
 	 * @return the creation info with that id if it exists, null otherwise
 	 */
-	public CreationInfo getCreationInfoByLoanId(int loanId) {
+	public List<CreationInfo> getCreationInfoByLoanId(Integer... loanIds) {
 		try {
-			PreparedStatement statement = connection.prepareStatement("SELECT * FROM creation_infos WHERE loan_id=? LIMIT 1");
-			statement.setInt(1, loanId);
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM creation_infos WHERE loan_id in ? LIMIT 1");
+			Array arr = connection.createArrayOf("int", loanIds);
+			statement.setArray(1, arr);
 			
 			ResultSet set = statement.executeQuery();
+			List<CreationInfo> result = new ArrayList<>();
 			
-			CreationInfo result = (set.next() ? getCreationInfoFromSet(set) : null);
+			while(set.next()) {
+				result.add(getCreationInfoFromSet(set));
+			}
 			
 			set.close();
 			statement.close();
@@ -876,6 +881,7 @@ public class LoansDatabase extends Database {
 			throw new RuntimeException(exc);
 		}
 	}
+	
 	
 	private CreationInfo getCreationInfoFromSet(ResultSet set) throws SQLException {
 		return new CreationInfo(

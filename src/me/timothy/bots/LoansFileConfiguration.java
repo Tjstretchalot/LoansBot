@@ -23,5 +23,6 @@ public class LoansFileConfiguration extends FileConfiguration {
 		
 		addProperties("database", true, "url", "username", "password");
 		addProperties("currencylayer", true, "access_code");
+		addProperties("rechecks", true, "silent_mode");
 	}
 }

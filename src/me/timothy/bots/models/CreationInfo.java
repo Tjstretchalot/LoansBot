@@ -24,7 +24,13 @@ public class CreationInfo {
 		/**
 		 * A loan that was created on reddit loans
 		 */
-		REDDITLOANS(1)
+		REDDITLOANS(1),
+		
+		/**
+		 * A loan that was created retroactively by a paid
+		 * summon that has not yet found the loan command
+		 */
+		PAID_SUMMON(2)
 		
 		;
 		

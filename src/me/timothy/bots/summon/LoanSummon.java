@@ -1,6 +1,7 @@
 package me.timothy.bots.summon;
 
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -79,14 +80,24 @@ public class LoanSummon implements CommentSummon {
 			
 			User doerU = database.getOrCreateUserByUsername(author);
 			User doneToU = database.getOrCreateUserByUsername(linkAuthor);
-			long now = System.currentTimeMillis();
+			long now = Math.round(comment.createdUTC() * 1000);
+			
+			
 			
 			Loan loan = new Loan(-1, doerU.id, doneToU.id, amountPennies, 0, false, false, null, new Timestamp(now), new Timestamp(now), null);
+			CreationInfo cInfoRetro = attemptRetroactiveLoan(database, loan); // this may set the loan id, which will cause it to be updated rather than added
 			database.addOrUpdateLoan(loan);
-			CreationInfo cInfo = new CreationInfo(-1, loan.id, CreationInfo.CreationType.REDDIT, url, null, -1, new Timestamp(now), new Timestamp(now));
+			CreationInfo cInfo = null;
+			if(cInfoRetro != null) {
+				cInfo = new CreationInfo(cInfoRetro.id, loan.id, CreationInfo.CreationType.REDDIT, 
+						url, null, -1, new Timestamp(Math.min(now, cInfoRetro.createdAt.getTime())),
+						new Timestamp(Math.max(now, cInfoRetro.createdAt.getTime())));
+			}else {
+				cInfo = new CreationInfo(-1, loan.id, CreationInfo.CreationType.REDDIT, url, null, -1, new Timestamp(now), new Timestamp(now));
+			}
 			database.addOrUpdateCreationInfo(cInfo);
 			
-			logger.printf(Level.INFO, "%s just lent %s to %s [loan %d]", author, BotUtils.getCostString(amountPennies / 100.), linkAuthor, loan.id);
+			logger.printf(Level.INFO, "%s just lent %s to %s [loan %d] [retroactive = %s]", author, BotUtils.getCostString(amountPennies / 100.), linkAuthor, loan.id, cInfoRetro == null ? "no" : "yes");
 			
 			String resp = null;
 			
@@ -96,6 +107,37 @@ public class LoanSummon implements CommentSummon {
 				resp = database.getResponseByName("successful_loan").responseBody;
 			}
 			return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(resp, respInfo).getFormattedResponse(config, database));
+		}
+		return null;
+	}
+	
+	private CreationInfo attemptRetroactiveLoan(LoansDatabase database, Loan loan) {
+		// We want to find creation infos for a loan that might match this.
+		
+		List<Loan> similarLoans = database.getLoansWithBorrowerAndOrLender(loan.borrowerId, loan.lenderId, true);
+		Integer[] similarLoanIds = new Integer[similarLoans.size()];
+		for(int i = 0; i < similarLoans.size(); i++) {
+			similarLoanIds[i] = similarLoans.get(i).id;
+		}
+		
+		List<CreationInfo> similarCreationInfos = database.getCreationInfoByLoanId(similarLoanIds);
+		
+		for(Loan simLoan : similarLoans) {
+			CreationInfo simLoanInfo = null;
+			for(CreationInfo cInfo : similarCreationInfos) {
+				if(cInfo.loanId == simLoan.id) {
+					simLoanInfo = cInfo;
+					break;
+				}
+			}
+			if(simLoanInfo == null)
+				continue;
+			
+			if(simLoanInfo.type == CreationInfo.CreationType.PAID_SUMMON && simLoan.principalCents >= loan.principalCents) {
+				// This is the loan!
+				loan.id = simLoanInfo.id;
+				return simLoanInfo;
+			}
 		}
 		return null;
 	}

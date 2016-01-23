@@ -150,6 +150,7 @@ public class LoansBotDriver extends BotDriver {
 	 * them, then removes them from the queue
 	 */
 	private void handleRechecks() {
+		boolean silentMode = Boolean.valueOf(config.getProperty("rechecks.silent_mode"));
 		LoansDatabase ldb = (LoansDatabase) database;
 		
 		List<Recheck> rechecks = ldb.getAllRechecks();
@@ -191,7 +192,7 @@ public class LoansBotDriver extends BotDriver {
 			for(int i = 0; i < listing.numChildren(); i++) {
 				Thing thing = listing.getChild(i);
 				
-				handleRecheck(thing);
+				handleRecheck(thing, silentMode);
 			}
 		}
 	}
@@ -200,8 +201,9 @@ public class LoansBotDriver extends BotDriver {
 	 * Handles a particular recheck by determining its type
 	 * and calling the appropriate function in BotDriver
 	 * @param thing the thing to recheck
+	 * @param silentMode if the bot is in silent mode for rechecks
 	 */
-	private void handleRecheck(Thing thing) {
+	private void handleRecheck(Thing thing, boolean silentMode) {
 		if(database.containsFullname(thing.fullname())) {
 			logger.trace(String.format("Skipping %s because the database contains it", thing.fullname()));
 			return;
@@ -226,10 +228,10 @@ public class LoansBotDriver extends BotDriver {
 				comment.linkURL(link.url());
 			}
 				
-			handleComment(comment, true);
+			handleComment(comment, true, silentMode);
 		}else if(thing instanceof Link) {
 			final Link link = (Link) thing;
-			handleSubmission(link);
+			handleSubmission(link, silentMode);
 			
 			Listing replies = new Retryable<Listing>("Get link replies for link recheck") {
 				@Override
@@ -244,7 +246,6 @@ public class LoansBotDriver extends BotDriver {
 				Thing childThing = replies.getChild(i);
 				if(childThing instanceof Comment) {
 					if(childThing.fullname() != null) {
-						
 						commentsToLookAt.add((Comment) childThing);
 					}else {
 						logger.trace("(queueing comments of link to recheck) Null fullname for child thing: " + childThing);
@@ -258,10 +259,10 @@ public class LoansBotDriver extends BotDriver {
 			for(Comment com : commentsToLookAt) {
 				com.linkAuthor(link.author());
 				com.linkURL(link.url());
-				handleComment(com, true);
+				handleComment(com, true, silentMode);
 			}
 		}else if(thing instanceof Message) {
-			handlePM(thing);
+			handlePM(thing, silentMode);
 		}
 	}
 	/**
