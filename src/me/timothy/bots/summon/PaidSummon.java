@@ -34,8 +34,6 @@ import org.apache.logging.log4j.Logger;
  * @author Timothy
  */
 public class PaidSummon implements CommentSummon {
-	public static final String CREATED_LOAN_WHEN_PAID = "Loan created when paid - ttfpusffpzpafrcy";
-	
 	/**
 	 * Matches things like
 	 * 
