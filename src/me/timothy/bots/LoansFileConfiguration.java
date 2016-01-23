@@ -22,5 +22,6 @@ public class LoansFileConfiguration extends FileConfiguration {
 		super.load();
 		
 		addProperties("database", true, "url", "username", "password");
+		addProperties("currencylayer", true, "access_code");
 	}
 }

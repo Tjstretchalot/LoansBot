@@ -3,6 +3,7 @@ package me.timothy.bots;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import me.timothy.bots.currencies.CurrencyHandler;
 import me.timothy.bots.responses.AppliedFormattableObject;
 import me.timothy.bots.responses.LoanFormattableObject;
 import me.timothy.bots.responses.ResponseInfoFactory;
@@ -51,6 +52,7 @@ public class LoansBotMain {
 			e.printStackTrace();
 			return;
 		}
+		CurrencyHandler.accessCode = config.getProperty("currencylayer.access_code");
 		
 		logger.debug("Connecting to database..");
 		LoansDatabase database = new LoansDatabase();

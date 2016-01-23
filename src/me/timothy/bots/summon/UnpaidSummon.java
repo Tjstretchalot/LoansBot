@@ -71,7 +71,7 @@ public class UnpaidSummon implements CommentSummon {
 			}
 			responseInfo.addTemporaryString("changed loans", LoansBotUtils.getLoansAsTable(changed, database, changed.size()));
 			
-			logger.printf(Level.INFO, "%s has defaulted on %d loans from %s", user1Username.username, changed.size(), authorUsername == null ? ("null user '" + author + "'") : authorUsername.username);
+			logger.printf(Level.INFO, "%s has defaulted on %d loans from %s", user1Username == null ? "null user " + user1 : user1Username.username, changed.size(), authorUsername == null ? ("null user '" + author + "'") : authorUsername.username);
 			
 			String responseFormat = database.getResponseByName("unpaid").responseBody;
 			return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(responseFormat, responseInfo).getFormattedResponse(config, database));

@@ -158,7 +158,7 @@ public class LoansBotDriver extends BotDriver {
 		
 		List<Recheck[]> batches = new ArrayList<Recheck[]>();
 		
-		while(rechecks.size() > 5) {
+		while(rechecks.size() > 5 && batches.size() < 5) {
 			Recheck[] batch = new Recheck[5];
 			for(int i = 0; i < 5; i++) {
 				batch[i] = rechecks.get(0);
@@ -167,8 +167,10 @@ public class LoansBotDriver extends BotDriver {
 			batches.add(batch);
 		}
 		
-		Recheck[] lastBatch = rechecks.toArray(new Recheck[0]);
-		batches.add(lastBatch);
+		if(rechecks.size() <= 5) {
+			Recheck[] lastBatch = rechecks.toArray(new Recheck[0]);
+			batches.add(lastBatch);
+		}
 		
 		logger.info("Performing " + batches.size() + " batches of rechecks");
 		
@@ -181,7 +183,7 @@ public class LoansBotDriver extends BotDriver {
 			
 			try {
 				Listing listing = RedditUtils.getThings(asStr, bot.getUser());
-				logger.debug(String.format("Batch size %d got %d things", batch.length, listing.numChildren()));
+				logger.trace(String.format("Batch size %d got %d things", batch.length, listing.numChildren()));
 				for(int i = 0; i < listing.numChildren(); i++) {
 					Thing thing = listing.getChild(i);
 					
@@ -199,32 +201,59 @@ public class LoansBotDriver extends BotDriver {
 	 * @param thing the thing to recheck
 	 */
 	private void handleRecheck(Thing thing) {
+		LoansDatabase ldb = (LoansDatabase) database;
 		if(database.containsFullname(thing.fullname())) {
-			logger.debug(String.format("Skipping %s because the database contains it", thing.fullname()));
+			logger.trace(String.format("Skipping %s because the database contains it", thing.fullname()));
 			return;
 		}
 		
 		if(thing instanceof Comment) {
 			Comment comment = (Comment) thing;
 			
-			try {
-				String linkId = comment.linkID();
-				Listing listing = RedditUtils.getThings(new String[] { linkId }, bot.getUser());
-				
-				if(listing.numChildren() != 1) {
-					logger.warn("Couldn't find link author for comment " + comment.fullname());
-				}else {
-					Link link = (Link) listing.getChild(0);
-					comment.linkAuthor(link.author());
-					comment.linkURL(link.url());
+			final String linkId = comment.linkID();
+			Listing listing = new Retryable<Listing>("Get things for rechecks") {
+				@Override
+				protected Listing runImpl() throws Exception {
+					return RedditUtils.getThings(new String[] { linkId }, bot.getUser());
 				}
-			} catch (IOException | ParseException e) {
-				logger.catching(e);
+			}.run();
+			sleepFor(2000);
+			if(listing.numChildren() != 1) {
+				logger.warn("Couldn't find link author for comment " + comment.fullname());
+			}else {
+				Link link = (Link) listing.getChild(0);
+				comment.linkAuthor(link.author());
+				comment.linkURL(link.url());
 			}
 				
 			handleComment(comment, true);
 		}else if(thing instanceof Link) {
-			handleSubmission((Link) thing);
+			final Link link = (Link) thing;
+			handleSubmission(link);
+			
+			Listing replies = new Retryable<Listing>("Get link replies for link recheck") {
+				@Override
+				protected Listing runImpl() throws Exception {
+					return RedditUtils.getLinkReplies(bot.getUser(), link.id());
+				}
+			}.run();
+			sleepFor(2000);
+			
+			int numCommentsQueued = 0;
+			for(int i = 0; i < replies.numChildren(); i++) {
+				Thing childThing = replies.getChild(i);
+				if(childThing instanceof Comment) {
+					if(childThing.fullname() != null) {
+						numCommentsQueued++;
+						ldb.addRecheck(childThing.fullname());
+					}else {
+						logger.trace("(queueing comments of link to recheck) Null fullname for child thing: " + childThing);
+					}
+				}else {
+					logger.trace("(queueing comments of link to recheck) Weird child thing: " + childThing);
+				}
+			}
+			logger.trace(String.format("Queued %d comments of %s for rechecks", numCommentsQueued, link.fullname()));
 		}else if(thing instanceof Message) {
 			handlePM(thing);
 		}

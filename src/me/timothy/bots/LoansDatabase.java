@@ -131,13 +131,29 @@ public class LoansDatabase extends Database {
 	 */
 	
 	/**
-	 * Gets all queued rechecks
+	 * Queues a recheck of a specified fullname
+	 * 
+	 * @param fullname the fullname to queue
+	 */
+	public void addRecheck(String fullname) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("INSERT INTO rechecks (fullname, created_at) VALUES (?, now())");
+			statement.setString(1, fullname);
+			statement.executeUpdate();
+			statement.close();
+		}catch(SQLException sqlE) {
+			throw new RuntimeException(sqlE);
+		}
+	}
+	
+	/**
+	 * Gets all queued rechecks (limited to 100 for memory reasons) (ordered by kind, t0 first, then t1, etc.)
 	 * 
 	 * @return any rechecks in the rechecks database
 	 */
 	public List<Recheck> getAllRechecks() {
 		try {
-			PreparedStatement statement = connection.prepareStatement("SELECT * FROM rechecks");
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM rechecks ORDER BY substring(fullname, 1, 2), id LIMIT 100");
 			
 			ResultSet set = statement.executeQuery();
 			List<Recheck> results = new ArrayList<>();
