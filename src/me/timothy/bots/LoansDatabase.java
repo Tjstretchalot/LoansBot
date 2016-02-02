@@ -1312,12 +1312,16 @@ public class LoansDatabase extends Database {
 	 *   old_principal_cents           - int not null
 	 *   old_principal_repayment_cents - int not null
 	 *   old_unpaid                    - tinyint(1)
+	 *   old_deleted                   - tinyint(1)
+	 *   old_deleted_reason            - text
 	 *   
 	 *   new_lender_id                 - int mul
 	 *   new_borrower_id               - int mul
 	 *   new_principal_cents           - int not null
 	 *   new_principal_repayment_cents - int not null
 	 *   new_unpaid                    - tinyint(1)
+	 *   new_deleted                   - tinyint(1)
+	 *   new_deleted_reason            - text
 	 *   
 	 *   created_at                    - datetime
 	 *   updated_at                    - datetime
@@ -1327,9 +1331,10 @@ public class LoansDatabase extends Database {
 	private AdminUpdate getAdminUpdate(ResultSet set) throws SQLException {
 		return new AdminUpdate(set.getInt("id"), set.getInt("loan_id"), set.getInt("user_id"),
 				set.getString("reason"), set.getInt("old_lender_id"), set.getInt("old_borrower_id"), set.getInt("old_principal_cents"),
-				set.getInt("old_principal_repayment_cents"), set.getBoolean("old_unpaid"), set.getInt("new_lender_id"), set.getInt("new_borrower_id"),
-				set.getInt("new_principal_cents"), set.getInt("new_principal_repayment_cents"), set.getBoolean("new_unpaid"), set.getTimestamp("created_at"),
-				set.getTimestamp("updated_at"));
+				set.getInt("old_principal_repayment_cents"), set.getBoolean("old_unpaid"), set.getBoolean("old_deleted"), 
+				set.getString("old_deleted_reason"), set.getInt("new_lender_id"), set.getInt("new_borrower_id"),
+				set.getInt("new_principal_cents"), set.getInt("new_principal_repayment_cents"), set.getBoolean("new_unpaid"),
+				set.getBoolean("new_deleted"), set.getString("new_deleted_reason"), set.getTimestamp("created_at"), set.getTimestamp("updated_at"));
 	}
 	
 

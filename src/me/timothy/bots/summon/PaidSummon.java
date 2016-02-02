@@ -52,6 +52,17 @@ public class PaidSummon implements CommentSummon {
 		logger = LogManager.getLogger();
 	}
 
+	private void createRetroactiveLoan(LoansDatabase database, String user1, String author, int amountRepaid, long now) {
+		User borrower = database.getOrCreateUserByUsername(user1);
+		User lender = database.getOrCreateUserByUsername(author);
+		
+		Loan loan = new Loan(-1, lender.id, borrower.id, amountRepaid, 0, false, false, null, new Timestamp(now), new Timestamp(now), null);
+		database.addOrUpdateLoan(loan);
+		CreationInfo cInfo = new CreationInfo(-1, loan.id, CreationInfo.CreationType.PAID_SUMMON, null, null, -1, new Timestamp(now), new Timestamp(now));
+		database.addOrUpdateCreationInfo(cInfo);
+		
+		logger.printf(Level.TRACE, "%s did a paid command on %s, but one did't exist. So we retroactively created loan %d", author, user1, loan.id);
+	}
 	/**
 	 * Goes through each relevant loan and attempts to add as
 	 * much as possible to the principal repayment without 
@@ -140,27 +151,13 @@ public class PaidSummon implements CommentSummon {
 			Username authorUsername = database.getUsernameByUsername(author);
 			Username user1Username = database.getUsernameByUsername(user1);
 			
-			if(user1Username == null || authorUsername == null) {
-				// This is to retroactively apply loans when we get the $paid out of order
-				// in rechecks. It can be removed when that is no longer necessary, because
-				// it breaks all the rules.
-				User borrower = database.getOrCreateUserByUsername(user1);
-				user1Username = database.getUsernameByUsername(user1); // fix npe
-				User lender = database.getOrCreateUserByUsername(author);
-				authorUsername = database.getUsernameByUsername(author);
-				
-				Loan loan = new Loan(-1, lender.id, borrower.id, amountRepaid, 0, false, false, null, new Timestamp(now), new Timestamp(now), null);
-				database.addOrUpdateLoan(loan);
-				CreationInfo cInfo = new CreationInfo(-1, loan.id, CreationInfo.CreationType.PAID_SUMMON, null, null, -1, new Timestamp(now), new Timestamp(now));
-				database.addOrUpdateCreationInfo(cInfo);
-				
-				logger.printf(Level.TRACE, "%s did a paid command on %s, but one did't exist. So we retroactively created loan %d", author, user1, loan.id);
-			}
 			if(authorUsername == null || user1Username == null) {
-				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but author is %s and user 1 is %s",
-						author, user1, amountRepaid, (authorUsername == null ? "null" : "not null"), (user1Username == null ? "null" : "not null"));
-				ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName("no_loans_to_repay").responseBody, respInfo);
-				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));//.replace("<borrower>", doneTo).replace("<author>", doer));
+				createRetroactiveLoan(database, user1, author, amountRepaid, now);
+				return handleComment(comment, db, config);
+//				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but author is %s and user 1 is %s",
+//						author, user1, amountRepaid, (authorUsername == null ? "null" : "not null"), (user1Username == null ? "null" : "not null"));
+//				ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName("no_loans_to_repay").responseBody, respInfo);
+//				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));//.replace("<borrower>", doneTo).replace("<author>", doer));
 			}
 			
 			User authorUser = database.getUserById(authorUsername.userId);
@@ -175,7 +172,9 @@ public class PaidSummon implements CommentSummon {
 			removeFinishedLoans(relevantLoans);
 			
 			if(relevantLoans.size() == 0) {
-				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but there are no ongoing loans", author, user1, amountRepaid);
+				createRetroactiveLoan(database, user1, author, amountRepaid, now);
+				return handleComment(comment, db, config);
+//				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but there are no ongoing loans", author, user1, amountRepaid);
 //				ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName("no_loans_to_repay").responseBody, respInfo);
 //				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));
 //				Loan loan = new Loan(-1, )
