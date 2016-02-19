@@ -672,6 +672,31 @@ public class LoansDatabase extends Database {
 			throw new RuntimeException(e);
 		}
 	}
+
+	/**
+	 * Gets the number of completed loans a user has done as a lender
+	 * in one sql query
+	 * @param userId the user id
+	 * @return the number of completed loans as lender
+	 */
+	public int getNumberOfCompletedLoansAsLender(int userId) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM (SELECT * FROM loans "
+					+ " WHERE lender_id=? AND deleted=0 AND principal_cents=principal_repayment_cents) as T2");
+			statement.setInt(1, userId);
+			ResultSet set = statement.executeQuery();
+			int result = 0;
+			if(set.next()) 
+				result = set.getInt(1);
+			else
+				throw new IllegalStateException("No results from COUNT(*)");
+			set.close();
+			statement.close();
+			return result;
+		}catch(SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
 	
 	/**
 	 * Add and give an id to loans with id <=0, otherwise updates the loan

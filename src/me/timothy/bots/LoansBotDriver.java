@@ -343,6 +343,7 @@ public class LoansBotDriver extends BotDriver {
 	 * Handles lenders camp contributors
 	 */
 	private void handleLendersCampContributors() {
+		final long UTC_TO_GMT_MILLIS = -8 * 60 * 60 * 1000; 
 		updateLendersCampContributors();
 		
 		LoansDatabase ldb = (LoansDatabase) database;
@@ -366,7 +367,8 @@ public class LoansBotDriver extends BotDriver {
 		
 		List<Integer> userIdsToCheck = new ArrayList<>();
 		if(lastCheck > 0) {
-			userIdsToCheck.addAll(ldb.getUserIdsWithNewLoanAsLenderSince(new Timestamp(lastCheck)));
+			Timestamp timestamp = new Timestamp(lastCheck + UTC_TO_GMT_MILLIS);
+			userIdsToCheck.addAll(ldb.getUserIdsWithNewLoanAsLenderSince(timestamp));
 		}
 		
 		int numAdditional = 10 - userIdsToCheck.size();
@@ -383,9 +385,9 @@ public class LoansBotDriver extends BotDriver {
 				continue;
 			
 			List<Username> usernames = ldb.getUsernamesForUserId(userToCheck.id);
-			int numberOfLoansAsLender = ldb.getNumberOfLoansAsLender(userToCheck.id);
+			int numberOfLoansAsLender = ldb.getNumberOfCompletedLoansAsLender(userToCheck.id);
 			if(numberOfLoansAsLender >= 7 && !ldb.hasLendersCampContributor(userToCheck.id)) {
-				logger.info(String.format("Inviting user %d (%s) as a contributor to lenderscamp (%d loans as lender)", userToCheck.id, usernames.get(0).username, numberOfLoansAsLender));
+				logger.info(String.format("Inviting user %d (%s) as a contributor to lenderscamp (%d completed loans as lender)", userToCheck.id, usernames.get(0).username, numberOfLoansAsLender));
 				for(final Username username : usernames) {
 					new Retryable<Boolean>("Add contributor") {
 						@Override
