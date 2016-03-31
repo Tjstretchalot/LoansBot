@@ -53,13 +53,13 @@ public class PaidSummon implements CommentSummon {
 	}
 
 	private void createRetroactiveLoan(LoansDatabase database, String user1, String author, int amountRepaid, long now) {
-		User borrower = database.getOrCreateUserByUsername(user1);
-		User lender = database.getOrCreateUserByUsername(author);
+		User borrower = database.getUserMapping().fetchOrCreateByName(user1);
+		User lender = database.getUserMapping().fetchOrCreateByName(author);
 		
 		Loan loan = new Loan(-1, lender.id, borrower.id, amountRepaid, 0, false, false, null, new Timestamp(now), new Timestamp(now), null);
-		database.addOrUpdateLoan(loan);
+		database.getLoanMapping().save(loan);
 		CreationInfo cInfo = new CreationInfo(-1, loan.id, CreationInfo.CreationType.PAID_SUMMON, null, null, -1, new Timestamp(now), new Timestamp(now));
-		database.addOrUpdateCreationInfo(cInfo);
+		database.getCreationInfoMapping().save(cInfo);
 		
 		logger.printf(Level.TRACE, "%s did a paid command on %s, but one did't exist. So we retroactively created loan %d", author, user1, loan.id);
 	}
@@ -88,17 +88,20 @@ public class PaidSummon implements CommentSummon {
 					int amount = (l.principalCents - l.principalRepaymentCents);
 					if(amount > 0) {
 						remainingPennies -= amount;
-						database.payLoan(l, amount, time);
+						if(true) {
+							throw new RuntimeException("Not yet implemented");
+						}
+						//database.payLoan(l, amount, time); TODO
 
-							if(l.unpaid) {
-								database.setLoanUnpaid(l, false);
-							}
+						if(l.unpaid) {
+							//database.setLoanUnpaid(l, false);  TODO
+						}
 
 						if(remainingPennies == 0)
 							break;
 					}
 				}else {
-					database.payLoan(l, remainingPennies, time);
+					//database.payLoan(l, remainingPennies, time);  TODO
 					remainingPennies = 0;
 					break;
 				}
@@ -148,8 +151,8 @@ public class PaidSummon implements CommentSummon {
 				
 				moneyObj.setAmount(amountRepaid);
 			}
-			Username authorUsername = database.getUsernameByUsername(author);
-			Username user1Username = database.getUsernameByUsername(user1);
+			Username authorUsername = database.getUsernameMapping().fetchByUsername(author);
+			Username user1Username = database.getUsernameMapping().fetchByUsername(user1);
 			
 			if(authorUsername == null || user1Username == null) {
 				createRetroactiveLoan(database, user1, author, amountRepaid, now);
@@ -160,15 +163,15 @@ public class PaidSummon implements CommentSummon {
 //				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));//.replace("<borrower>", doneTo).replace("<author>", doer));
 			}
 			
-			User authorUser = database.getUserById(authorUsername.userId);
-			User user1User = database.getUserById(user1Username.userId);
+			User authorUser = database.getUserMapping().fetchById(authorUsername.userId);
+			User user1User = database.getUserMapping().fetchById(user1Username.userId);
 			
 			if(amountRepaid <= 0) {
 				logger.printf(Level.WARN, "Ridiculous amount repaid of %d, ignoring", amountRepaid);
 				return null;
 			}
 			
-			List<Loan> relevantLoans = database.getLoansWithBorrowerAndOrLender(user1User.id, authorUser.id, true);
+			List<Loan> relevantLoans = database.getLoanMapping().fetchWithBorrowerAndOrLender(user1User.id, authorUser.id, true);
 			removeFinishedLoans(relevantLoans);
 			
 			if(relevantLoans.size() == 0) {
@@ -190,9 +193,9 @@ public class PaidSummon implements CommentSummon {
 			String response = null;
 			
 			if(hasConversion) {
-				response = database.getResponseByName("repayment_with_conversion").responseBody;
+				response = database.getResponseMapping().fetchByName("repayment_with_conversion").responseBody;
 			}else {
-				response = database.getResponseByName("repayment").responseBody;
+				response = database.getResponseMapping().fetchByName("repayment").responseBody;
 			}
 			
 			

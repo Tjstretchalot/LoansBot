@@ -22,10 +22,10 @@ public class LoanFormattableObject implements FormattableObject {
 	public String toFormattedString(ResponseInfo info, String myName, FileConfiguration config, Database database) {
 		LoansDatabase db = (LoansDatabase) database;
 		String username = info.getObject(myName.replace("loans", "user")).toString();
-		Username usernameModel = db.getUsernameByUsername(username);
+		Username usernameModel = db.getUsernameMapping().fetchByUsername(username);
 		List<Loan> relevantLoans1 = new ArrayList<>();
 		if(usernameModel != null) {
-			relevantLoans1 = db.getLoansWithBorrowerAndOrLender(usernameModel.userId, usernameModel.userId, false);
+			relevantLoans1 = db.getLoanMapping().fetchWithBorrowerAndOrLender(usernameModel.userId, usernameModel.userId, false);
 		}
 		return LoansBotUtils.getLoansString(relevantLoans1, db, username, config);
 	}

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Properties;
 
 import me.timothy.bots.diagnostics.Diagnostics;
+import me.timothy.bots.models.LendersCampContributor;
 import me.timothy.bots.models.Recheck;
 import me.timothy.bots.models.ResetPasswordRequest;
 import me.timothy.bots.models.Response;
@@ -78,7 +79,7 @@ public class LoansBotDriver extends BotDriver {
 						response = response + "\n\n";
 					}
 
-					String postfix = ((LoansDatabase) database).getResponseByName("secondary_subreddit_postfix").responseBody;
+					String postfix = ((LoansDatabase) database).getResponseMapping().fetchByName("secondary_subreddit_postfix").responseBody;
 					postfix = postfix.replace("<subreddit>", subreddit);
 					postfix = postfix.replace("<primary>", LoansBotUtils.PRIMARY_SUBREDDIT);
 
@@ -124,22 +125,22 @@ public class LoansBotDriver extends BotDriver {
 	 */
 	private void handleClaimCodes() {
 		LoansDatabase ldb = (LoansDatabase) database;
-		List<User> toSendCode = ldb.getUsersToSendCode();
+		List<User> toSendCode = ldb.getUserMapping().fetchUsersToSendCode();
 		
 		for(User user : toSendCode) {
-			List<Username> usernames = ldb.getUsernamesForUserId(user.id);
+			List<Username> usernames = ldb.getUsernameMapping().fetchByUserId(user.id);
 			
 			for(Username username : usernames) {
 				logger.info("Sending claim code to " + username.username);
 				
-				String message = ((LoansDatabase) database).getResponseByName("claim_code").responseBody;
+				String message = ((LoansDatabase) database).getResponseMapping().fetchByName("claim_code").responseBody;
 				message = message.replace("<user>", username.username);
 				message = message.replace("<code>", user.claimCode);
 				message = message.replace("<codeurl>", "https://redditloans.com/claim.php?username=" + username.username + "&user_id=" + user.id + "&claim_code=" + user.claimCode);
 				sendMessage(username.username, "RedditLoans Account Claimed", message);
 				
 				user.claimLinkSetAt = new Timestamp(System.currentTimeMillis());
-				ldb.addOrUpdateUser(user);
+				ldb.getUserMapping().save(user);
 				sleepFor(2000);
 			}
 		}
@@ -153,7 +154,7 @@ public class LoansBotDriver extends BotDriver {
 		boolean silentMode = Boolean.valueOf(config.getProperty("rechecks.silent_mode"));
 		LoansDatabase ldb = (LoansDatabase) database;
 		
-		List<Recheck> rechecks = ldb.getAllRechecks();
+		List<Recheck> rechecks = ldb.getRecheckMapping().fetchAll();
 		if(rechecks.size() == 0)
 			return;
 		
@@ -179,7 +180,7 @@ public class LoansBotDriver extends BotDriver {
 			final String[] asStr = new String[batch.length];
 			for(int i = 0; i < batch.length; i++) {
 				asStr[i] = batch[i].fullname;
-				ldb.deleteRecheck(batch[i]);
+				ldb.getRecheckMapping().delete(batch[i]);
 			}
 			
 			Listing listing = new Retryable<Listing>("Get things for rechecks") {
@@ -271,7 +272,7 @@ public class LoansBotDriver extends BotDriver {
 	 */
 	private void handleResetPasswordRequests() {
 		LoansDatabase db = ((LoansDatabase) database);
-		List<ResetPasswordRequest> resetPasswordRequests = db.getUnsentResetPasswordRequests();
+		List<ResetPasswordRequest> resetPasswordRequests = db.getResetPasswordRequestMapping().fetchUnsent();
 		
 		if(resetPasswordRequests.size() == 0) {
 			return;
@@ -286,26 +287,26 @@ public class LoansBotDriver extends BotDriver {
 			else
 				first = false;
 			
-			User user = db.getUserById(rpr.userId);
+			User user = db.getUserMapping().fetchById(rpr.userId);
 			if(user == null) {
 				logger.warn(String.format("Reset Password Request id=%d has user_id=%d, which is not correlated with any user", rpr.id, rpr.userId));
 				continue;
 			}
 			
-			Response resp = db.getResponseByName("reset_password");
+			Response resp = db.getResponseMapping().fetchByName("reset_password");
 			ResponseInfo rInfo = new ResponseInfo();
 			rInfo.addTemporaryString("userid", Integer.toString(user.id));
 			rInfo.addTemporaryString("code", rpr.resetCode);
 			
 			String message = new ResponseFormatter(resp.responseBody, rInfo).getFormattedResponse(config, db);
 			
-			List<Username> usernames = db.getUsernamesForUserId(user.id);
+			List<Username> usernames = db.getUsernameMapping().fetchByUserId(user.id);
 			for(Username username : usernames) {
 				logger.info(String.format("Sending reset password code to %s", username.username));
 				sendMessage(username.username, "RedditLoans Reset Password", message);
 				
 				rpr.resetCodeSent = true;
-				db.updateResetPasswordRequest(rpr);
+				db.getResetPasswordRequestMapping().save(rpr);
 			}
 		}
 	}
@@ -329,11 +330,13 @@ public class LoansBotDriver extends BotDriver {
 			Account contribAcc = (Account) contribs.getChild(i);
 			String usernameStr = contribAcc.name();
 			
-			Username username = ldb.getUsernameByUsername(usernameStr);
+			Username username = ldb.getUsernameMapping().fetchByUsername(usernameStr);
 			if(username != null) {
-				if(!ldb.hasLendersCampContributor(username.userId)) {
+				if(!ldb.getLccMapping().contains(username.userId)) {
 					logger.info(String.format("Detected outside person added contributor %s to lenderscamp", usernameStr));
-					ldb.addLenderCampContributor(username.userId, false);
+					long now = System.currentTimeMillis();
+					LendersCampContributor lcc = new LendersCampContributor(-1, username.userId, false, new Timestamp(now), new Timestamp(now));
+					ldb.getLccMapping().save(lcc);
 				}
 			}
 		}
@@ -368,25 +371,25 @@ public class LoansBotDriver extends BotDriver {
 		List<Integer> userIdsToCheck = new ArrayList<>();
 		if(lastCheck > 0) {
 			Timestamp timestamp = new Timestamp(lastCheck + UTC_TO_GMT_MILLIS);
-			userIdsToCheck.addAll(ldb.getUserIdsWithNewLoanAsLenderSince(timestamp));
+			userIdsToCheck.addAll(ldb.getLoanMapping().fetchLenderIdsWithNewLoanSince(timestamp));
 		}
 		
 		int numAdditional = 10 - userIdsToCheck.size();
 		for(int i = 0; i < numAdditional; i++) {
-			if(idNext > ldb.getMaxUserId())
+			if(idNext > ldb.getUserMapping().fetchMaxUserId())
 				break;
 			userIdsToCheck.add(idNext);
 			idNext++;
 		}
 		
 		for(Integer userToCheckId : userIdsToCheck) {
-			User userToCheck = ldb.getUserById(userToCheckId);
+			User userToCheck = ldb.getUserMapping().fetchById(userToCheckId);
 			if(userToCheck == null)
 				continue;
 			
-			List<Username> usernames = ldb.getUsernamesForUserId(userToCheck.id);
-			int numberOfLoansAsLender = ldb.getNumberOfCompletedLoansAsLender(userToCheck.id);
-			if(numberOfLoansAsLender >= 7 && !ldb.hasLendersCampContributor(userToCheck.id)) {
+			List<Username> usernames = ldb.getUsernameMapping().fetchByUserId(userToCheck.id);
+			int numberOfLoansAsLender = ldb.getLoanMapping().fetchNumberOfLoansWithUserAsLender(userToCheck.id);
+			if(numberOfLoansAsLender >= 7 && !ldb.getLccMapping().contains(userToCheck.id)) {
 				logger.info(String.format("Inviting user %d (%s) as a contributor to lenderscamp (%d completed loans as lender)", userToCheck.id, usernames.get(0).username, numberOfLoansAsLender));
 				for(final Username username : usernames) {
 					new Retryable<Boolean>("Add contributor") {
@@ -398,7 +401,9 @@ public class LoansBotDriver extends BotDriver {
 					}.run();
 				}
 				sleepFor(2000);
-				ldb.addLenderCampContributor(userToCheck.id, true);
+				long now = System.currentTimeMillis();
+				LendersCampContributor lcc = new LendersCampContributor(-1, userToCheck.id, true, new Timestamp(now), new Timestamp(now));
+				ldb.getLccMapping().save(lcc);
 			}
 		}
 		

@@ -22,7 +22,7 @@ public class BadLoanSummon implements CommentSummon {
 	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
 		if(BAD_LOAN_PATTERN.matcher(comment.body()).find()) {
 			LoansDatabase database = (LoansDatabase) db;
-			return new SummonResponse(SummonResponse.ResponseType.INVALID, database.getResponseByName("bad_loan_summon").responseBody);
+			return new SummonResponse(SummonResponse.ResponseType.INVALID, database.getResponseMapping().fetchByName("bad_loan_summon").responseBody);
 		}
 		return null;
 	}

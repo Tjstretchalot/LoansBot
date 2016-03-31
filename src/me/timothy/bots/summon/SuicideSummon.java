@@ -26,7 +26,7 @@ public class SuicideSummon implements LinkSummon, CommentSummon {
 
 	private SummonResponse getReply(FileConfiguration config, Database db) {
 		LoansDatabase database = (LoansDatabase) db;
-		return new SummonResponse(SummonResponse.ResponseType.VALID, database.getResponseByName("suicide").responseBody.replace("<user>", user));
+		return new SummonResponse(SummonResponse.ResponseType.VALID, database.getResponseMapping().fetchByName("suicide").responseBody.replace("<user>", user));
 	}
 
 	@Override

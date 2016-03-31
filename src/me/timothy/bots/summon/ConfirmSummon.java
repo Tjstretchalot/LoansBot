@@ -63,16 +63,16 @@ public class ConfirmSummon implements CommentSummon {
 
 			LoansDatabase database = (LoansDatabase) db;
 			
-			Username lenderUsername = database.getUsernameByUsername(lender);
-			Username borrowerUsername = database.getUsernameByUsername(borrower);
+			Username lenderUsername = database.getUsernameMapping().fetchByUsername(lender);
+			Username borrowerUsername = database.getUsernameMapping().fetchByUsername(borrower);
 
 			boolean validConfirm = false;
 			int numLoans = 0;
 			if(lenderUsername != null && borrowerUsername != null) {
-				User lenderUser = database.getUserById(lenderUsername.userId);
-				User borrowerUser = database.getUserById(borrowerUsername.userId);
+				User lenderUser = database.getUserMapping().fetchById(lenderUsername.userId);
+				User borrowerUser = database.getUserMapping().fetchById(borrowerUsername.userId);
 					
-				List<Loan> loans = database.getLoansWithBorrowerAndOrLender(borrowerUser.id, lenderUser.id, true);
+				List<Loan> loans = database.getLoanMapping().fetchWithBorrowerAndOrLender(borrowerUser.id, lenderUser.id, true);
 				numLoans = loans.size();
 				for(Loan loan : loans) {
 					if(loan.principalCents != loan.principalRepaymentCents && loan.principalCents >= money) {
@@ -82,7 +82,7 @@ public class ConfirmSummon implements CommentSummon {
 			}
 			ri.addTemporaryString("numloans", Integer.toString(numLoans));
 			
-			ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName(validConfirm ? "confirm" : "confirmNoLoan").responseBody, ri);
+			ResponseFormatter formatter = new ResponseFormatter(database.getResponseMapping().fetchByName(validConfirm ? "confirm" : "confirmNoLoan").responseBody, ri);
 			
 			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, (LoansDatabase) db), "991c8042-3ecc-11e4-8052-12313d05258a");
 		}

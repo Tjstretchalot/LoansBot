@@ -54,26 +54,28 @@ public class UnpaidSummon implements CommentSummon {
 
 			String author = responseInfo.getObject("author").toString();
 			String user1 = responseInfo.getObject("user1").toString();
-			Username authorUsername = database.getUsernameByUsername(author);
-			Username user1Username = database.getUsernameByUsername(user1);
+			Username authorUsername = database.getUsernameMapping().fetchByUsername(author);
+			Username user1Username = database.getUsernameMapping().fetchByUsername(user1);
 			
 			List<Loan> relevantLoans = new ArrayList<Loan>();
 			if(authorUsername != null && user1Username != null) {
-				relevantLoans = database.getLoansWithBorrowerAndOrLender(user1Username.userId, authorUsername.userId, true);
+				relevantLoans = database.getLoanMapping().fetchWithBorrowerAndOrLender(user1Username.userId, authorUsername.userId, true);
 			}
 			List<Loan> changed = new ArrayList<>();
 			
 			for(Loan l : relevantLoans) {
 				if(l.principalRepaymentCents != l.principalCents) {
-					database.setLoanUnpaid(l, true);
+					
+					//database.setLoanUnpaid(l, true); TODO
 					changed.add(l);
+					throw new RuntimeException("Not yet implemented");
 				}
 			}
 			responseInfo.addTemporaryString("changed loans", LoansBotUtils.getLoansAsTable(changed, database, changed.size()));
 			
 			logger.printf(Level.INFO, "%s has defaulted on %d loans from %s", user1Username == null ? "null user " + user1 : user1Username.username, changed.size(), authorUsername == null ? ("null user '" + author + "'") : authorUsername.username);
 			
-			String responseFormat = database.getResponseByName("unpaid").responseBody;
+			String responseFormat = database.getResponseMapping().fetchByName("unpaid").responseBody;
 			return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(responseFormat, responseInfo).getFormattedResponse(config, database));
 		}
 		return null;

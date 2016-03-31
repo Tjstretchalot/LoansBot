@@ -78,15 +78,15 @@ public class LoanSummon implements CommentSummon {
 				moneyObj.setAmount(amountPennies);
 			}
 			
-			User doerU = database.getOrCreateUserByUsername(author);
-			User doneToU = database.getOrCreateUserByUsername(linkAuthor);
+			User doerU = database.getUserMapping().fetchOrCreateByName(author);
+			User doneToU = database.getUserMapping().fetchOrCreateByName(linkAuthor);
 			long now = Math.round(comment.createdUTC() * 1000);
 			
 			
 			
 			Loan loan = new Loan(-1, doerU.id, doneToU.id, amountPennies, 0, false, false, null, new Timestamp(now), new Timestamp(now), null);
 			CreationInfo cInfoRetro = attemptRetroactiveLoan(database, loan); // this may set the loan id, which will cause it to be updated rather than added
-			database.addOrUpdateLoan(loan);
+			database.getLoanMapping().save(loan);
 			CreationInfo cInfo = null;
 			if(cInfoRetro != null) {
 				cInfo = new CreationInfo(cInfoRetro.id, loan.id, CreationInfo.CreationType.REDDIT, 
@@ -95,16 +95,16 @@ public class LoanSummon implements CommentSummon {
 			}else {
 				cInfo = new CreationInfo(-1, loan.id, CreationInfo.CreationType.REDDIT, url, null, -1, new Timestamp(now), new Timestamp(now));
 			}
-			database.addOrUpdateCreationInfo(cInfo);
+			database.getCreationInfoMapping().save(cInfo);
 			
 			logger.printf(Level.INFO, "%s just lent %s to %s [loan %d] [retroactive = %s]", author, BotUtils.getCostString(amountPennies / 100.), linkAuthor, loan.id, cInfoRetro == null ? "no" : "yes");
 			
 			String resp = null;
 			
 			if(hasConversion) {
-				resp  = database.getResponseByName("successful_loan_with_conversion").responseBody;
+				resp  = database.getResponseMapping().fetchByName("successful_loan_with_conversion").responseBody;
 			}else {
-				resp = database.getResponseByName("successful_loan").responseBody;
+				resp = database.getResponseMapping().fetchByName("successful_loan").responseBody;
 			}
 			return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(resp, respInfo).getFormattedResponse(config, database));
 		}
@@ -114,13 +114,13 @@ public class LoanSummon implements CommentSummon {
 	private CreationInfo attemptRetroactiveLoan(LoansDatabase database, Loan loan) {
 		// We want to find creation infos for a loan that might match this.
 		
-		List<Loan> similarLoans = database.getLoansWithBorrowerAndOrLender(loan.borrowerId, loan.lenderId, true);
+		List<Loan> similarLoans = database.getLoanMapping().fetchWithBorrowerAndOrLender(loan.borrowerId, loan.lenderId, true);
 		int[] similarLoanIds = new int[similarLoans.size()];
 		for(int i = 0; i < similarLoans.size(); i++) {
 			similarLoanIds[i] = similarLoans.get(i).id;
 		}
 		
-		List<CreationInfo> similarCreationInfos = database.getCreationInfoByLoanId(similarLoanIds);
+		List<CreationInfo> similarCreationInfos = database.getCreationInfoMapping().fetchManyByLoanIds(similarLoanIds);
 		
 		for(Loan simLoan : similarLoans) {
 			CreationInfo simLoanInfo = null;

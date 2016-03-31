@@ -92,7 +92,7 @@ public class LoansBotUtils {
 			long amountBorrowedDonePen = getTotalLentPen(asBorrowerDone);
 			long amountLenderDonePen = getTotalLentPen(asLenderDone);
 			
-			loansString = db.getResponseByName("check_truncated").responseBody;
+			loansString = db.getResponseMapping().fetchByName("check_truncated").responseBody;
 			
 			loansString = loansString.replace("<relevant user>", relevantUser);
 			loansString = loansString.replace("<num borrowed done>", Integer.toString(asBorrowerDone.size()));
@@ -133,9 +133,9 @@ public class LoansBotUtils {
 		int toShow = loans.size() > max ? max : loans.size();
 		for(int i = 0; i < toShow; i++) {
 			Loan l = loans.get(i);
-			User uLend = db.getUserById(l.lenderId);
-			User uBorr = db.getUserById(l.borrowerId);
-			CreationInfo cInfo = db.getCreationInfoByLoanId(l.id).get(0);
+			User uLend = db.getUserMapping().fetchById(l.lenderId);
+			User uBorr = db.getUserMapping().fetchById(l.borrowerId);
+			CreationInfo cInfo = db.getCreationInfoMapping().fetchByLoanId(l.id);
 			
 			
 			table.addRow(getUsernamesSeperatedWith(uLend, db, " aka "), getUsernamesSeperatedWith(uBorr, db, " aka "), BotUtils.getCostString(l.principalCents/100.), 
@@ -174,7 +174,7 @@ public class LoansBotUtils {
 	 * @return
 	 */
 	public static String getUsernamesSeperatedWith(User user, LoansDatabase db, String seperator) {
-		List<Username> usernames = db.getUsernamesForUserId(user.id);
+		List<Username> usernames = db.getUsernameMapping().fetchByUserId(user.id);
 		
 		StringBuilder result = new StringBuilder();
 		boolean first = true;
@@ -200,7 +200,7 @@ public class LoansBotUtils {
 	private static List<Loan> getLoansWithBorrower(List<Loan> bigList, LoansDatabase db, String borrower) {
 		List<Loan> result = new ArrayList<>();
 		for(Loan l : bigList) {
-			List<Username> borrowerUsernames = db.getUsernamesForUserId(l.borrowerId);
+			List<Username> borrowerUsernames = db.getUsernameMapping().fetchByUserId(l.borrowerId);
 			for(Username borrowerUsername : borrowerUsernames) {
 				if(borrowerUsername.username.equalsIgnoreCase(borrower)) {
 					result.add(l);
@@ -221,7 +221,7 @@ public class LoansBotUtils {
 	private static List<Loan> getLoansWithLender(List<Loan> bigList, LoansDatabase db, String lender) {
 		List<Loan> result = new ArrayList<>();
 		for(Loan l : bigList) {
-			List<Username> lenderUsernames = db.getUsernamesForUserId(l.lenderId);
+			List<Username> lenderUsernames = db.getUsernameMapping().fetchByUserId(l.lenderId);
 			for(Username lenderUsername : lenderUsernames) {
 				if(lenderUsername.username.equalsIgnoreCase(lender)) {
 					result.add(l);

@@ -19,11 +19,11 @@ public class AppliedFormattableObject implements FormattableObject {
 	@Override
 	public String toFormattedString(ResponseInfo info, String myName, FileConfiguration config, Database database) {
 		LoansDatabase db = (LoansDatabase) database;
-		Username username = db.getUsernameByUsername(info.getObject(myName.replace("applied", "user")).toString());
+		Username username = db.getUsernameMapping().fetchByUsername(info.getObject(myName.replace("applied", "user")).toString());
 		if(username == null)
 			return "No";
 		
-		User myUser = db.getUserById(username.userId);
+		User myUser = db.getUserMapping().fetchById(username.userId);
 		return (myUser != null && myUser.claimed) ? "Yes" : "No";
 	}
 

@@ -1,0 +1,50 @@
+package me.timothy.bots.models;
+
+/**
+ * Just a basic fullname that can be mapped to the database
+ * in order to prevent the bot from reusing the same one
+ * 
+ * @author Tmoor
+ *
+ */
+public class Fullname {
+	public String fullname;
+
+	/**
+	 * Creates the fullname using the specified fullname
+	 * @param fullname the fullname to use
+	 */
+	public Fullname(String fullname) {
+		this.fullname = fullname;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((fullname == null) ? 0 : fullname.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Fullname other = (Fullname) obj;
+		if (fullname == null) {
+			if (other.fullname != null)
+				return false;
+		} else if (!fullname.equals(other.fullname))
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "Fullname [fullname=" + fullname + "]";
+	}
+}
