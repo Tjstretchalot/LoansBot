@@ -3,6 +3,8 @@
  */
 package me.timothy.bots.database;
 
+import java.util.List;
+
 /**
  * <p>An object-relational mapping (ORM) converts objects into relational
  * databases - saving to and loading from.</p>
@@ -21,4 +23,11 @@ public interface ObjectMapping<A> {
 	 * @throws IllegalArgumentException if the object is not ready to be mapped
 	 */
 	public void save(A a) throws IllegalArgumentException;
+	
+	/**
+	 * Fetches all of the {@code A}'s in the mapping, or an empty list. 
+	 * 
+	 * @return all objects stored in this mapping
+	 */
+	public List<A> fetchAll(); 
 }

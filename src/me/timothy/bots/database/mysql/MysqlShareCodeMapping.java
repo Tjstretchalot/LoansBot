@@ -28,4 +28,9 @@ public class MysqlShareCodeMapping extends MysqlObjectMapping<ShareCode> impleme
 		throw new RuntimeException("Not yet implemented");
 	}
 
+	@Override
+	public List<ShareCode> fetchAll() {
+		throw new RuntimeException("Not yet implemented");
+	}
+
 }

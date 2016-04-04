@@ -1,6 +1,7 @@
 package me.timothy.bots.database.mysql;
 
 import java.sql.Connection;
+import java.util.List;
 
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.database.LCCMapping;
@@ -19,6 +20,11 @@ public class MysqlLCCMapping extends MysqlObjectMapping<LendersCampContributor> 
 
 	@Override
 	public boolean contains(int userId) {
+		throw new RuntimeException("Not yet implemented");
+	}
+
+	@Override
+	public List<LendersCampContributor> fetchAll() {
 		throw new RuntimeException("Not yet implemented");
 	}
 

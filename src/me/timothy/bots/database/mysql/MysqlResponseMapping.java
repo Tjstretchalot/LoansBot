@@ -1,6 +1,7 @@
 package me.timothy.bots.database.mysql;
 
 import java.sql.Connection;
+import java.util.List;
 
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.database.ResponseMapping;
@@ -19,6 +20,11 @@ public class MysqlResponseMapping extends MysqlObjectMapping<Response> implement
 
 	@Override
 	public Response fetchByName(String name) {
+		throw new RuntimeException("Not yet implemented");
+	}
+
+	@Override
+	public List<Response> fetchAll() {
 		throw new RuntimeException("Not yet implemented");
 	}
 

@@ -23,4 +23,9 @@ public class MysqlWarningMapping extends MysqlObjectMapping<Warning> implements 
 		throw new RuntimeException("Not yet implemented");
 	}
 
+	@Override
+	public List<Warning> fetchAll() {
+		throw new RuntimeException("Not yet implemented");
+	}
+
 }

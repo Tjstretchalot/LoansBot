@@ -33,4 +33,9 @@ public class MysqlUsernameMapping extends MysqlObjectMapping<Username> implement
 		throw new RuntimeException("Not yet implemented");
 	}
 
+	@Override
+	public List<Username> fetchAll() {
+		throw new RuntimeException("Not yet implemented");
+	}
+
 }

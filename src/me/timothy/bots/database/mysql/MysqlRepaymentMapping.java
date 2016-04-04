@@ -23,4 +23,9 @@ public class MysqlRepaymentMapping extends MysqlObjectMapping<Repayment> impleme
 		throw new RuntimeException("Not yet implemented");
 	}
 
+	@Override
+	public List<Repayment> fetchAll() {
+		throw new RuntimeException("Not yet implemented");
+	}
+
 }

@@ -8,13 +8,16 @@ package me.timothy.bots.models;
  *
  */
 public class Fullname {
+	public int id;
 	public String fullname;
 
 	/**
 	 * Creates the fullname using the specified fullname
+	 * @param id the id of the fullname
 	 * @param fullname the fullname to use
 	 */
-	public Fullname(String fullname) {
+	public Fullname(int id, String fullname) {
+		this.id = id;
 		this.fullname = fullname;
 	}
 
@@ -22,6 +25,7 @@ public class Fullname {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + id;
 		result = prime * result + ((fullname == null) ? 0 : fullname.hashCode());
 		return result;
 	}
@@ -40,11 +44,14 @@ public class Fullname {
 				return false;
 		} else if (!fullname.equals(other.fullname))
 			return false;
+		else if(other.id != id) 
+			return false;
+		
 		return true;
 	}
 
 	@Override
 	public String toString() {
-		return "Fullname [fullname=" + fullname + "]";
+		return "Fullname [id=" + id + ", fullname=" + fullname + "]";
 	}
 }

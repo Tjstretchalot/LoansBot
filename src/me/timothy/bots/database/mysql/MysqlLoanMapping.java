@@ -34,4 +34,9 @@ public class MysqlLoanMapping extends MysqlObjectMapping<Loan> implements LoanMa
 		throw new RuntimeException("Not yet implemented");
 	}
 
+	@Override
+	public List<Loan> fetchAll() {
+		throw new RuntimeException("Not yet implemented");
+	}
+
 }

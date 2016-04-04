@@ -33,4 +33,9 @@ public class MysqlCreationInfoMapping extends MysqlObjectMapping<CreationInfo> i
 		throw new RuntimeException("Not yet implemented");
 	}
 
+	@Override
+	public List<CreationInfo> fetchAll() {
+		throw new RuntimeException("Not yet implemented");
+	}
+
 }

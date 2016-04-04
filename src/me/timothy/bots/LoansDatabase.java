@@ -1,8 +1,15 @@
 package me.timothy.bots;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,6 +19,7 @@ import me.timothy.bots.database.CreationInfoMapping;
 import me.timothy.bots.database.FullnameMapping;
 import me.timothy.bots.database.LCCMapping;
 import me.timothy.bots.database.LoanMapping;
+import me.timothy.bots.database.MappingDatabase;
 import me.timothy.bots.database.RecheckMapping;
 import me.timothy.bots.database.RepaymentMapping;
 import me.timothy.bots.database.ResetPasswordRequestMapping;
@@ -23,6 +31,7 @@ import me.timothy.bots.database.UsernameMapping;
 import me.timothy.bots.database.WarningMapping;
 import me.timothy.bots.database.mysql.MysqlAdminUpdateMapping;
 import me.timothy.bots.database.mysql.MysqlCreationInfoMapping;
+import me.timothy.bots.database.mysql.MysqlFullnameMapping;
 import me.timothy.bots.database.mysql.MysqlLCCMapping;
 import me.timothy.bots.database.mysql.MysqlLoanMapping;
 import me.timothy.bots.database.mysql.MysqlRecheckMapping;
@@ -41,7 +50,7 @@ import me.timothy.bots.models.Fullname;
  * 
  * @author Timothy
  */
-public class LoansDatabase extends Database {
+public class LoansDatabase extends Database implements MappingDatabase {
 	private Logger logger;
 	private Connection connection;
 	private AdminUpdateMapping adminUpdateMapping;
@@ -83,6 +92,7 @@ public class LoansDatabase extends Database {
 		
 		connection = DriverManager.getConnection(url, username, password);
 		
+		fullnameMapping = new MysqlFullnameMapping(this, connection);
 		adminUpdateMapping = new MysqlAdminUpdateMapping(this, connection);
 		creationInfoMapping = new MysqlCreationInfoMapping(this, connection);
 		lccMapping = new MysqlLCCMapping(this, connection);
@@ -96,6 +106,113 @@ public class LoansDatabase extends Database {
 		userMapping = new MysqlUserMapping(this, connection);
 		usernameMapping = new MysqlUsernameMapping(this, connection);
 		warningMapping = new MysqlWarningMapping(this, connection);
+	}
+	
+	/**
+	 * Purges everything from everything. Scary stuff.
+	 * 
+	 */
+	public void purgeAll() {
+		try {
+			Statement statement = connection.createStatement();
+			statement.execute("DELETE FROM fullnames;");
+		}catch(SQLException sqlE) {
+			logger.throwing(sqlE);
+			throw new RuntimeException(sqlE);
+		}
+	}
+	
+	/**
+	 * <p>Validates the tables in the database match what are expected. If the tables
+	 * cannot be found, they are created. Throws an error if the tables already exist
+	 * but are not in the expected state.</p>
+	 * 
+	 * <p>Exactly the same as calling each validateXTable</p>
+	 * 
+	 * @throws IllegalStateException if the tables are in the wrong state
+	 */
+	public void validateTableState() {
+		validateFullnamesTable();
+	}
+	
+	public void validateFullnamesTable() {
+		try {
+			DatabaseMetaData metadata = connection.getMetaData();
+			ResultSet results = metadata.getTables(null, null, "fullnames", null);
+			boolean exists = results.next();
+			results.close();
+			
+			if(!exists) {
+				createFullnamesTable();
+			}else {
+				results = metadata.getColumns(null, null, "fullnames", "%"); 
+				
+				List<String> errors = new ArrayList<>();
+				List<String> toFind = new ArrayList<>();
+				toFind.add("id");
+				toFind.add("fullname");
+				
+				while(results.next()) {
+					int type;
+					String autoIncrement;
+					
+					String colName = results.getString(4);
+					if(colName.equals("id")) {
+						toFind.remove("id");
+						
+						type = results.getInt(5);
+						if(type != Types.INTEGER) {
+							errors.add("expected id to be an integer");
+						}
+						
+						autoIncrement = results.getString(23);
+						if(!autoIncrement.equals("YES")) {
+							errors.add("expected id to autoincrement");
+						}
+					}else if(colName.equals("fullname")) {
+						toFind.remove("fullname");
+						
+						type = results.getInt(5);
+						if(type != Types.VARCHAR) {
+							errors.add("expected fullname to be a varchar");
+						}
+					}else {
+						errors.add("weird column " + colName);
+					}
+				}
+				
+				results.close();
+				
+				while(toFind.size() > 0) {
+					String col = toFind.get(0);
+					toFind.remove(0);
+					
+					errors.add(String.format("expected %s", col));
+				}
+				
+				if(errors.size() > 0) {
+					throw new RuntimeException("Validation failed on fullnames: " + errors.stream().collect(Collectors.joining("; ")));
+				}
+			}
+			
+		} catch (SQLException e) {
+			logger.throwing(e);
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 * Creates the fullnames table
+	 * 
+	 * @throws SQLException
+	 */
+	protected void createFullnamesTable() throws SQLException {
+		Statement statement = connection.createStatement();
+		statement.execute("CREATE TABLE fullnames ("
+				+ "id int NOT NULL AUTO_INCREMENT, "
+				+ "fullname varchar(50) NOT NULL, "
+				+ "PRIMARY KEY(id))");
+		statement.close();
 	}
 	
 	/**
@@ -174,7 +291,7 @@ public class LoansDatabase extends Database {
 	 */
 	@Override
 	public void addFullname(String id) {
-		fullnameMapping.save(new Fullname(id));
+		fullnameMapping.save(new Fullname(-1, id));
 	}
 
 	/**

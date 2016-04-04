@@ -1,6 +1,7 @@
 package me.timothy.bots.database.mysql;
 
 import java.sql.Connection;
+import java.util.List;
 
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.database.AdminUpdateMapping;
@@ -14,6 +15,11 @@ public class MysqlAdminUpdateMapping extends MysqlObjectMapping<AdminUpdate> imp
 
 	@Override
 	public void save(AdminUpdate a) throws IllegalArgumentException {
+		throw new RuntimeException("Not yet implemented");
+	}
+
+	@Override
+	public List<AdminUpdate> fetchAll() {
 		throw new RuntimeException("Not yet implemented");
 	}
 

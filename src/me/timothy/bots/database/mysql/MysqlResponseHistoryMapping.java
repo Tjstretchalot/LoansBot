@@ -23,4 +23,9 @@ public class MysqlResponseHistoryMapping extends MysqlObjectMapping<ResponseHist
 		throw new RuntimeException("Not yet implemented");
 	}
 
+	@Override
+	public List<ResponseHistory> fetchAll() {
+		throw new RuntimeException("Not yet implemented");
+	}
+
 }

@@ -23,4 +23,9 @@ public class MysqlResetPasswordRequestMapping extends MysqlObjectMapping<ResetPa
 		throw new RuntimeException("Not yet implemented");
 	}
 
+	@Override
+	public List<ResetPasswordRequest> fetchAll() {
+		throw new RuntimeException("Not yet implemented");
+	}
+
 }
