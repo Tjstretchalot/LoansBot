@@ -38,7 +38,7 @@ public class ResponseHistory {
 	/**
 	 * Check to make sure this response history is plausible
 	 * 
-	 * @return
+	 * @return if the response history is valid
 	 */
 	public boolean isValid() {
 		return responseId > 0 && userId > 0 && oldRaw != null && newRaw != null && reason != null && createdAt != null && updatedAt != null;

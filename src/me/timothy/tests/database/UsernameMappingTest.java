@@ -22,7 +22,7 @@ public class UsernameMappingTest {
 	protected MappingDatabase database;
 	
 	/**
-	 * Generates & saves a new user
+	 * Generates &amp; saves a new user
 	 * @return the user
 	 */
 	protected User createUser() {

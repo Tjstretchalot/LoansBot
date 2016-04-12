@@ -231,8 +231,8 @@ public class MysqlUserMapping extends MysqlObjectMapping<User> implements UserMa
 	/**
 	 * Fetches the user in the current row of the set
 	 * @param set the set to get the user from
-	 * @return if one occurs
-	 * @throws SQLException
+	 * @return the user in the current row of the set
+	 * @throws SQLException if one occurs
 	 */
 	protected User fetchFromSet(ResultSet set) throws SQLException {
 		return new User(set.getInt("id"), set.getInt("auth"), set.getString("password_digest"), set.getBoolean("claimed"), 

@@ -90,8 +90,8 @@ public class CreationInfo {
 
 	/**
 	 * Ensures this creation info is consistent, that is if
-	 * type is REDDIT then reason is null and userId is <= 0;
-	 * if type is REDDITLOANS then thread is null and userId > 0.
+	 * type is REDDIT then reason is null and userId is &lt;= 0;
+	 * if type is REDDITLOANS then thread is null and userId &gt;= 0.
 	 * 
 	 * Also ensures createdAt and updatedAt are not null
 	 * @return if this creation info is plausible

@@ -59,6 +59,7 @@ public class LoansBotUtils {
 	 * otherwise it matches config.getCheckTruncated
 	 * 
 	 * @param loans the loans
+	 * @param db the database
 	 * @param relevantUser the relevant user in the loans (required for truncating)
 	 * @param config the configuration options to use
 	 * @return a string representing a human-readable version of the list of loans. Potentially truncated
@@ -112,9 +113,10 @@ public class LoansBotUtils {
 	/**
 	 * Sorts the specified list of loans according to their date (newest first),
 	 * and adds a little note at the bottom if any loans are truncated
-	 * @param loans
-	 * @param max
-	 * @return
+	 * @param loans the loans to stringify
+	 * @param db the database to use if additional information is needed
+	 * @param max the maximum loans before truncation
+	 * @return the loans as a table
 	 */
 	public static String getLoansAsTable(List<Loan> loans, LoansDatabase db, int max) {
 		Collections.sort(loans, new Comparator<Loan>() {
@@ -171,7 +173,7 @@ public class LoansBotUtils {
 	 * @param user the user to fetch usernames of
 	 * @param db the database to use to fetch the usernames
 	 * @param seperator the seperator between usernames
-	 * @return
+	 * @return the usernames seperated with the specified seperator
 	 */
 	public static String getUsernamesSeperatedWith(User user, LoansDatabase db, String seperator) {
 		List<Username> usernames = db.getUsernameMapping().fetchByUserId(user.id);

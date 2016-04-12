@@ -47,10 +47,13 @@ public abstract class MysqlObjectMapping<A> implements ObjectMapping<A>, SchemaV
 	
 	/**
 	 * Sets the {@code connection} to the specified connection and the 
-	 * {@code database} to the specified database
+	 * {@code database} to the specified database, as well as enough information
+	 * to do general column schema verification.
 	 * 
 	 * @param database the database 
 	 * @param connection the mysql connection
+	 * @param table the table this mapping maps to in the datbase
+	 * @param columns a description of the columns that are expected.
 	 */
 	protected MysqlObjectMapping(LoansDatabase database, Connection connection, String table, MysqlColumn... columns) {
 		this.database = database;

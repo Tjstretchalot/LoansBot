@@ -19,7 +19,7 @@ public interface SchemaValidator {
 	 * <ul>
 	 * <li>That the fields/columns exist and are of the right type</li>
 	 * <li>That fields that <i>must</i> have certain behavior (e.g. default to null, autoincrement)
-	 * in order for the mapper to function correctly do.</i>
+	 * in order for the mapper to function correctly do.</li>
 	 * </ul>
 	 * 
 	 * <p>Things that should <i>not</i> be verified:</p>

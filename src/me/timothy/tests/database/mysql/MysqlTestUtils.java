@@ -72,7 +72,7 @@ public class MysqlTestUtils {
 	/**
 	 * Ensures that the database is empty. 
 	 * 
-	 * @param database
+	 * @param database the database to clear
 	 */
 	public static void clearDatabase(LoansDatabase database) {
 		database.purgeAll();
