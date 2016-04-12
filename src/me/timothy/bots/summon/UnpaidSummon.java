@@ -64,9 +64,9 @@ public class UnpaidSummon implements CommentSummon {
 			List<Loan> changed = new ArrayList<>();
 			
 			for(Loan l : relevantLoans) {
-				if(l.principalRepaymentCents != l.principalCents) {
-					
-					//database.setLoanUnpaid(l, true); TODO
+				if(l.principalRepaymentCents != l.principalCents) {					
+					l.unpaid = true;
+					database.getLoanMapping().save(l);
 					changed.add(l);
 					throw new RuntimeException("Not yet implemented");
 				}

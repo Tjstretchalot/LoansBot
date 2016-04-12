@@ -178,7 +178,6 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	 * @see me.timothy.bots.database.SchemaValidator#validateSchema()
 	 */
 	public void validateTableState() {
-		// TODO Finish this in the same order as tests are added
 		fullnameValidator.validateSchema();
 		userValidator.validateSchema();
 		usernameValidator.validateSchema();
