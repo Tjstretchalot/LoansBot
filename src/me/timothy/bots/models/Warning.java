@@ -43,6 +43,10 @@ public class Warning {
 		this.updatedAt = updatedAt;
 	}
 	
+	public Warning() {
+		this(-1, -1, -1, null, null, null, null, null, null);
+	}
+
 	/**
 	 * Performs a sanity check to see if this Warning
 	 * is potentially a valid entry
@@ -51,4 +55,77 @@ public class Warning {
 	public boolean isValid() {
 		return (warnedUserId >= 1 && warningUserId >= 1 && violation != null && actionTaken != null && nextAction != null && notes != null);
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((actionTaken == null) ? 0 : actionTaken.hashCode());
+		result = prime * result + ((createdAt == null) ? 0 : createdAt.hashCode());
+		result = prime * result + id;
+		result = prime * result + ((nextAction == null) ? 0 : nextAction.hashCode());
+		result = prime * result + ((notes == null) ? 0 : notes.hashCode());
+		result = prime * result + ((updatedAt == null) ? 0 : updatedAt.hashCode());
+		result = prime * result + ((violation == null) ? 0 : violation.hashCode());
+		result = prime * result + warnedUserId;
+		result = prime * result + warningUserId;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Warning other = (Warning) obj;
+		if (actionTaken == null) {
+			if (other.actionTaken != null)
+				return false;
+		} else if (!actionTaken.equals(other.actionTaken))
+			return false;
+		if (createdAt == null) {
+			if (other.createdAt != null)
+				return false;
+		} else if (!createdAt.equals(other.createdAt))
+			return false;
+		if (id != other.id)
+			return false;
+		if (nextAction == null) {
+			if (other.nextAction != null)
+				return false;
+		} else if (!nextAction.equals(other.nextAction))
+			return false;
+		if (notes == null) {
+			if (other.notes != null)
+				return false;
+		} else if (!notes.equals(other.notes))
+			return false;
+		if (updatedAt == null) {
+			if (other.updatedAt != null)
+				return false;
+		} else if (!updatedAt.equals(other.updatedAt))
+			return false;
+		if (violation == null) {
+			if (other.violation != null)
+				return false;
+		} else if (!violation.equals(other.violation))
+			return false;
+		if (warnedUserId != other.warnedUserId)
+			return false;
+		if (warningUserId != other.warningUserId)
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "Warning [id=" + id + ", warnedUserId=" + warnedUserId + ", warningUserId=" + warningUserId
+				+ ", violation=" + violation + ", actionTaken=" + actionTaken + ", nextAction=" + nextAction
+				+ ", notes=" + notes + ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + "]";
+	}
+	
+	
 }

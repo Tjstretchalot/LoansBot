@@ -63,4 +63,78 @@ public class Loan {
 		else
 			return true;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + borrowerId;
+		result = prime * result + ((createdAt == null) ? 0 : createdAt.hashCode());
+		result = prime * result + (deleted ? 1231 : 1237);
+		result = prime * result + ((deletedAt == null) ? 0 : deletedAt.hashCode());
+		result = prime * result + ((deletedReason == null) ? 0 : deletedReason.hashCode());
+		result = prime * result + id;
+		result = prime * result + lenderId;
+		result = prime * result + principalCents;
+		result = prime * result + principalRepaymentCents;
+		result = prime * result + (unpaid ? 1231 : 1237);
+		result = prime * result + ((updatedAt == null) ? 0 : updatedAt.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Loan other = (Loan) obj;
+		if (borrowerId != other.borrowerId)
+			return false;
+		if (createdAt == null) {
+			if (other.createdAt != null)
+				return false;
+		} else if (!createdAt.equals(other.createdAt))
+			return false;
+		if (deleted != other.deleted)
+			return false;
+		if (deletedAt == null) {
+			if (other.deletedAt != null)
+				return false;
+		} else if (!deletedAt.equals(other.deletedAt))
+			return false;
+		if (deletedReason == null) {
+			if (other.deletedReason != null)
+				return false;
+		} else if (!deletedReason.equals(other.deletedReason))
+			return false;
+		if (id != other.id)
+			return false;
+		if (lenderId != other.lenderId)
+			return false;
+		if (principalCents != other.principalCents)
+			return false;
+		if (principalRepaymentCents != other.principalRepaymentCents)
+			return false;
+		if (unpaid != other.unpaid)
+			return false;
+		if (updatedAt == null) {
+			if (other.updatedAt != null)
+				return false;
+		} else if (!updatedAt.equals(other.updatedAt))
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "Loan [id=" + id + ", lenderId=" + lenderId + ", borrowerId=" + borrowerId + ", principalCents="
+				+ principalCents + ", principalRepaymentCents=" + principalRepaymentCents + ", unpaid=" + unpaid
+				+ ", deleted=" + deleted + ", deletedReason=" + deletedReason + ", createdAt=" + createdAt
+				+ ", updatedAt=" + updatedAt + ", deletedAt=" + deletedAt + "]";
+	}
+	
+	
 }

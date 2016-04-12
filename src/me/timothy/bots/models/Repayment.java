@@ -43,4 +43,52 @@ public class Repayment {
 			return false;
 		return true;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + amountCents;
+		result = prime * result + ((createdAt == null) ? 0 : createdAt.hashCode());
+		result = prime * result + id;
+		result = prime * result + loanId;
+		result = prime * result + ((updatedAt == null) ? 0 : updatedAt.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Repayment other = (Repayment) obj;
+		if (amountCents != other.amountCents)
+			return false;
+		if (createdAt == null) {
+			if (other.createdAt != null)
+				return false;
+		} else if (!createdAt.equals(other.createdAt))
+			return false;
+		if (id != other.id)
+			return false;
+		if (loanId != other.loanId)
+			return false;
+		if (updatedAt == null) {
+			if (other.updatedAt != null)
+				return false;
+		} else if (!updatedAt.equals(other.updatedAt))
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "Repayment [id=" + id + ", loanId=" + loanId + ", amountCents=" + amountCents + ", createdAt="
+				+ createdAt + ", updatedAt=" + updatedAt + "]";
+	}
+	
+	
 }

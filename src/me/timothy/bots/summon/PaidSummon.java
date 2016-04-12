@@ -6,6 +6,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
@@ -14,6 +18,7 @@ import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.currencies.CurrencyHandler;
 import me.timothy.bots.models.CreationInfo;
 import me.timothy.bots.models.Loan;
+import me.timothy.bots.models.Repayment;
 import me.timothy.bots.models.User;
 import me.timothy.bots.models.Username;
 import me.timothy.bots.responses.GenericFormattableObject;
@@ -22,10 +27,6 @@ import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
 import me.timothy.bots.responses.ResponseInfoFactory;
 import me.timothy.jreddit.info.Comment;
-
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Saying that a user has paid back in part or in full a loan
@@ -52,6 +53,7 @@ public class PaidSummon implements CommentSummon {
 		logger = LogManager.getLogger();
 	}
 
+	@SuppressWarnings("unused")
 	private void createRetroactiveLoan(LoansDatabase database, String user1, String author, int amountRepaid, long now) {
 		User borrower = database.getUserMapping().fetchOrCreateByName(user1);
 		User lender = database.getUserMapping().fetchOrCreateByName(author);
@@ -63,6 +65,7 @@ public class PaidSummon implements CommentSummon {
 		
 		logger.printf(Level.TRACE, "%s did a paid command on %s, but one did't exist. So we retroactively created loan %d", author, user1, loan.id);
 	}
+	
 	/**
 	 * Goes through each relevant loan and attempts to add as
 	 * much as possible to the principal repayment without 
@@ -88,20 +91,24 @@ public class PaidSummon implements CommentSummon {
 					int amount = (l.principalCents - l.principalRepaymentCents);
 					if(amount > 0) {
 						remainingPennies -= amount;
-						if(true) {
-							throw new RuntimeException("Not yet implemented");
-						}
-						//database.payLoan(l, amount, time); TODO
-
+						Repayment repayment = new Repayment(-1, l.id, amount, new Timestamp(time), new Timestamp(time));
+						database.getRepaymentMapping().save(repayment);
+						l.principalRepaymentCents += amount;
+						database.getLoanMapping().save(l);
+						
 						if(l.unpaid) {
-							//database.setLoanUnpaid(l, false);  TODO
+							l.unpaid = false;
+							database.getLoanMapping().save(l);
 						}
 
 						if(remainingPennies == 0)
 							break;
 					}
 				}else {
-					//database.payLoan(l, remainingPennies, time);  TODO
+					Repayment repayment = new Repayment(-1, l.id, remainingPennies, new Timestamp(time), new Timestamp(time));
+					database.getRepaymentMapping().save(repayment);
+					l.principalRepaymentCents += remainingPennies;
+					database.getLoanMapping().save(l);
 					remainingPennies = 0;
 					break;
 				}
@@ -139,7 +146,6 @@ public class PaidSummon implements CommentSummon {
 			String user1 = respInfo.getObject("user1").toString();
 			MoneyFormattableObject moneyObj = (MoneyFormattableObject) respInfo.getObject("money1");
 			int amountRepaid = moneyObj.getAmount();
-			long now = Math.round(comment.createdUTC() * 1000);
 			boolean hasConversion = matcher.group(2) != null; 
 			if(hasConversion) {
 				String convertFrom = matcher.group(2).trim();
@@ -155,12 +161,12 @@ public class PaidSummon implements CommentSummon {
 			Username user1Username = database.getUsernameMapping().fetchByUsername(user1);
 			
 			if(authorUsername == null || user1Username == null) {
-				createRetroactiveLoan(database, user1, author, amountRepaid, now);
-				return handleComment(comment, db, config);
-//				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but author is %s and user 1 is %s",
-//						author, user1, amountRepaid, (authorUsername == null ? "null" : "not null"), (user1Username == null ? "null" : "not null"));
-//				ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName("no_loans_to_repay").responseBody, respInfo);
-//				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));//.replace("<borrower>", doneTo).replace("<author>", doer));
+//				createRetroactiveLoan(database, user1, author, amountRepaid, now);
+//				return handleComment(comment, db, config);
+				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but author is %s and user 1 is %s",
+						author, user1, amountRepaid, (authorUsername == null ? "null" : "not null"), (user1Username == null ? "null" : "not null"));
+				ResponseFormatter formatter = new ResponseFormatter(database.getResponseMapping().fetchByName("no_loans_to_repay").responseBody, respInfo);
+				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));//.replace("<borrower>", doneTo).replace("<author>", doer));
 			}
 			
 			User authorUser = database.getUserMapping().fetchById(authorUsername.userId);
@@ -175,12 +181,11 @@ public class PaidSummon implements CommentSummon {
 			removeFinishedLoans(relevantLoans);
 			
 			if(relevantLoans.size() == 0) {
-				createRetroactiveLoan(database, user1, author, amountRepaid, now);
-				return handleComment(comment, db, config);
-//				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but there are no ongoing loans", author, user1, amountRepaid);
-//				ResponseFormatter formatter = new ResponseFormatter(database.getResponseByName("no_loans_to_repay").responseBody, respInfo);
-//				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));
-//				Loan loan = new Loan(-1, )
+//				createRetroactiveLoan(database, user1, author, amountRepaid, now);
+//				return handleComment(comment, db, config);
+				logger.printf(Level.WARN, "%s tried to say %s repaid him by %d, but there are no ongoing loans", author, user1, amountRepaid);
+				ResponseFormatter formatter = new ResponseFormatter(database.getResponseMapping().fetchByName("no_loans_to_repay").responseBody, respInfo);
+				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));
 			}
 			
 			

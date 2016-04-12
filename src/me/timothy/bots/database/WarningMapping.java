@@ -11,10 +11,11 @@ import me.timothy.bots.models.Warning;
  */
 public interface WarningMapping extends ObjectMapping<Warning> {
 	/**
-	 * Fetches all the warnings for the specified user id
+	 * Fetches all the warnings where the specified user id
+	 * is the warned user id.
 	 * 
 	 * @param userId the user id to fetch warnings of
 	 * @return the warnings of that user, or an empty list
 	 */
-	public List<Warning> fetchByUserId(int userId);
+	public List<Warning> fetchByWarnedUserId(int userId);
 }

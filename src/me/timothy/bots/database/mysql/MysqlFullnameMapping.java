@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,12 +14,15 @@ import org.apache.logging.log4j.Logger;
 
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.database.FullnameMapping;
+import me.timothy.bots.database.SchemaValidator;
 import me.timothy.bots.models.Fullname;
 
-public class MysqlFullnameMapping extends MysqlObjectMapping<Fullname> implements FullnameMapping {
+public class MysqlFullnameMapping extends MysqlObjectMapping<Fullname> implements FullnameMapping, SchemaValidator {
 	private static Logger logger = LogManager.getLogger();
 	public MysqlFullnameMapping(LoansDatabase database, Connection connection) {
-		super(database, connection);
+		super(database, connection, "fullnames", 
+				new MysqlColumn(Types.INTEGER, "id", true),
+				new MysqlColumn(Types.VARCHAR, "fullname"));
 	}
 
 	@Override
@@ -44,7 +48,9 @@ public class MysqlFullnameMapping extends MysqlObjectMapping<Fullname> implement
 				if(keys.next()) {
 					fullname.id = keys.getInt(1);
 				}else {
-					throw new IllegalStateException("no generated keys");
+					keys.close();
+					statement.close();
+					throw new RuntimeException("Expected generated keys for fullname table, but none found");
 				}
 				keys.close();
 			}
@@ -104,5 +110,15 @@ public class MysqlFullnameMapping extends MysqlObjectMapping<Fullname> implement
 	 */
 	protected Fullname fetchFromSet(ResultSet set) throws SQLException {
 		return new Fullname(set.getInt("id"), set.getString("fullname"));
+	}
+
+	@Override
+	protected void createTable() throws SQLException {
+		Statement statement = connection.createStatement();
+		statement.execute("CREATE TABLE fullnames ("
+				+ "id INT NOT NULL AUTO_INCREMENT, "
+				+ "fullname VARCHAR(50) NOT NULL, "
+				+ "PRIMARY KEY(id))");
+		statement.close();
 	}
 }

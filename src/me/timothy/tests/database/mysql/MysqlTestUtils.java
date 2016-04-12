@@ -77,5 +77,6 @@ public class MysqlTestUtils {
 	public static void clearDatabase(LoansDatabase database) {
 		database.purgeAll();
 		database.validateTableState();
+		database.validateTableState(); // doing this twice is like a test of its own
 	}
 }

@@ -84,6 +84,10 @@ public class CreationInfo {
 		this.updatedAt = updatedAt;
 	}
 	
+	public CreationInfo() {
+		this(-1, -1, null, null, null, -1, null, null);
+	}
+
 	/**
 	 * Ensures this creation info is consistent, that is if
 	 * type is REDDIT then reason is null and userId is <= 0;
@@ -113,4 +117,67 @@ public class CreationInfo {
 		
 		return true;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((createdAt == null) ? 0 : createdAt.hashCode());
+		result = prime * result + id;
+		result = prime * result + loanId;
+		result = prime * result + ((reason == null) ? 0 : reason.hashCode());
+		result = prime * result + ((thread == null) ? 0 : thread.hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + ((updatedAt == null) ? 0 : updatedAt.hashCode());
+		result = prime * result + userId;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		CreationInfo other = (CreationInfo) obj;
+		if (createdAt == null) {
+			if (other.createdAt != null)
+				return false;
+		} else if (!createdAt.equals(other.createdAt))
+			return false;
+		if (id != other.id)
+			return false;
+		if (loanId != other.loanId)
+			return false;
+		if (reason == null) {
+			if (other.reason != null)
+				return false;
+		} else if (!reason.equals(other.reason))
+			return false;
+		if (thread == null) {
+			if (other.thread != null)
+				return false;
+		} else if (!thread.equals(other.thread))
+			return false;
+		if (type != other.type)
+			return false;
+		if (updatedAt == null) {
+			if (other.updatedAt != null)
+				return false;
+		} else if (!updatedAt.equals(other.updatedAt))
+			return false;
+		if (userId != other.userId)
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "CreationInfo [id=" + id + ", loanId=" + loanId + ", type=" + type + ", thread=" + thread + ", reason="
+				+ reason + ", userId=" + userId + ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + "]";
+	}
+	
+	
 }

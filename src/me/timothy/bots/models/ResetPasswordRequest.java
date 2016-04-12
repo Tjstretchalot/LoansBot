@@ -33,12 +33,73 @@ public class ResetPasswordRequest {
 		this.updatedAt = updatedAt;
 	}
 	
+	public ResetPasswordRequest() {
+		this(-1, -1, null, false, false, null, null);
+	}
+
 	/**
 	 * Checks if this could potentially be a valid
 	 * entry
 	 * @return if this request is probably valid
 	 */
 	public boolean isValid() {
-		return id > 0 && userId > 0 && resetCode != null && createdAt != null && updatedAt != null;
+		return userId > 0 && userId > 0 && resetCode != null && createdAt != null && updatedAt != null;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((createdAt == null) ? 0 : createdAt.hashCode());
+		result = prime * result + id;
+		result = prime * result + ((resetCode == null) ? 0 : resetCode.hashCode());
+		result = prime * result + (resetCodeSent ? 1231 : 1237);
+		result = prime * result + (resetCodeUsed ? 1231 : 1237);
+		result = prime * result + ((updatedAt == null) ? 0 : updatedAt.hashCode());
+		result = prime * result + userId;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ResetPasswordRequest other = (ResetPasswordRequest) obj;
+		if (createdAt == null) {
+			if (other.createdAt != null)
+				return false;
+		} else if (!createdAt.equals(other.createdAt))
+			return false;
+		if (id != other.id)
+			return false;
+		if (resetCode == null) {
+			if (other.resetCode != null)
+				return false;
+		} else if (!resetCode.equals(other.resetCode))
+			return false;
+		if (resetCodeSent != other.resetCodeSent)
+			return false;
+		if (resetCodeUsed != other.resetCodeUsed)
+			return false;
+		if (updatedAt == null) {
+			if (other.updatedAt != null)
+				return false;
+		} else if (!updatedAt.equals(other.updatedAt))
+			return false;
+		if (userId != other.userId)
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "ResetPasswordRequest [id=" + id + ", userId=" + userId + ", resetCode=" + resetCode + ", resetCodeSent="
+				+ resetCodeSent + ", resetCodeUsed=" + resetCodeUsed + ", createdAt=" + createdAt + ", updatedAt="
+				+ updatedAt + "]";
+	}
+	
 }

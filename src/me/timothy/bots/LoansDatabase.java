@@ -1,15 +1,8 @@
 package me.timothy.bots;
 
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,6 +18,7 @@ import me.timothy.bots.database.RepaymentMapping;
 import me.timothy.bots.database.ResetPasswordRequestMapping;
 import me.timothy.bots.database.ResponseHistoryMapping;
 import me.timothy.bots.database.ResponseMapping;
+import me.timothy.bots.database.SchemaValidator;
 import me.timothy.bots.database.ShareCodeMapping;
 import me.timothy.bots.database.UserMapping;
 import me.timothy.bots.database.UsernameMapping;
@@ -46,13 +40,27 @@ import me.timothy.bots.database.mysql.MysqlWarningMapping;
 import me.timothy.bots.models.Fullname;
 
 /**
- * 
+ * An implementation of a mapping database for the MySQL mappings.
  * 
  * @author Timothy
  */
 public class LoansDatabase extends Database implements MappingDatabase {
 	private Logger logger;
 	private Connection connection;
+	
+	/*
+	 * This is quite.. wordy. But schema validators are different from mappings,
+	 * particularly when networking is involved (which is a planned addition). In that 
+	 * cause, its quite likely I'll want to have seperate classes for it, since they will
+	 * all have the same schema validator (verifies the protocol version).
+	 * 
+	 * Arrays aren't used because this is very business-logic-like; I may need to handle
+	 * certain mappings "specially" at some point in the future, and a map / list would
+	 * complicate that. Also, the getXMapping() pattern actually looks pretty nice
+	 * when it's being used, and an array wouldn't look significantly better for that
+	 * pattern.
+	 */
+	
 	private AdminUpdateMapping adminUpdateMapping;
 	private CreationInfoMapping creationInfoMapping;
 	private FullnameMapping fullnameMapping;
@@ -67,6 +75,21 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	private UserMapping userMapping;
 	private UsernameMapping usernameMapping;
 	private WarningMapping warningMapping;
+	
+	private SchemaValidator adminUpdateValidator;
+	private SchemaValidator creationInfoValidator;
+	private SchemaValidator fullnameValidator;
+	private SchemaValidator lccValidator;
+	private SchemaValidator loanValidator;
+	private SchemaValidator recheckValidator;
+	private SchemaValidator repaymentValidator;
+	private SchemaValidator resetPasswordRequestValidator;
+	private SchemaValidator responseHistoryValidator;
+	private SchemaValidator responseValidator;
+	private SchemaValidator shareCodeValidator;
+	private SchemaValidator userValidator;
+	private SchemaValidator usernameValidator;
+	private SchemaValidator warningValidator;
 	
 	public LoansDatabase() {
 		logger = LogManager.getLogger();
@@ -106,20 +129,44 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		userMapping = new MysqlUserMapping(this, connection);
 		usernameMapping = new MysqlUsernameMapping(this, connection);
 		warningMapping = new MysqlWarningMapping(this, connection);
+		
+		fullnameValidator = (SchemaValidator) fullnameMapping;
+		adminUpdateValidator = (SchemaValidator) adminUpdateMapping;
+		creationInfoValidator = (SchemaValidator) creationInfoMapping;
+		lccValidator = (SchemaValidator) lccMapping;
+		loanValidator = (SchemaValidator) loanMapping;
+		recheckValidator = (SchemaValidator) recheckMapping;
+		repaymentValidator = (SchemaValidator) repaymentMapping;
+		resetPasswordRequestValidator = (SchemaValidator) resetPasswordRequestMapping;
+		responseHistoryValidator = (SchemaValidator) responseHistoryMapping;
+		responseValidator = (SchemaValidator) responseMapping;
+		shareCodeValidator = (SchemaValidator) shareCodeMapping;
+		userValidator = (SchemaValidator) userMapping;
+		usernameValidator = (SchemaValidator) usernameMapping;
+		warningValidator = (SchemaValidator) warningMapping;
 	}
 	
 	/**
 	 * Purges everything from everything. Scary stuff.
 	 * 
+	 * @see me.timothy.bots.database.SchemaValidator#purgeSchema()
 	 */
 	public void purgeAll() {
-		try {
-			Statement statement = connection.createStatement();
-			statement.execute("DELETE FROM fullnames;");
-		}catch(SQLException sqlE) {
-			logger.throwing(sqlE);
-			throw new RuntimeException(sqlE);
-		}
+		// REVERSE ORDER of validateTableState
+		warningValidator.purgeSchema();
+		shareCodeValidator.purgeSchema();
+		responseHistoryValidator.purgeSchema();
+		responseValidator.purgeSchema();
+		resetPasswordRequestValidator.purgeSchema();
+		repaymentValidator.purgeSchema();
+		recheckValidator.purgeSchema();
+		lccValidator.purgeSchema();
+		creationInfoValidator.purgeSchema();
+		adminUpdateValidator.purgeSchema();
+		loanValidator.purgeSchema();
+		usernameValidator.purgeSchema();
+		userValidator.purgeSchema();
+		fullnameValidator.purgeSchema();
 	}
 	
 	/**
@@ -127,92 +174,25 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	 * cannot be found, they are created. Throws an error if the tables already exist
 	 * but are not in the expected state.</p>
 	 * 
-	 * <p>Exactly the same as calling each validateXTable</p>
-	 * 
 	 * @throws IllegalStateException if the tables are in the wrong state
+	 * @see me.timothy.bots.database.SchemaValidator#validateSchema()
 	 */
 	public void validateTableState() {
-		validateFullnamesTable();
-	}
-	
-	public void validateFullnamesTable() {
-		try {
-			DatabaseMetaData metadata = connection.getMetaData();
-			ResultSet results = metadata.getTables(null, null, "fullnames", null);
-			boolean exists = results.next();
-			results.close();
-			
-			if(!exists) {
-				createFullnamesTable();
-			}else {
-				results = metadata.getColumns(null, null, "fullnames", "%"); 
-				
-				List<String> errors = new ArrayList<>();
-				List<String> toFind = new ArrayList<>();
-				toFind.add("id");
-				toFind.add("fullname");
-				
-				while(results.next()) {
-					int type;
-					String autoIncrement;
-					
-					String colName = results.getString(4);
-					if(colName.equals("id")) {
-						toFind.remove("id");
-						
-						type = results.getInt(5);
-						if(type != Types.INTEGER) {
-							errors.add("expected id to be an integer");
-						}
-						
-						autoIncrement = results.getString(23);
-						if(!autoIncrement.equals("YES")) {
-							errors.add("expected id to autoincrement");
-						}
-					}else if(colName.equals("fullname")) {
-						toFind.remove("fullname");
-						
-						type = results.getInt(5);
-						if(type != Types.VARCHAR) {
-							errors.add("expected fullname to be a varchar");
-						}
-					}else {
-						errors.add("weird column " + colName);
-					}
-				}
-				
-				results.close();
-				
-				while(toFind.size() > 0) {
-					String col = toFind.get(0);
-					toFind.remove(0);
-					
-					errors.add(String.format("expected %s", col));
-				}
-				
-				if(errors.size() > 0) {
-					throw new RuntimeException("Validation failed on fullnames: " + errors.stream().collect(Collectors.joining("; ")));
-				}
-			}
-			
-		} catch (SQLException e) {
-			logger.throwing(e);
-			throw new RuntimeException(e);
-		}
-	}
-	
-	/**
-	 * Creates the fullnames table
-	 * 
-	 * @throws SQLException
-	 */
-	protected void createFullnamesTable() throws SQLException {
-		Statement statement = connection.createStatement();
-		statement.execute("CREATE TABLE fullnames ("
-				+ "id int NOT NULL AUTO_INCREMENT, "
-				+ "fullname varchar(50) NOT NULL, "
-				+ "PRIMARY KEY(id))");
-		statement.close();
+		// TODO Finish this in the same order as tests are added
+		fullnameValidator.validateSchema();
+		userValidator.validateSchema();
+		usernameValidator.validateSchema();
+		loanValidator.validateSchema();
+		adminUpdateValidator.validateSchema();
+		creationInfoValidator.validateSchema();
+		lccValidator.validateSchema();
+		recheckValidator.validateSchema();
+		repaymentValidator.validateSchema();
+		resetPasswordRequestValidator.validateSchema();
+		responseValidator.validateSchema();
+		responseHistoryValidator.validateSchema();
+		shareCodeValidator.validateSchema();
+		warningValidator.validateSchema();
 	}
 	
 	/**
@@ -240,6 +220,21 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		userMapping = null;
 		usernameMapping = null;
 		warningMapping = null;
+		
+		adminUpdateValidator = null;
+		creationInfoValidator = null;
+		fullnameValidator = null;
+		lccValidator = null;
+		loanValidator = null;
+		recheckValidator = null;
+		repaymentValidator = null;
+		resetPasswordRequestValidator = null;
+		responseHistoryValidator = null;
+		responseValidator = null;
+		shareCodeValidator = null;
+		userValidator = null;
+		usernameValidator = null;
+		warningValidator = null;
 	}
 	
 	public AdminUpdateMapping getAdminUpdateMapping() {
@@ -284,6 +279,13 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	public WarningMapping getWarningMapping() {
 		return warningMapping;
 	}
+	
+	/*
+	 * The following don't match the "MapperDatabase" I have setup, because I'm subclassing
+	 * from the generic Database from SummonableBot. I'm brainstorming ways to refactor this
+	 * without breaking other people codes - shoot me a message at mtimothy984@gmail.com or 
+	 * comment here if you think of one!
+	 */
 	
 	/**
 	 * Adds a fullname to the database

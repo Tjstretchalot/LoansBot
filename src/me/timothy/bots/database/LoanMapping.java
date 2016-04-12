@@ -31,7 +31,8 @@ public interface LoanMapping extends ObjectMapping<Loan> {
 	public List<Loan> fetchWithBorrowerAndOrLender(int borrowerId, int lenderId, boolean strict);
 	
 	/**
-	 * Fetches the number of loans with the specified user as the lender
+	 * Fetches the number of loans with the specified user as the lender. Does <i>not</i>
+	 * count deleted loans
 	 * 
 	 * @param lenderId the lender id
 	 * @return the number of loans with the specified user as the lender

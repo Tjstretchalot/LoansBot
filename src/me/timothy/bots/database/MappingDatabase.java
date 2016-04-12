@@ -10,10 +10,12 @@ public interface MappingDatabase {
 	public CreationInfoMapping getCreationInfoMapping();
 	public FullnameMapping getFullnameMapping();
 	public LCCMapping getLccMapping();
+	public LoanMapping getLoanMapping();
 	public RecheckMapping getRecheckMapping();
 	public RepaymentMapping getRepaymentMapping();
 	public ResetPasswordRequestMapping getResetPasswordRequestMapping();
 	public ResponseHistoryMapping getResponseHistoryMapping();
+	public ResponseMapping getResponseMapping();
 	public ShareCodeMapping getShareCodeMapping();
 	public UserMapping getUserMapping();
 	public UsernameMapping getUsernameMapping();
