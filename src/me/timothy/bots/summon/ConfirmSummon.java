@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansDatabase;
+import me.timothy.bots.currencies.CurrencyHandler;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.User;
 import me.timothy.bots.models.Username;
@@ -32,7 +33,7 @@ public class ConfirmSummon implements CommentSummon {
 	 * $confirm /u/John $10
 	 */
 	private static final Pattern CONFIRM_PATTERN = Pattern
-			.compile("\\s*\\$confirm\\s/u/\\S+\\s\\$?\\d+\\.?\\d*\\$?");
+			.compile("\\s*\\$confirm\\s/u/\\S+\\s\\$?\\d+\\.?\\d*\\$?(\\s[A-Z]{3})?");
 	
 	private static final String CONFIRM_FORMAT = "$confirm <user1> <money1>";
 
@@ -47,7 +48,7 @@ public class ConfirmSummon implements CommentSummon {
 		Matcher matcher = CONFIRM_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
-			String text = matcher.group().trim();
+			String text = matcher.group(1).trim();
 			ResponseInfo ri = ResponseInfoFactory.getResponseInfo(CONFIRM_FORMAT, text, comment);
 			
 			String borrower = ri.getObject("author").toString().toLowerCase();
@@ -56,6 +57,17 @@ public class ConfirmSummon implements CommentSummon {
 			if(borrower.equals(lender)) {
 				logger.printf(Level.INFO, "Ignoring %s confirming he sent money to himself!", borrower);
 				return null;
+			}
+			
+			final int originalMoneyPennies = money;
+			boolean hasConversion = matcher.group(2) != null;
+			String convertFrom = "USD";
+			double conversionRate = 1;
+			if(hasConversion) {
+				convertFrom = matcher.group(2).trim();
+				conversionRate = CurrencyHandler.getConversionRate(convertFrom, "USD");
+				logger.debug("Converting from " + convertFrom + " to USD using rate " + conversionRate);
+				money *= conversionRate;
 			}
 		
 			logger.printf(Level.INFO, "%s confirmed a $%s transfer from %s", borrower,
@@ -82,7 +94,17 @@ public class ConfirmSummon implements CommentSummon {
 			}
 			ri.addTemporaryString("numloans", Integer.toString(numLoans));
 			
-			ResponseFormatter formatter = new ResponseFormatter(database.getResponseMapping().fetchByName(validConfirm ? "confirm" : "confirmNoLoan").responseBody, ri);
+			if(hasConversion) {
+				ri.addTemporaryString("convert_from", convertFrom);
+				ri.addTemporaryString("conversion_rate", Double.toString(conversionRate));
+				ri.addTemporaryObject("original_money", new MoneyFormattableObject(originalMoneyPennies));
+			}
+			
+			String responseName = "confirm";
+			if(!validConfirm) { responseName += "NoLoan"; }
+			if(hasConversion) { responseName += "HasConversion"; }
+			
+			ResponseFormatter formatter = new ResponseFormatter(database.getResponseMapping().fetchByName(responseName).responseBody, ri);
 			
 			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, (LoansDatabase) db), "991c8042-3ecc-11e4-8052-12313d05258a");
 		}
