@@ -19,9 +19,11 @@ public interface LoanMapping extends ObjectMapping<Loan> {
 	public List<Integer> fetchLenderIdsWithNewLoanSince(Timestamp timestamp);
 	
 	/**
-	 * Fetches loans that have a borrower that is the specified borrower id, or 
+	 * <p>Fetches loans that have a borrower that is the specified borrower id, or 
 	 * a lender with a specified lender id. If {@code strict=true}, the loan must 
-	 * have <i>both</i> the specified borrower and the specified lender
+	 * have <i>both</i> the specified borrower and the specified lender.</p>
+	 * 
+	 * <p>Does not fetch deleted loans</p>
 	 * 
 	 * @param borrowerId the borrower id
 	 * @param lenderId the lender id

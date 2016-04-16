@@ -118,8 +118,8 @@ public class MysqlLoanMapping extends MysqlObjectMapping<Loan> implements LoanMa
 		final String strictOperatorStr = strict ? "AND" : "OR";
 		
 		try {
-			PreparedStatement statement = connection.prepareStatement("SELECT * FROM loans WHERE lender_id=? " + strictOperatorStr 
-					+ " borrower_id=?");
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM loans WHERE deleted=0 AND (lender_id=? " + strictOperatorStr 
+					+ " borrower_id=?)");
 			
 			int counter = 1;
 			statement.setInt(counter++, lenderId);

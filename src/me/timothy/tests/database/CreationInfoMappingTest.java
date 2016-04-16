@@ -179,6 +179,7 @@ public class CreationInfoMappingTest {
 		cInfoPaulToJohn2.updatedAt = new Timestamp(System.currentTimeMillis());
 		database.getCreationInfoMapping().save(cInfoPaulToJohn2);
 		
+		
 		List<CreationInfo> fromDb = database.getCreationInfoMapping().fetchManyByLoanIds(loanPaulToJohn.id);
 		assertEquals(1, fromDb.size());
 		assertTrue("expected " + fromDb + " to contain " + cInfoPaulToJohn, fromDb.contains(cInfoPaulToJohn));
@@ -191,6 +192,9 @@ public class CreationInfoMappingTest {
 		assertEquals(2, fromDb.size());
 		assertTrue("expected " + fromDb + " to contain " + cInfoPaulToJohn, fromDb.contains(cInfoPaulToJohn));
 		assertTrue("expected " + fromDb + " to contain " + cInfoPaulToJohn2, fromDb.contains(cInfoPaulToJohn2));
+		
+		fromDb = database.getCreationInfoMapping().fetchManyByLoanIds();
+		assertEquals(0, fromDb.size());
 	}
 	
 	

@@ -260,5 +260,42 @@ public class LoanMappingTest {
 		assertEquals(2, fromDb);
 	}
 	
-	
+	@Test
+	public void testFetchDeleted() {
+		User paul = database.getUserMapping().fetchOrCreateByName("paul");
+		User john = database.getUserMapping().fetchOrCreateByName("john");
+		
+		Loan loanPaulToJohn1 = new Loan();
+		loanPaulToJohn1.id = -1;
+		loanPaulToJohn1.lenderId = paul.id;
+		loanPaulToJohn1.borrowerId = john.id;
+		loanPaulToJohn1.principalCents = 100 * 100; // $100
+		loanPaulToJohn1.principalRepaymentCents = 0;
+		loanPaulToJohn1.createdAt = new Timestamp(System.currentTimeMillis());
+		loanPaulToJohn1.updatedAt = new Timestamp(System.currentTimeMillis());
+		database.getLoanMapping().save(loanPaulToJohn1);
+		
+		List<Loan> fromDb = database.getLoanMapping().fetchAll();
+		assertEquals(1, fromDb.size());
+		assertTrue("expected " + fromDb + " to contain " + loanPaulToJohn1, fromDb.contains(loanPaulToJohn1));
+		
+		fromDb = database.getLoanMapping().fetchWithBorrowerAndOrLender(john.id, paul.id, true);
+		assertEquals(1, fromDb.size());
+		assertTrue("expected " + fromDb + " to contain " + loanPaulToJohn1, fromDb.contains(loanPaulToJohn1));
+		
+		loanPaulToJohn1.deleted = true;
+		loanPaulToJohn1.deletedAt = new Timestamp(System.currentTimeMillis());
+		loanPaulToJohn1.deletedReason = "invalid";
+		database.getLoanMapping().save(loanPaulToJohn1);
+		
+		fromDb = database.getLoanMapping().fetchAll();
+		assertEquals(1, fromDb.size());
+		assertTrue("expected " + fromDb + " to contain " + loanPaulToJohn1, fromDb.contains(loanPaulToJohn1));
+		
+		fromDb = database.getLoanMapping().fetchWithBorrowerAndOrLender(john.id, paul.id, true);
+		assertEquals(0, fromDb.size());
+		
+		fromDb = database.getLoanMapping().fetchWithBorrowerAndOrLender(john.id, paul.id, false);
+		assertEquals(0, fromDb.size());
+	}
 }

@@ -64,6 +64,9 @@ public class LoansBotMain {
 			return;
 		}
 		
+		logger.debug("Verifying database schema..");
+		database.validateTableState();
+		
 		logger.debug("Running loans bot driver");
 		BotDriver driver = new LoansBotDriver(database, config, loansBot,
 				new CommentSummon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon(), new SuicideSummon(), new BadLoanSummon() }, 

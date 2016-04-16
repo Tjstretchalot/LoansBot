@@ -131,7 +131,7 @@ public class MysqlCreationInfoMapping extends MysqlObjectMapping<CreationInfo> i
 
 	@Override
 	public List<CreationInfo> fetchManyByLoanIds(int... loanIds) {
-		String where = "";
+		String where = " WHERE ";
 		boolean first = true;
 		
 		for(int i = 0; i < loanIds.length; i++) {
@@ -144,8 +144,10 @@ public class MysqlCreationInfoMapping extends MysqlObjectMapping<CreationInfo> i
 			where += "loan_id=?";
 		}
 		
+		
+		
 		try {
-			PreparedStatement statement = connection.prepareStatement("SELECT * FROM creation_infos WHERE " + where);
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM creation_infos" + (loanIds.length > 0 ? where : " WHERE 0"));
 			int counter = 1;
 			for(int loanId : loanIds) {
 				statement.setInt(counter++, loanId);

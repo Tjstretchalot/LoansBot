@@ -33,7 +33,7 @@ public class ConfirmSummon implements CommentSummon {
 	 * $confirm /u/John $10
 	 */
 	private static final Pattern CONFIRM_PATTERN = Pattern
-			.compile("\\s*\\$confirm\\s/u/\\S+\\s\\$?\\d+\\.?\\d*\\$?(\\s[A-Z]{3})?");
+			.compile("(\\s*\\$confirm\\s/u/\\S+\\s\\$?\\d+\\.?\\d*\\$?)(\\s[A-Z]{3})?");
 	
 	private static final String CONFIRM_FORMAT = "$confirm <user1> <money1>";
 
@@ -110,5 +110,4 @@ public class ConfirmSummon implements CommentSummon {
 		}
 		return null;
 	}
-
 }
