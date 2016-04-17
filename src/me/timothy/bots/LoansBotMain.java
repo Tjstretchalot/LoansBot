@@ -31,11 +31,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class LoansBotMain {
 	public static void main(String[] args) {
-		for(int i = 1; i <= 3; i++) {
-			ResponseInfoFactory.base.addLongtermObject("loans" + i, new LoanFormattableObject());
-			ResponseInfoFactory.base.addLongtermObject("applied" + i, new AppliedFormattableObject());
-		}
-		
+		LoansResponseInfoFactory.init();
 		
 		Logger logger = LogManager.getLogger();
 		

@@ -25,9 +25,9 @@ public class MysqlTestUtils {
 	public static Properties fetchTestDatabaseProperties() {
 		Properties props = new Properties();
 		
-		Path path = Paths.get("test_database.properties");
+		Path path = Paths.get("tests/database.properties");
 		if(!Files.exists(path)) {
-			throw new IllegalStateException("test_database.properties could not be found");
+			throw new IllegalStateException("tests/database.properties could not be found");
 		}
 		
 		try(FileReader fr = new FileReader(path.toFile())) {

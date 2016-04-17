@@ -59,6 +59,10 @@ public class CheckSummon implements CommentSummon, LinkSummon {
 	}
 	@Override
 	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
+		if(comment.author().equalsIgnoreCase(config.getProperty("user.username"))) {
+			return null;
+		}
+		
 		Matcher matcher = CHECK_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
