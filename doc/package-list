@@ -7,5 +7,6 @@ me.timothy.bots.models
 me.timothy.bots.responses
 me.timothy.bots.summon
 me.timothy.tests.bots.responses
+me.timothy.tests.bots.summon
 me.timothy.tests.database
 me.timothy.tests.database.mysql
