@@ -68,7 +68,6 @@ public class UnpaidSummon implements CommentSummon {
 					l.unpaid = true;
 					database.getLoanMapping().save(l);
 					changed.add(l);
-					throw new RuntimeException("Not yet implemented");
 				}
 			}
 			responseInfo.addTemporaryString("changed loans", LoansBotUtils.getLoansAsTable(changed, database, changed.size()));

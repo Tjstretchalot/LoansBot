@@ -3,10 +3,10 @@ package me.timothy.bots;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import me.timothy.bots.currencies.CurrencyHandler;
-import me.timothy.bots.responses.AppliedFormattableObject;
-import me.timothy.bots.responses.LoanFormattableObject;
-import me.timothy.bots.responses.ResponseInfoFactory;
 import me.timothy.bots.summon.BadLoanSummon;
 import me.timothy.bots.summon.CheckSummon;
 import me.timothy.bots.summon.CommentSummon;
@@ -18,9 +18,6 @@ import me.timothy.bots.summon.PaidSummon;
 import me.timothy.bots.summon.SuicideSummon;
 import me.timothy.bots.summon.UnpaidSummon;
 import me.timothy.jreddit.requests.Utils;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Entry point to the program. Handles initializing the bot on a local
