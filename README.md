@@ -11,3 +11,6 @@ LoansBot was created for /r/loans, now renamed to /r/borrow. It is intended to k
 4. Maintains its own history - deleting a comment on reddit does not affect the LoansBot once the LoansBot has seen it.
 5. Secure, the LoansBot is by nature safe from SQL injections and other tomfoolery.
 
+###Documentation
+
+The documentation is available on [here](http://tjstretchalot.github.io/LoansBot) thanks to [GitHub Pages](https://pages.github.com/).
