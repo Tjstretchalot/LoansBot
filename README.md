@@ -13,4 +13,4 @@ LoansBot was created for /r/loans, now renamed to /r/borrow. It is intended to k
 
 ###Documentation
 
-The documentation is available on [here](http://tjstretchalot.github.io/LoansBot) thanks to [GitHub Pages](https://pages.github.com/).
+The documentation is available [here](http://tjstretchalot.github.io/LoansBot) thanks to [GitHub Pages](https://pages.github.com/).
