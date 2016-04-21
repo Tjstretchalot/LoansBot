@@ -4,7 +4,7 @@ package me.timothy.bots.models;
  * Just a basic fullname that can be mapped to the database
  * in order to prevent the bot from reusing the same one
  * 
- * @author Tmoor
+ * @author Timothy
  *
  */
 public class Fullname {

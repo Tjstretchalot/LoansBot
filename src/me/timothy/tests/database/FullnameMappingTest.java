@@ -1,6 +1,7 @@
 package me.timothy.tests.database;
 
 import static org.junit.Assert.*;
+import static me.timothy.tests.database.mysql.MysqlTestUtils.assertListContents;
 
 import java.util.List;
 
@@ -18,13 +19,26 @@ import me.timothy.bots.models.Fullname;
  * @author Timothy
  */
 public class FullnameMappingTest {
+	/**
+	 * The {@link me.timothy.bots.database.MappingDatabase MappingDatabase} that contains
+	 * the {@link me.timothy.bots.database.FullnameMapping FullnameMapping} to test.
+	 */
 	protected MappingDatabase database;
 	
+	/**
+	 * Verifies the test is setup correctly by ensuring the {@link #database} is not null
+	 */
 	@Test
 	public void testTest() {
 		assertNotNull(database);
 	}
 	
+	/**
+	 * Tests that {@link me.timothy.bots.database.ObjectMapping#save(A) saving}
+	 * fullnames will set their {@link Fullname#id id} to a strictly positive
+	 * number, and that the fullname can be fetched again with
+	 * {@link me.timothy.bots.database.ObjectMapping#fetchAll() fetchAll()}
+	 */
 	@Test
 	public void testSave() {
 		final String fullnameStr = "asdfgh";
@@ -36,10 +50,17 @@ public class FullnameMappingTest {
 		assertTrue(fullname.fullname.equals(fullnameStr));
 		
 		List<Fullname> fromDb = database.getFullnameMapping().fetchAll();
-		assertEquals(1, fromDb.size());
-		assertTrue(fromDb.toString() + " found; expected " + fullname, fromDb.contains(fullname));
+		assertListContents(fromDb, fullname);
 	}
 	
+	/**
+	 * Tests that
+	 * {@link me.timothy.bots.database.FullnameMapping#contains(String)
+	 * contains} will return true for Strings that are
+	 * {@link Object#equals(Object) equal}, and false for {@link Fullname
+	 * fullnames} that are not in the {@link #database database}, regardless of
+	 * if they are alike in the MySQL sense.
+	 */
 	@Test
 	public void testContains() {
 		final String fullnameStr = "asdfgh";

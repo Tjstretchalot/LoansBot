@@ -1,6 +1,7 @@
 package me.timothy.tests.database;
 
 import static org.junit.Assert.*;
+import static me.timothy.tests.database.mysql.MysqlTestUtils.assertListContents;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -21,13 +22,44 @@ import me.timothy.bots.models.User;
  * @author Timothy
  */
 public class AdminUpdateMappingTest {
+	/**
+	 * The mapping database containing the 
+	 * {@link me.timothy.bots.database.AdminUpdateMapping AdminUpdateMapping} 
+	 * to be tested. Must be initialized by a child class.
+	 */
 	protected MappingDatabase database;
 	
+	/**
+	 * <p>Verifies that the test has been prepared correctly
+	 * by the subclass by asserting that the {@link #database database} is 
+	 * not null.</p>
+	 */
 	@Test
 	public void testTest() {
 		assertNotNull(database);
 	}
 
+	/**
+	 * <p>Tests the ability to save {@link me.timothy.bots.models.AdminUpdate AdminUpdates}</p>
+	 * 
+	 * <p>This is a basic test to make sure that doing a standard
+	 * {@link me.timothy.bots.database.ObjectMapping#save(A) save} on 
+	 * an {@link me.timothy.bots.models.AdminUpdate AdminUpdate} does not result 
+	 * in any errors, and sets the {@link me.timothy.bots.models.AdminUpdate#id id} of the 
+	 * {@link me.timothy.bots.models.AdminUpdate AdminUpdate}
+	 * to a positive integer, and the very same (using 
+	 * {@link me.timothy.bots.models.AdminUpdate#equals(Object) equals}) 
+	 * {@link me.timothy.bots.models.AdminUpdate AdminUpdate} is returned using 
+	 * {@link me.timothy.bots.database.ObjectMapping#fetchAll() fetchAll}</p>
+	 * 
+	 * <p>This has the side-effect of checking 
+	 * {@link AdminUpdate#equals(Object) AdminUpdates equals function}
+	 * is implemented.</p>
+	 * 
+	 * @see me.timothy.bots.models.AdminUpdate#equals(Object)
+	 * @see me.timothy.bots.database.AdminUpdateMapping#save(AdminUpdate)
+	 * @see me.timothy.bots.database.AdminUpdateMapping#fetchAll()
+	 */
 	@Test
 	public void testSave() {
 		User paul = database.getUserMapping().fetchOrCreateByName("paul");
@@ -71,7 +103,6 @@ public class AdminUpdateMappingTest {
 		assertTrue(adminUpdate.id > 0);
 		
 		List<AdminUpdate> fromDb = database.getAdminUpdateMapping().fetchAll();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + adminUpdate, fromDb.contains(adminUpdate));
+		assertListContents(fromDb, adminUpdate);
 	}
 }

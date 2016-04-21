@@ -6,7 +6,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Properties;
+
+import org.junit.Assert;
 
 import me.timothy.bots.LoansDatabase;
 
@@ -78,5 +81,31 @@ public class MysqlTestUtils {
 		database.purgeAll();
 		database.validateTableState();
 		database.validateTableState(); // doing this twice is like a test of its own
+	}
+	
+	/**
+	 * Asserts that the {@code list} contains the {@code obj}, as 
+	 * if by {@code assertTrue(list.contains(obj)}, except with a
+	 * prettier error message.
+	 * 
+	 * @param list the list
+	 * @param obj the object
+	 */
+	public static <A> void assertContains(List<A> list, A obj) {
+		Assert.assertTrue("expected " + list + " to contain " + obj, list.contains(obj));
+	}
+	
+	/**
+	 * Convenience function to verify that a list matches the 
+	 * set of objects.
+	 * 
+	 * @param list the list
+	 * @param objs the objects
+	 */
+	public static <A> void assertListContents(List<A> list, A... objs) {
+		for(int i = 0; i < objs.length; i++) {
+			assertContains(list, objs[i]);
+		}
+		Assert.assertEquals(objs.length, list.size());
 	}
 }

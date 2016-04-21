@@ -1,6 +1,7 @@
 package me.timothy.tests.database;
 
 import static org.junit.Assert.*;
+import static me.timothy.tests.database.mysql.MysqlTestUtils.assertListContents;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -55,8 +56,7 @@ public class RepaymentMappingTest {
 		database.getLoanMapping().save(loanPaulToGreg);
 		
 		List<Repayment> fromDb = database.getRepaymentMapping().fetchAll();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + repayment, fromDb.contains(repayment));
+		assertListContents(fromDb, repayment);
 	}
 	
 	@Test
@@ -97,8 +97,7 @@ public class RepaymentMappingTest {
 		database.getLoanMapping().save(loanPaulToGreg);
 		
 		List<Repayment> fromDb = database.getRepaymentMapping().fetchByLoanId(loanPaulToGreg.id);
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + repaymentPaulToGreg, fromDb.contains(repaymentPaulToGreg));
+		assertListContents(fromDb, repaymentPaulToGreg);
 		
 		fromDb = database.getRepaymentMapping().fetchByLoanId(loanPaulToJohn.id);
 		assertEquals(0, fromDb.size());
@@ -115,7 +114,6 @@ public class RepaymentMappingTest {
 		database.getLoanMapping().save(loanPaulToJohn);
 		
 		fromDb = database.getRepaymentMapping().fetchByLoanId(loanPaulToJohn.id);
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + repaymentPaulToJohn, fromDb.contains(repaymentPaulToJohn));
+		assertListContents(fromDb, repaymentPaulToJohn);
 	}
 }

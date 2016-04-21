@@ -1,6 +1,7 @@
 package me.timothy.tests.database;
 
 import static org.junit.Assert.*;
+import static me.timothy.tests.database.mysql.MysqlTestUtils.assertListContents;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -37,8 +38,7 @@ public class RecheckMappingTest {
 		assertTrue(recheck.id > 0);
 		
 		List<Recheck> fromDb = database.getRecheckMapping().fetchAll();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + recheck, fromDb.contains(recheck));
+		assertListContents(fromDb, recheck);
 	}
 	
 	@Test
@@ -51,8 +51,7 @@ public class RecheckMappingTest {
 		database.getRecheckMapping().save(r1);
 		
 		List<Recheck> fromDb = database.getRecheckMapping().fetchAll();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + r1, fromDb.contains(r1));
+		assertListContents(fromDb, r1);
 		
 		database.getRecheckMapping().delete(r1);
 		
@@ -62,6 +61,7 @@ public class RecheckMappingTest {
 		r1.id = -1;
 		database.getRecheckMapping().save(r1);
 		
+		// Note the matching fullnames - that shouldn't cause problems
 		Recheck r2 = new Recheck();
 		r2.id = -1;
 		r2.fullname = "t1_asdf";
@@ -70,15 +70,12 @@ public class RecheckMappingTest {
 		database.getRecheckMapping().save(r2);
 		
 		fromDb = database.getRecheckMapping().fetchAll();
-		assertEquals(2, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + r1, fromDb.contains(r1));
-		assertTrue("expected " + fromDb + " to contain " + r2, fromDb.contains(r2));
+		assertListContents(fromDb, r1, r2);
 		
 		database.getRecheckMapping().delete(r2);
 		
 		fromDb = database.getRecheckMapping().fetchAll();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + r1, fromDb.contains(r1));
+		assertListContents(fromDb, r1);
 		
 		database.getRecheckMapping().delete(r1);
 		

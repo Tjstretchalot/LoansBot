@@ -1,6 +1,7 @@
 package me.timothy.tests.database;
 
 import static org.junit.Assert.*;
+import static me.timothy.tests.database.mysql.MysqlTestUtils.assertListContents;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -43,8 +44,7 @@ public class ResetPasswordRequestTest {
 		assertTrue(rprGreg.id > 0);
 		
 		List<ResetPasswordRequest> fromDb = database.getResetPasswordRequestMapping().fetchAll();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + rprGreg, fromDb.contains(rprGreg));
+		assertListContents(fromDb, rprGreg);
 	}
 	
 	@Test
@@ -62,8 +62,7 @@ public class ResetPasswordRequestTest {
 		database.getResetPasswordRequestMapping().save(rprGreg);
 		
 		List<ResetPasswordRequest> fromDb = database.getResetPasswordRequestMapping().fetchUnsent();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + rprGreg, fromDb.contains(rprGreg));
+		assertListContents(fromDb, rprGreg);
 		
 		User paul = database.getUserMapping().fetchOrCreateByName("paul");
 		
@@ -78,15 +77,12 @@ public class ResetPasswordRequestTest {
 		database.getResetPasswordRequestMapping().save(rprPaul);
 		
 		fromDb = database.getResetPasswordRequestMapping().fetchUnsent();
-		assertEquals(2, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + rprPaul, fromDb.contains(rprPaul));
-		assertTrue("expected " + fromDb + " to contain " + rprGreg, fromDb.contains(rprGreg));
+		assertListContents(fromDb, rprPaul, rprGreg);
 		
 		rprGreg.resetCodeSent = true;
 		database.getResetPasswordRequestMapping().save(rprGreg);
 		
 		fromDb = database.getResetPasswordRequestMapping().fetchUnsent();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + rprPaul, fromDb.contains(rprPaul));
+		assertListContents(fromDb, rprPaul);
 	}
 }

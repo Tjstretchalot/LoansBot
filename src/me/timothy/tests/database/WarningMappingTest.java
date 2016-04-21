@@ -1,6 +1,7 @@
 package me.timothy.tests.database;
 
 import static org.junit.Assert.*;
+import static me.timothy.tests.database.mysql.MysqlTestUtils.assertListContents;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -46,8 +47,7 @@ public class WarningMappingTest {
 		assertTrue(warning.id > 0);
 		
 		List<Warning> fromDb = database.getWarningMapping().fetchAll();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + warning, fromDb.contains(warning));
+		assertListContents(fromDb, warning);
 	}
 	
 	@Test
@@ -72,8 +72,7 @@ public class WarningMappingTest {
 		assertEquals(0, fromDb.size());
 		
 		fromDb = database.getWarningMapping().fetchByWarnedUserId(greg.id);
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + warningPaulToGreg, fromDb.contains(warningPaulToGreg));
+		assertListContents(fromDb, warningPaulToGreg);
 		
 		fromDb = database.getWarningMapping().fetchByWarnedUserId(john.id);
 		assertEquals(0, fromDb.size());
@@ -91,9 +90,7 @@ public class WarningMappingTest {
 		database.getWarningMapping().save(warningPaulToGreg2);
 		
 		fromDb = database.getWarningMapping().fetchByWarnedUserId(greg.id);
-		assertEquals(2, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + warningPaulToGreg, fromDb.contains(warningPaulToGreg));
-		assertTrue("expected " + fromDb + " to contain " + warningPaulToGreg2, fromDb.contains(warningPaulToGreg2));
+		assertListContents(fromDb, warningPaulToGreg, warningPaulToGreg2);
 		
 		Warning warningPaulToJohn = new Warning();
 		warningPaulToJohn.id = -1;
@@ -108,7 +105,6 @@ public class WarningMappingTest {
 		database.getWarningMapping().save(warningPaulToJohn);
 		
 		fromDb = database.getWarningMapping().fetchByWarnedUserId(john.id);
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + warningPaulToJohn, fromDb.contains(warningPaulToJohn));
+		assertListContents(fromDb, warningPaulToJohn);
 	}
 }

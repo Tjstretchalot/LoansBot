@@ -1,6 +1,7 @@
 package me.timothy.tests.database;
 
 import static org.junit.Assert.*;
+import static me.timothy.tests.database.mysql.MysqlTestUtils.assertListContents;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -20,13 +21,32 @@ import me.timothy.bots.models.User;
  * @author Timothy
  */
 public class LCCMappingTest {
+	/**
+	 * The {@link MappingDatabase} that contains the 
+	 * {@link me.timothy.bots.database.LCCMapping LCCMapping}
+	 * to test.
+	 */
 	protected MappingDatabase database;
 	
+	/**
+	 * Ensures the test is set up correctly by verifying that
+	 * the {@link #database database} is not null.
+	 */
 	@Test
 	public void testTest() {
 		assertNotNull(database);
 	}
 	
+	/**
+	 * Checks that the {@link me.timothy.bots.database.LCCMapping LCCMapping} handles
+	 * straightforward {@link me.timothy.bots.database.ObjectMapping#save(A) saving} by
+	 * observing that, when saved, the {@link LendersCampContributor} has a strictly
+	 * positive {@link LendersCampContributor#id id}, and when all
+	 * {@link LendersCampContributor LendersCampContributors} are fetched using 
+	 * {@link me.timothy.bots.database.ObjectMapping#fetchAll() fetchAll}, the only
+	 * result is the same {@link LendersCampContributor LCC} that was initially saved,
+	 * using an {@link Object#equals(Object) equality} check.
+	 */
 	@Test
 	public void testSave() {
 		User paul = database.getUserMapping().fetchOrCreateByName("paul");
@@ -42,8 +62,7 @@ public class LCCMappingTest {
 		assertTrue(lccPaul.id > 0);
 		
 		List<LendersCampContributor> fromDb = database.getLccMapping().fetchAll();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + lccPaul, fromDb.contains(lccPaul));
+		assertListContents(fromDb, lccPaul);
 		
 		LendersCampContributor lccJohn = new LendersCampContributor();
 		lccJohn.id = -1;
@@ -55,11 +74,16 @@ public class LCCMappingTest {
 		assertTrue(lccJohn.id > 0);
 		
 		fromDb = database.getLccMapping().fetchAll();
-		assertEquals(2, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + lccPaul, fromDb.contains(lccPaul));
-		assertTrue("expected " + fromDb + " to contain " + lccJohn, fromDb.contains(lccJohn));
+		assertListContents(fromDb, lccPaul, lccJohn);
 	}
 	
+	/**
+	 * Focused on testing that, after a {@link LendersCampContributor LCC}
+	 * is saved,
+	 * {@link me.timothy.bots.database.LCCMapping#contains(int) LCCMapping#contains(int)}
+	 * will return true for the appropriate {@link User user}.{@link User#id id}, and false
+	 * for {@link User users} for which no {@link LendersCampContributor LCC} has been created.
+	 */
 	@Test
 	public void testContains() {
 		User paul = database.getUserMapping().fetchOrCreateByName("paul");

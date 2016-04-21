@@ -1,6 +1,7 @@
 package me.timothy.tests.database;
 
 import static org.junit.Assert.*;
+import static me.timothy.tests.database.mysql.MysqlTestUtils.assertListContents;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -36,8 +37,7 @@ public class UserMappingTest {
 		assertTrue(user1.id > 0);
 		
 		List<User> fromDb = database.getUserMapping().fetchAll();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + user1, fromDb.contains(user1));
+		assertListContents(fromDb, user1);
 	}
 	
 	@Test
@@ -121,8 +121,7 @@ public class UserMappingTest {
 		database.getUserMapping().save(user1);
 		
 		List<User> fromDb = database.getUserMapping().fetchUsersToSendCode();
-		assertEquals(1, fromDb.size());
-		assertTrue(fromDb.contains(user1));
+		assertListContents(fromDb, user1);
 		
 		user1.claimLinkSentAt = new Timestamp(System.currentTimeMillis());
 		user1.updatedAt = new Timestamp(System.currentTimeMillis());
@@ -141,8 +140,7 @@ public class UserMappingTest {
 		database.getUserMapping().save(user2);
 		
 		fromDb = database.getUserMapping().fetchUsersToSendCode();
-		assertEquals(1, fromDb.size());
-		assertTrue(fromDb.contains(user2));
+		assertListContents(fromDb, user2);
 	}
 
 }

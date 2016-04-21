@@ -1,6 +1,7 @@
 package me.timothy.tests.database;
 
 import static org.junit.Assert.*;
+import static me.timothy.tests.database.mysql.MysqlTestUtils.assertListContents;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -48,8 +49,7 @@ public class UsernameMappingTest {
 		assertTrue(paul.id > 0);
 		
 		List<Username> fromDb = database.getUsernameMapping().fetchAll();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + paul, fromDb.contains(paul));
+		assertListContents(fromDb, paul);
 	}
 	
 	@Test
@@ -81,17 +81,14 @@ public class UsernameMappingTest {
 		database.getUsernameMapping().save(paul);
 		
 		List<Username> fromDb = database.getUsernameMapping().fetchByUserId(paulUser.id);
-		assertEquals(1, fromDb.size());
-		assertTrue(fromDb.contains(paul));
+		assertListContents(fromDb, paul);
 		
 		Username paulNickname = new Username(-1, paulUser.id, "P.J.", 
 				new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()));
 		database.getUsernameMapping().save(paulNickname);
 		
 		fromDb = database.getUsernameMapping().fetchByUserId(paulUser.id);
-		assertEquals(2, fromDb.size());
-		assertTrue(fromDb.contains(paul));
-		assertTrue(fromDb.contains(paulNickname));
+		assertListContents(fromDb, paul, paulNickname);
 		
 		User gregUser = createUser();
 		Username greg = new Username(-1, gregUser.id, "greg", 
@@ -99,8 +96,7 @@ public class UsernameMappingTest {
 		database.getUsernameMapping().save(greg);
 		
 		fromDb = database.getUsernameMapping().fetchByUserId(gregUser.id);
-		assertEquals(1, fromDb.size());
-		assertTrue(fromDb.contains(greg));
+		assertListContents(fromDb, greg);
 	}
 	
 	@Test

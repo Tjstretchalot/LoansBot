@@ -156,4 +156,13 @@ public class UnpaidSummonTests {
 		assertEquals(loanPaulToJohn.id, fromDb.id);
 		assertEquals(false, fromDb.unpaid);
 	}
+	
+	@Test
+	public void testDoesntRespondToSelf() {
+		database.getResponseMapping().save(new Response(-1, "unpaid", "<changed loans>", now, now));
+		
+		Comment comment = SummonTestUtils.createComment("$unpaid /u/john", "LoansBot");
+		SummonResponse response = summon.handleComment(comment, database, config);
+		assertNull(response);
+	}
 }

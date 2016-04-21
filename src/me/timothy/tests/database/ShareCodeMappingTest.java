@@ -1,6 +1,7 @@
 package me.timothy.tests.database;
 
 import static org.junit.Assert.*;
+import static me.timothy.tests.database.mysql.MysqlTestUtils.assertListContents;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -41,8 +42,7 @@ public class ShareCodeMappingTest {
 		assertTrue(shareCode.id > 0);
 		
 		List<ShareCode> fromDb = database.getShareCodeMapping().fetchAll();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + shareCode, fromDb.contains(shareCode));
+		assertListContents(fromDb, shareCode);
 	}
 	
 	@Test 
@@ -70,12 +70,10 @@ public class ShareCodeMappingTest {
 		assertEquals(0, fromDb.size());
 		
 		fromDb = database.getShareCodeMapping().fetchForUser(paul.id);
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + paulSC, fromDb.contains(paulSC));
+		assertListContents(fromDb, paulSC);
 		
 		fromDb = database.getShareCodeMapping().fetchForUser(greg.id);
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + gregSC, fromDb.contains(gregSC));
+		assertListContents(fromDb, gregSC);
 	}
 	
 	@Test
@@ -92,8 +90,7 @@ public class ShareCodeMappingTest {
 		assertTrue(shareCode.id > 0);
 		
 		List<ShareCode> fromDb = database.getShareCodeMapping().fetchAll();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + shareCode, fromDb.contains(shareCode));
+		assertListContents(fromDb, shareCode);
 		
 		database.getShareCodeMapping().delete(shareCode);
 		shareCode = null;

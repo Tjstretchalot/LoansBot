@@ -1,6 +1,7 @@
 package me.timothy.tests.database;
 
 import static org.junit.Assert.*;
+import static me.timothy.tests.database.mysql.MysqlTestUtils.assertListContents;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -38,8 +39,7 @@ public class ResponseMappingTest {
 		assertTrue(response.id > 0);
 		
 		List<Response> fromDb = database.getResponseMapping().fetchAll();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + response, fromDb.contains(response));
+		assertListContents(fromDb, response);
 	}
 
 	@Test

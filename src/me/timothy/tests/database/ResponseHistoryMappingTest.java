@@ -1,6 +1,7 @@
 package me.timothy.tests.database;
 
 import static org.junit.Assert.*;
+import static me.timothy.tests.database.mysql.MysqlTestUtils.assertListContents;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -52,8 +53,7 @@ public class ResponseHistoryMappingTest {
 		database.getResponseMapping().save(test);
 		
 		List<ResponseHistory> fromDb = database.getResponseHistoryMapping().fetchAll();
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + testHistory, fromDb.contains(testHistory));
+		assertListContents(fromDb, testHistory);
 	}
 
 	@Test
@@ -79,8 +79,7 @@ public class ResponseHistoryMappingTest {
 		database.getResponseMapping().save(test);
 		
 		List<ResponseHistory> fromDb = database.getResponseHistoryMapping().fetchForResponse(test.id);
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + testHistory, fromDb.contains(testHistory));
+		assertListContents(fromDb, testHistory);
 		
 		fromDb = database.getResponseHistoryMapping().fetchForResponse(-1);
 		assertEquals(0, fromDb.size());
@@ -101,11 +100,9 @@ public class ResponseHistoryMappingTest {
 		database.getResponseHistoryMapping().save(goodbyeHistory);
 
 		fromDb = database.getResponseHistoryMapping().fetchForResponse(test.id);
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + testHistory, fromDb.contains(testHistory));
+		assertListContents(fromDb, testHistory);
 
 		fromDb = database.getResponseHistoryMapping().fetchForResponse(goodbye.id);
-		assertEquals(1, fromDb.size());
-		assertTrue("expected " + fromDb + " to contain " + goodbyeHistory, fromDb.contains(goodbyeHistory));
+		assertListContents(fromDb, goodbyeHistory);
 	}
 }
