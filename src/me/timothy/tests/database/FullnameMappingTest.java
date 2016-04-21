@@ -34,7 +34,7 @@ public class FullnameMappingTest {
 	}
 	
 	/**
-	 * Tests that {@link me.timothy.bots.database.ObjectMapping#save(A) saving}
+	 * Tests that {@link me.timothy.bots.database.ObjectMapping#save(Object) saving}
 	 * fullnames will set their {@link Fullname#id id} to a strictly positive
 	 * number, and that the fullname can be fetched again with
 	 * {@link me.timothy.bots.database.ObjectMapping#fetchAll() fetchAll()}

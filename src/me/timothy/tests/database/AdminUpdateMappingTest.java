@@ -43,7 +43,7 @@ public class AdminUpdateMappingTest {
 	 * <p>Tests the ability to save {@link me.timothy.bots.models.AdminUpdate AdminUpdates}</p>
 	 * 
 	 * <p>This is a basic test to make sure that doing a standard
-	 * {@link me.timothy.bots.database.ObjectMapping#save(A) save} on 
+	 * {@link me.timothy.bots.database.ObjectMapping#save(Object) save} on 
 	 * an {@link me.timothy.bots.models.AdminUpdate AdminUpdate} does not result 
 	 * in any errors, and sets the {@link me.timothy.bots.models.AdminUpdate#id id} of the 
 	 * {@link me.timothy.bots.models.AdminUpdate AdminUpdate}
@@ -55,10 +55,6 @@ public class AdminUpdateMappingTest {
 	 * <p>This has the side-effect of checking 
 	 * {@link AdminUpdate#equals(Object) AdminUpdates equals function}
 	 * is implemented.</p>
-	 * 
-	 * @see me.timothy.bots.models.AdminUpdate#equals(Object)
-	 * @see me.timothy.bots.database.AdminUpdateMapping#save(AdminUpdate)
-	 * @see me.timothy.bots.database.AdminUpdateMapping#fetchAll()
 	 */
 	@Test
 	public void testSave() {

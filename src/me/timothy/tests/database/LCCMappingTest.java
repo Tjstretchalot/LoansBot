@@ -39,7 +39,7 @@ public class LCCMappingTest {
 	
 	/**
 	 * Checks that the {@link me.timothy.bots.database.LCCMapping LCCMapping} handles
-	 * straightforward {@link me.timothy.bots.database.ObjectMapping#save(A) saving} by
+	 * straightforward {@link me.timothy.bots.database.ObjectMapping#save(Object) saving} by
 	 * observing that, when saved, the {@link LendersCampContributor} has a strictly
 	 * positive {@link LendersCampContributor#id id}, and when all
 	 * {@link LendersCampContributor LendersCampContributors} are fetched using 

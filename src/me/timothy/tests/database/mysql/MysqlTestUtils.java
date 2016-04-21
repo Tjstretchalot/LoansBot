@@ -90,6 +90,7 @@ public class MysqlTestUtils {
 	 * 
 	 * @param list the list
 	 * @param obj the object
+	 * @param <A> the type of list / object
 	 */
 	public static <A> void assertContains(List<A> list, A obj) {
 		Assert.assertTrue("expected " + list + " to contain " + obj, list.contains(obj));
@@ -101,11 +102,18 @@ public class MysqlTestUtils {
 	 * 
 	 * @param list the list
 	 * @param objs the objects
+	 * @param <A> the type of list / object
 	 */
+	@SafeVarargs
 	public static <A> void assertListContents(List<A> list, A... objs) {
+		/*
+		 * This function has SafeVarargs since it never inserts anything
+		 * into the list, nor is any casting attempted.
+		 */
 		for(int i = 0; i < objs.length; i++) {
 			assertContains(list, objs[i]);
 		}
+		
 		Assert.assertEquals(objs.length, list.size());
 	}
 }

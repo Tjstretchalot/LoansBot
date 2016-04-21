@@ -40,23 +40,19 @@ public class CreationInfoMappingTest {
 	/**
 	 * <p>
 	 * Tests the simple case of
-	 * {@link me.timothy.bots.database.ObjectMapping#save(A) saving} a valid
+	 * {@link me.timothy.bots.database.ObjectMapping#save(Object) saving} a valid
 	 * {@link CreationInfo}. Specifically, this test ensures that when saved,
 	 * the {@link CreationInfo#id id} is set to a strictly positive integer, and
 	 * when the entire mappings collection is fetched using
-	 * {@link ObjectMapping#fetchAll() fetchAll}, the same (using
+	 * {@link me.timothy.bots.database.ObjectMapping#fetchAll() fetchAll}, the same (using
 	 * {@link CreationInfo#equals(Object) equals}) {@link CreationInfo} that was
 	 * saved is returned.
 	 * </p>
 	 * 
 	 * <p>
 	 * This has the side-effect of testing {@link CreationInfo#equals(Object)}
-	 * and {@link CreationInfoMapping#fetchAll()}
+	 * and {@link me.timothy.bots.database.CreationInfoMapping#fetchAll()}
 	 * </p>
-	 * 
-	 * @see me.timothy.bots.models.CreationInfo#equals(Object)
-	 * @see me.timothy.bots.database.ObjectMapping#save(A)
-	 * @see me.timothy.bots.database.ObjectMapping#fetchAll()
 	 */
 	@Test
 	public void testSave() {

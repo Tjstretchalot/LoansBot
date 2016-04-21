@@ -38,13 +38,13 @@ public class LoanMappingTest {
 	/**
 	 * Tests that simple {@link Loan} saving can be done without error by
 	 * verifying that, after
-	 * {@link me.timothy.bots.database.ObjectMapping#save(A) saving}:
+	 * {@link me.timothy.bots.database.ObjectMapping#save(Object) saving}:
 	 * <ul>
 	 * <li>the {@link Loan}.{@link Loan#id id} is strictly positive</li>
 	 * <li>when all {@link Loan Loans} are
 	 * {@link me.timothy.bots.database.ObjectMapping#fetchAll() fetched}, only
 	 * the {@link Loan Loans} that have been
-	 * {@link me.timothy.bots.database.ObjectMapping#save(A) saved} are
+	 * {@link me.timothy.bots.database.ObjectMapping#save(Object) saved} are
 	 * returned, using an {@link Object#equals(Object) equality} check.</li>
 	 * </ul>
 	 */
