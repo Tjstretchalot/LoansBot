@@ -21,7 +21,7 @@ import me.timothy.bots.LoansDatabase;
  */
 public class MysqlTestUtils {
 	/**
-	 * Fetches the test_database.properties file
+	 * Fetches the test_database.properties file 
 	 * 
 	 * @return the test database property file
 	 */
