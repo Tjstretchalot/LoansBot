@@ -94,6 +94,7 @@ public class PaidSummon implements CommentSummon {
 						Repayment repayment = new Repayment(-1, l.id, amount, new Timestamp(time), new Timestamp(time));
 						database.getRepaymentMapping().save(repayment);
 						l.principalRepaymentCents += amount;
+						l.updatedAt = new Timestamp(System.currentTimeMillis());
 						database.getLoanMapping().save(l);
 						
 						if(l.unpaid) {
@@ -149,7 +150,7 @@ public class PaidSummon implements CommentSummon {
 			boolean hasConversion = matcher.group(2) != null; 
 			if(hasConversion) {
 				String convertFrom = matcher.group(2).trim();
-				double conversionRate = CurrencyHandler.getConversionRate(convertFrom, "USD");
+				double conversionRate = CurrencyHandler.getInstance().getConversionRate(convertFrom, "USD");
 				logger.debug("Converting from " + convertFrom + " to USD using rate " + conversionRate);
 				respInfo.addTemporaryString("convert_from", convertFrom);
 				respInfo.addTemporaryString("conversion_rate", Double.toString(conversionRate));

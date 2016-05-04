@@ -4,6 +4,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansDatabase;
@@ -17,10 +21,6 @@ import me.timothy.bots.responses.ResponseInfo;
 import me.timothy.bots.responses.ResponseInfoFactory;
 import me.timothy.jreddit.info.Comment;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 /**
  * A summon for confirming that some money was transfered to someone
  * 
@@ -33,7 +33,7 @@ public class ConfirmSummon implements CommentSummon {
 	 * $confirm /u/John $10
 	 */
 	private static final Pattern CONFIRM_PATTERN = Pattern
-			.compile("(\\s*\\$confirm\\s/u/\\S+\\s\\$?\\d+\\.?\\d*\\$?)(\\s[A-Z]{3})?");
+			.compile("(\\s*\\$confirm[\\s\\u0085\\p{Z}]/u/\\S+[\\s\\u0085\\p{Z}]\\$?\\d+\\.?\\d*\\$?)([\\s\\u0085\\p{Z}][A-Z]{3})?");
 	
 	private static final String CONFIRM_FORMAT = "$confirm <user1> <money1>";
 
@@ -45,8 +45,10 @@ public class ConfirmSummon implements CommentSummon {
 
 	@Override
 	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
-		Matcher matcher = CONFIRM_PATTERN.matcher(comment.body());
+		if(comment.author().equalsIgnoreCase(config.getProperty("user.username")))
+			return null;
 		
+		Matcher matcher = CONFIRM_PATTERN.matcher(comment.body());
 		if(matcher.find()) {
 			String text = matcher.group(1).trim();
 			ResponseInfo ri = ResponseInfoFactory.getResponseInfo(CONFIRM_FORMAT, text, comment);
@@ -65,7 +67,7 @@ public class ConfirmSummon implements CommentSummon {
 			double conversionRate = 1;
 			if(hasConversion) {
 				convertFrom = matcher.group(2).trim();
-				conversionRate = CurrencyHandler.getConversionRate(convertFrom, "USD");
+				conversionRate = CurrencyHandler.getInstance().getConversionRate(convertFrom, "USD");
 				logger.debug("Converting from " + convertFrom + " to USD using rate " + conversionRate);
 				money *= conversionRate;
 			}
@@ -98,6 +100,7 @@ public class ConfirmSummon implements CommentSummon {
 				ri.addTemporaryString("convert_from", convertFrom);
 				ri.addTemporaryString("conversion_rate", Double.toString(conversionRate));
 				ri.addTemporaryObject("original_money", new MoneyFormattableObject(originalMoneyPennies));
+				ri.addTemporaryObject("money1", new MoneyFormattableObject(money));
 			}
 			
 			String responseName = "confirm";

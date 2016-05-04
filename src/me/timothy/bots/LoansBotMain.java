@@ -45,7 +45,7 @@ public class LoansBotMain {
 			e.printStackTrace();
 			return;
 		}
-		CurrencyHandler.accessCode = config.getProperty("currencylayer.access_code");
+		CurrencyHandler.getInstance().accessCode = config.getProperty("currencylayer.access_code");
 		
 		logger.debug("Connecting to database..");
 		LoansDatabase database = new LoansDatabase();

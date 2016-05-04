@@ -15,14 +15,34 @@ import me.timothy.jreddit.requests.Utils;
  */
 public class CurrencyHandler {
 	public static final String API_BASE = "http://apilayer.net/api/live";
-	public static String accessCode;
+	private static CurrencyHandler instance;
+	
+	/**
+	 * The access code used for connecting with the api layer.
+	 */
+	public String accessCode;
+	
+	static {
+		instance = new CurrencyHandler();
+	}
+	
+	/**
+	 * Fetch the instance of the currency handler that should
+	 * be used.
+	 * 
+	 * @return the instance of the currency handler
+	 */
+	public static CurrencyHandler getInstance() {
+		return instance;
+	}
+	
 	/**
 	 * Fetches the conversion rate from {@code from} to {@code to}
 	 * @param from the currency to go from (e.g. EUR)
 	 * @param to the currency to go to (e.g. USD)
 	 * @return the conversion factor ( from * conversion_factor = to )
 	 */
-	public static double getConversionRate(String from, String to) {
+	public double getConversionRate(String from, String to) {
 		if(from.equals(to))
 			return 1;
 		if(from.length() != 3 || to.length() != 3)

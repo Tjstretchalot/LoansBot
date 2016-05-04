@@ -69,7 +69,7 @@ public class LoanSummon implements CommentSummon {
 			boolean hasConversion = matcher.group(2) != null; 
 			if(hasConversion) {
 				String convertFrom = matcher.group(2).trim();
-				double conversionRate = CurrencyHandler.getConversionRate(convertFrom, "USD");
+				double conversionRate = CurrencyHandler.getInstance().getConversionRate(convertFrom, "USD");
 				logger.debug("Converting from " + convertFrom + " to USD using rate " + conversionRate);
 				respInfo.addTemporaryString("convert_from", convertFrom);
 				respInfo.addTemporaryString("conversion_rate", Double.toString(conversionRate));

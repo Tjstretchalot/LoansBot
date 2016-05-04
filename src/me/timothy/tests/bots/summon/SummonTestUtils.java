@@ -1,6 +1,7 @@
 package me.timothy.tests.bots.summon;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Paths;
 import java.util.Properties;
 
@@ -9,6 +10,7 @@ import org.json.simple.JSONObject;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.LoansFileConfiguration;
 import me.timothy.bots.LoansResponseInfoFactory;
+import me.timothy.bots.currencies.CurrencyHandler;
 import me.timothy.jreddit.info.Comment;
 import me.timothy.jreddit.info.Link;
 import me.timothy.tests.database.mysql.MysqlTestUtils;
@@ -94,5 +96,37 @@ public class SummonTestUtils {
 		config.setFolder(Paths.get("tests"));
 		config.load();
 		return config;
+	}
+	
+	/**
+	 * Overrides the currency conversion to force it to return only the specified conversion factor
+	 * for the specified conversion, and error on all other requested conversions.
+	 * 
+	 * @param conversionFrom the from currency
+	 * @param conversionTo the to currency
+	 * @param conversionFactor the conversion factor
+	 * @throws SecurityException if one occurs
+	 * @throws NoSuchFieldException if one occurs
+	 * @throws IllegalAccessException if one occurs
+	 * @throws IllegalArgumentException if one occurs
+	 */
+	public static void overrideCurrencyConversion(final String conversionFrom, final String conversionTo, final double conversionFactor) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+		Class<CurrencyHandler> chCl = CurrencyHandler.class;
+		Field instance = chCl.getDeclaredField("instance");
+		instance.setAccessible(true);
+		instance.set(null, new CurrencyHandler() {
+
+			@Override
+			public double getConversionRate(String from, String to) {
+				if(!from.equalsIgnoreCase(conversionFrom) || !to.equalsIgnoreCase(conversionTo)) {
+					throw new IllegalArgumentException(
+							String.format("Weird conversion requested during test: %s -> %s (%s -> %s expected)",
+									from, to, conversionFrom, conversionTo));
+				}
+				
+				return conversionFactor;
+			}
+			
+		});
 	}
 }

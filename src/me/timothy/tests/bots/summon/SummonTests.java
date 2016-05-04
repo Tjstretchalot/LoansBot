@@ -6,7 +6,9 @@ import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
 @SuiteClasses({
-	CheckSummonTests.class
+	CheckSummonTests.class,
+	ConfirmSummonTests.class,
+	UnpaidSummonTests.class
 })
 public class SummonTests {
 
