@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 
 import org.json.simple.parser.ParseException;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,8 +37,12 @@ public class ConfirmSummonTests {
 		database = SummonTestUtils.getTestDatabase();
 		config = SummonTestUtils.getTestConfig();
 		now = new Timestamp(System.currentTimeMillis());
-		
-		
+	}
+	
+	@After
+	public void tearDown() {
+		database.disconnect();
+		database = null;
 	}
 	
 	@Test

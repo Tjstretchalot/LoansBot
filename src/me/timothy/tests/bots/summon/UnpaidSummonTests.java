@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.sql.Timestamp;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -34,6 +35,12 @@ public class UnpaidSummonTests {
 		database = SummonTestUtils.getTestDatabase();
 		config = SummonTestUtils.getTestConfig();
 		now = new Timestamp(System.currentTimeMillis());
+	}
+
+	@After
+	public void tearDown() {
+		database.disconnect();
+		database = null;
 	}
 	
 	@Test

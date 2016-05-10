@@ -8,7 +8,8 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({
 	CheckSummonTests.class,
 	ConfirmSummonTests.class,
-	UnpaidSummonTests.class
+	UnpaidSummonTests.class,
+	BadLoanSummonTests.class
 })
 public class SummonTests {
 
