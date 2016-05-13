@@ -7,13 +7,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import me.timothy.bots.models.CreationInfo;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.User;
 import me.timothy.bots.models.Username;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Contains various utility static methods
@@ -52,7 +52,7 @@ public class LoansBotUtils {
 		final long ms = TimeUnit.MILLISECONDS.toMillis(l - TimeUnit.HOURS.toMillis(hr) - TimeUnit.MINUTES.toMillis(min) - TimeUnit.SECONDS.toMillis(sec));
 		return String.format("%02d:%02d:%02d.%03d", hr, min, sec, ms);
 	}
-	 
+	
 	/**
 	 * Gets a string that represents the specified loan such that it is readily
 	 * readable. If there are less than 5 loans this is equivalent to getLoansStringRaw,

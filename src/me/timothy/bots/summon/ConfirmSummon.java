@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansDatabase;
@@ -33,7 +34,7 @@ public class ConfirmSummon implements CommentSummon {
 	 * $confirm /u/John $10
 	 */
 	private static final Pattern CONFIRM_PATTERN = Pattern
-			.compile("(\\s*\\$confirm[\\s\\u0085\\p{Z}]/u/\\S+[\\s\\u0085\\p{Z}]\\$?\\d+\\.?\\d*\\$?)([\\s\\u0085\\p{Z}][A-Z]{3})?");
+			.compile("(\\s*\\$confirm\\s/u/\\S+\\s" + BotUtils.getDollarAmountPatternString() + ")([A-Z]{3})?");
 	
 	private static final String CONFIRM_FORMAT = "$confirm <user1> <money1>";
 

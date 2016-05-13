@@ -41,7 +41,7 @@ public class LoanSummon implements CommentSummon {
 	 * $loan 50 EUR
 	 * $loan 50 USD
 	 */
-	private static final Pattern LOAN_PATTERN = Pattern.compile("(\\s*\\$loan\\s\\$?\\d+\\.?\\d*\\$?)(\\s[A-Z]{3})?");
+	private static final Pattern LOAN_PATTERN = Pattern.compile("(\\s*\\$loan\\s" + BotUtils.getDollarAmountPatternString() + ")([A-Z]{3})?");
 	private static final String LOAN_FORMAT = "$loan <money1>";
 	
 	private Logger logger;
@@ -51,6 +51,10 @@ public class LoanSummon implements CommentSummon {
 	}
 	@Override
 	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
+		if(comment.author().equalsIgnoreCase(config.getProperty("user.username"))) {
+			return null;
+		}
+		
 		Matcher matcher = LOAN_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {

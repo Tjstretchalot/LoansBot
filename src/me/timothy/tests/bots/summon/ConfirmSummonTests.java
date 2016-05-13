@@ -89,7 +89,7 @@ public class ConfirmSummonTests {
 				);
 		database.getLoanMapping().save(loanPaulToGreg);
 		
-		Comment comment = SummonTestUtils.createComment("$confirm /u/paul $100", "greg");
+		Comment comment = SummonTestUtils.createComment("some stuff $confirm /u/paul $100 more stuff", "greg");
 		SummonResponse response = summon.handleComment(comment, database, config);
 		assertNotNull(response);
 		assertEquals(SummonResponse.ResponseType.VALID, response.getResponseType());
@@ -101,7 +101,7 @@ public class ConfirmSummonTests {
 		SummonTestUtils.overrideCurrencyConversion("GDP", "USD", 1.15);
 		database.getResponseMapping().save(new Response(-1, "confirmNoLoanHasConversion", "<money1>", now, now));
 		
-		Comment comment = SummonTestUtils.createComment("$confirm /u/paul 100 GDP", "greg");
+		Comment comment = SummonTestUtils.createComment("some stuff $confirm /u/paul 100 GDP more stuff", "greg");
 		SummonResponse response = summon.handleComment(comment, database, config);
 		assertNotNull(response);
 		assertEquals(SummonResponse.ResponseType.VALID, response.getResponseType());
@@ -130,5 +130,16 @@ public class ConfirmSummonTests {
 		assertNotNull(response);
 		assertEquals(SummonResponse.ResponseType.VALID, response.getResponseType());
 		assertEquals("$129.00", response.getResponseMessage());
+	}
+	
+	@Test
+	public void testResponseToNumberWithComma() throws Exception {
+		database.getResponseMapping().save(new Response(-1, "confirmNoLoan", "<money1>", now, now));
+		
+		Comment comment = SummonTestUtils.createComment("$confirm /u/paul $1,000.00", "greg");
+		SummonResponse response = summon.handleComment(comment, database, config);
+		assertNotNull(response);
+		assertEquals(SummonResponse.ResponseType.VALID, response.getResponseType());
+		assertEquals("$1,000.00", response.getResponseMessage());
 	}
 }

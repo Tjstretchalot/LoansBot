@@ -81,10 +81,24 @@ public class BadLoanSummonTests {
 		assertEquals(SummonResponse.ResponseType.INVALID, response.getResponseType());
 		assertEquals("bad loan", response.getResponseMessage());
 		
-		comment = SummonTestUtils.createComment("$loan /u/asdf $50", "paul");
+		comment = SummonTestUtils.createComment("$loan /u/asdf $50 more stuff here", "paul");
 		response = summon.handleComment(comment, database, config);
 		assertNotNull(response);
 		assertEquals(SummonResponse.ResponseType.INVALID, response.getResponseType());
 		assertEquals("bad loan", response.getResponseMessage());
+	}
+	
+	@Test
+	public void testHandlesCommas() {
+		database.getResponseMapping().save(new Response(-1, "bad_loan_summon", "bad loan", now, now));
+		Comment comment = SummonTestUtils.createComment("$loan /u/john $5,000.00", "paul");
+		SummonResponse response = summon.handleComment(comment,  database, config);
+		assertNotNull(response);
+		assertEquals(SummonResponse.ResponseType.INVALID, response.getResponseType());
+		assertEquals("bad loan", response.getResponseMessage());
+		
+		comment = SummonTestUtils.createComment("$loan /u/john $5.001", "paul");
+		response = summon.handleComment(comment, database, config);
+		assertNull(response);
 	}
 }

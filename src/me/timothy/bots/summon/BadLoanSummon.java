@@ -2,6 +2,7 @@ package me.timothy.bots.summon;
 
 import java.util.regex.Pattern;
 
+import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansDatabase;
@@ -16,7 +17,7 @@ import me.timothy.jreddit.info.Comment;
  */
 public class BadLoanSummon implements CommentSummon {
 
-	private static final Pattern BAD_LOAN_PATTERN = Pattern.compile("\\$loan\\s/u/\\S+\\s\\$?\\d+\\.?\\d*\\$?");
+	private static final Pattern BAD_LOAN_PATTERN = Pattern.compile("\\$loan\\s/u/\\S+\\s" + BotUtils.getDollarAmountPatternString());
 
 	@Override
 	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
