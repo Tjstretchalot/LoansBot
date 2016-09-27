@@ -57,7 +57,7 @@ public class CurrencyHandler {
 				times++;
 				if(times > 3)
 					return new JSONObject();
-				return (JSONObject) Utils.get(apiParams, new URL(API_BASE), null);
+				return (JSONObject) Utils.get(apiParams, new URL(API_BASE), null, null, false);
 			}
 		};
 		

@@ -41,6 +41,7 @@ import org.json.simple.parser.ParseException;
  */
 public class LoansBotDriver extends BotDriver {
 	private Diagnostics diagnostics;
+	
 	/**
 	 * Exact echo of BotDriver constructor; initializes diagnostics
 	 * @param database database
@@ -98,19 +99,19 @@ public class LoansBotDriver extends BotDriver {
 	java.text.ParseException {
 		logger.debug("Scanning for new claim codes..");
 		handleClaimCodes();
-		sleepFor(2000);
+		sleepFor(BRIEF_PAUSE_MS);
 		
 		logger.debug("Scanning for recheck requests..");
 		handleRechecks();
-		sleepFor(2000);
+		sleepFor(BRIEF_PAUSE_MS);
 		
 		logger.debug("Scanning for reset password requests..");
 		handleResetPasswordRequests();
-		sleepFor(2000);
+		sleepFor(BRIEF_PAUSE_MS);
 		
 		logger.debug("Scanning for new lenders camp contributors..");
 		handleLendersCampContributors();
-		sleepFor(2000);
+		sleepFor(BRIEF_PAUSE_MS);
 		
 		logger.debug("Performing self-assessment...");
 		handleDiagnostics();
@@ -141,7 +142,7 @@ public class LoansBotDriver extends BotDriver {
 				
 				user.claimLinkSentAt = new Timestamp(System.currentTimeMillis());
 				ldb.getUserMapping().save(user);
-				sleepFor(2000);
+				sleepFor(BRIEF_PAUSE_MS);
 			}
 		}
 	}
@@ -220,7 +221,7 @@ public class LoansBotDriver extends BotDriver {
 					return RedditUtils.getThings(new String[] { linkId }, bot.getUser());
 				}
 			}.run();
-			sleepFor(2000);
+			sleepFor(BRIEF_PAUSE_MS);
 			if(listing.numChildren() != 1) {
 				logger.warn("Couldn't find link author for comment " + comment.fullname());
 			}else {
@@ -240,7 +241,7 @@ public class LoansBotDriver extends BotDriver {
 					return RedditUtils.getLinkReplies(bot.getUser(), link.id());
 				}
 			}.run();
-			sleepFor(2000);
+			sleepFor(BRIEF_PAUSE_MS);
 			
 			List<Comment> commentsToLookAt = new ArrayList<>();
 			for(int i = 0; i < replies.numChildren(); i++) {
@@ -283,7 +284,7 @@ public class LoansBotDriver extends BotDriver {
 		boolean first = true;
 		for(ResetPasswordRequest rpr : resetPasswordRequests) {
 			if(!first)
-				sleepFor(2000);
+				sleepFor(BRIEF_PAUSE_MS);
 			else
 				first = false;
 			
@@ -324,7 +325,7 @@ public class LoansBotDriver extends BotDriver {
 				return RedditUtils.getContributorsForSubreddit("lenderscamp", bot.getUser());
 			}
 		}.run();
-		sleepFor(2000);
+		sleepFor(BRIEF_PAUSE_MS);
 		
 		for(int i = 0; i < contribs.numChildren(); i++) {
 			Account contribAcc = (Account) contribs.getChild(i);
@@ -400,7 +401,7 @@ public class LoansBotDriver extends BotDriver {
 						}
 					}.run();
 				}
-				sleepFor(2000);
+				sleepFor(BRIEF_PAUSE_MS);
 				long now = System.currentTimeMillis();
 				LendersCampContributor lcc = new LendersCampContributor(-1, userToCheck.id, true, new Timestamp(now), new Timestamp(now));
 				ldb.getLccMapping().save(lcc);
@@ -437,7 +438,7 @@ public class LoansBotDriver extends BotDriver {
 			protected Boolean runImpl() throws Exception {
 				Errorable errors = bot.sendPM(to, title, message);
 				List<?> errorsList = errors.getErrors();
-				if(!errorsList.isEmpty()) {
+				if(errorsList != null && !errorsList.isEmpty()) {
 					logger.printf(Level.WARN, "Failed to send (to=%s, title=%s, message=%s): %s", to, title, message, errorsList.toString());
 				}
 				return true;

@@ -3,6 +3,7 @@ package me.timothy.bots;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,7 +33,6 @@ public class LoansBotMain {
 		
 		Logger logger = LogManager.getLogger();
 		
-		Utils.USER_AGENT = "LoansBot by /u/Tjstretchalot";
 		
 		logger.debug("Initializing loans bot..");
 		Bot loansBot = new Bot(getSubreddit());
@@ -46,6 +46,7 @@ public class LoansBotMain {
 			return;
 		}
 		CurrencyHandler.getInstance().accessCode = config.getProperty("currencylayer.access_code");
+		Utils.USER_AGENT = config.getProperty("user.appClientID") + ":v09.26.2016 (by /u/Tjstretchalot)";
 		
 		logger.debug("Connecting to database..");
 		LoansDatabase database = new LoansDatabase();
@@ -69,7 +70,13 @@ public class LoansBotMain {
 		while(true) {
 			try {
 				driver.run();
-			}catch(Exception e) {}
+			}catch(Exception e) {
+				e.printStackTrace();
+				logger.log(Level.FATAL, e.getMessage(), e);
+				
+				logger.catching(e);
+				driver.sleepFor(2000);
+			}
 		}
 	}
 

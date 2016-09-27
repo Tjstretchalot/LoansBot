@@ -17,6 +17,11 @@ import me.timothy.bots.summon.LoanSummon;
 import me.timothy.bots.summon.SummonResponse;
 import me.timothy.jreddit.info.Comment;
 
+/**
+ * Describes tests focused on LoanSummon
+ * 
+ * @author Timothy
+ */
 public class LoanSummonTests {
 	private LoanSummon summon;
 	private LoansDatabase database;
