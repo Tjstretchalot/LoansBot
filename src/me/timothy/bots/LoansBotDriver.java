@@ -184,7 +184,7 @@ public class LoansBotDriver extends BotDriver {
 				ldb.getRecheckMapping().delete(batch[i]);
 			}
 			
-			Listing listing = new Retryable<Listing>("Get things for rechecks") {
+			Listing listing = new Retryable<Listing>("Get things for rechecks", maybeLoginAgainRunnable) {
 				@Override
 				protected Listing runImpl() throws Exception {
 					return RedditUtils.getThings(asStr, bot.getUser());
@@ -215,7 +215,7 @@ public class LoansBotDriver extends BotDriver {
 			Comment comment = (Comment) thing;
 			
 			final String linkId = comment.linkID();
-			Listing listing = new Retryable<Listing>("Get things for rechecks") {
+			Listing listing = new Retryable<Listing>("Get things for rechecks", maybeLoginAgainRunnable) {
 				@Override
 				protected Listing runImpl() throws Exception {
 					return RedditUtils.getThings(new String[] { linkId }, bot.getUser());
@@ -235,7 +235,7 @@ public class LoansBotDriver extends BotDriver {
 			final Link link = (Link) thing;
 			handleSubmission(link, silentMode);
 			
-			Listing replies = new Retryable<Listing>("Get link replies for link recheck") {
+			Listing replies = new Retryable<Listing>("Get link replies for link recheck", maybeLoginAgainRunnable) {
 				@Override
 				protected Listing runImpl() throws Exception {
 					return RedditUtils.getLinkReplies(bot.getUser(), link.id());
@@ -319,7 +319,7 @@ public class LoansBotDriver extends BotDriver {
 	private void updateLendersCampContributors() {
 		LoansDatabase ldb = (LoansDatabase) database;
 		
-		Listing contribs = new Retryable<Listing>("Get lenderscamp contributors"){
+		Listing contribs = new Retryable<Listing>("Get lenderscamp contributors", maybeLoginAgainRunnable){
 			@Override
 			protected Listing runImpl() throws Exception {
 				return RedditUtils.getContributorsForSubreddit("lenderscamp", bot.getUser());
@@ -393,7 +393,7 @@ public class LoansBotDriver extends BotDriver {
 			if(numberOfLoansAsLender >= 7 && !ldb.getLccMapping().contains(userToCheck.id)) {
 				logger.info(String.format("Inviting user %d (%s) as a contributor to lenderscamp (%d completed loans as lender)", userToCheck.id, usernames.get(0).username, numberOfLoansAsLender));
 				for(final Username username : usernames) {
-					new Retryable<Boolean>("Add contributor") {
+					new Retryable<Boolean>("Add contributor", maybeLoginAgainRunnable) {
 						@Override
 						protected Boolean runImpl() throws Exception {
 							RedditUtils.addContributor("lenderscamp", username.username, bot.getUser());
@@ -432,7 +432,7 @@ public class LoansBotDriver extends BotDriver {
 	 * @param message the text of the message
 	 */
 	private void sendMessage(final String to, final String title, final String message) {
-		new Retryable<Boolean>("Send PM") {
+		new Retryable<Boolean>("Send PM", maybeLoginAgainRunnable) {
 
 			@Override
 			protected Boolean runImpl() throws Exception {
