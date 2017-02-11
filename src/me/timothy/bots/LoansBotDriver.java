@@ -10,6 +10,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
+import org.json.simple.parser.ParseException;
+
 import me.timothy.bots.diagnostics.Diagnostics;
 import me.timothy.bots.models.LendersCampContributor;
 import me.timothy.bots.models.Recheck;
@@ -25,14 +27,10 @@ import me.timothy.bots.summon.PMSummon;
 import me.timothy.jreddit.RedditUtils;
 import me.timothy.jreddit.info.Account;
 import me.timothy.jreddit.info.Comment;
-import me.timothy.jreddit.info.Errorable;
 import me.timothy.jreddit.info.Link;
 import me.timothy.jreddit.info.Listing;
 import me.timothy.jreddit.info.Message;
 import me.timothy.jreddit.info.Thing;
-
-import org.apache.logging.log4j.Level;
-import org.json.simple.parser.ParseException;
 
 /**
  * The bot driver for the loans bot
@@ -422,28 +420,5 @@ public class LoansBotDriver extends BotDriver {
 	 */
 	private void handleDiagnostics() {
 		diagnostics.diagnose();
-	}
-
-	/**
-	 * Sends a message to the specified user with the specified
-	 * title & message
-	 * @param user the user to send the message to
-	 * @param title the title of the message
-	 * @param message the text of the message
-	 */
-	private void sendMessage(final String to, final String title, final String message) {
-		new Retryable<Boolean>("Send PM", maybeLoginAgainRunnable) {
-
-			@Override
-			protected Boolean runImpl() throws Exception {
-				Errorable errors = bot.sendPM(to, title, message);
-				List<?> errorsList = errors.getErrors();
-				if(errorsList != null && !errorsList.isEmpty()) {
-					logger.printf(Level.WARN, "Failed to send (to=%s, title=%s, message=%s): %s", to, title, message, errorsList.toString());
-				}
-				return true;
-			}
-
-		}.run();
 	}
 }

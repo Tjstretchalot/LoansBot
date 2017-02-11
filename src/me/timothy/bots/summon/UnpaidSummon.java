@@ -1,9 +1,15 @@
 package me.timothy.bots.summon;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
@@ -15,10 +21,6 @@ import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
 import me.timothy.bots.responses.ResponseInfoFactory;
 import me.timothy.jreddit.info.Comment;
-
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * For when someone does not pay back ones loan
@@ -78,7 +80,40 @@ public class UnpaidSummon implements CommentSummon {
 			logger.printf(Level.INFO, "%s has defaulted on %d loans from %s", user1Username == null ? "null user " + user1 : user1Username.username, changed.size(), authorUsername == null ? ("null user '" + author + "'") : authorUsername.username);
 			
 			String responseFormat = database.getResponseMapping().fetchByName("unpaid").responseBody;
-			return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(responseFormat, responseInfo).getFormattedResponse(config, database));
+			
+			// Also send pms to all affected lenders telling them about the default
+			List<Loan> loansWithBorrowerThatDefaulted = database.getLoanMapping().fetchWithBorrowerAndOrLender(user1Username.userId, 0, false);
+			Set<Integer> userIdsWithBorrowerThatDefaulted = new HashSet<>();
+			for(Loan loanWithBorrowerThatDefaulted : loansWithBorrowerThatDefaulted)
+			{
+				int lenderId = loanWithBorrowerThatDefaulted.lenderId;
+				
+				if(lenderId != authorUsername.userId)
+				{
+					userIdsWithBorrowerThatDefaulted.add(lenderId);
+				}
+			}
+			
+			String pmFormat = database.getResponseMapping().fetchByName("unpaid_lender_pm").responseBody;
+			List<PMResponse> lenderPMs = new ArrayList<>();
+			for(int userIdWithBorrowerThatDefaulted : userIdsWithBorrowerThatDefaulted)
+			{
+				List<Username> usernames = database.getUsernameMapping().fetchByUserId(userIdWithBorrowerThatDefaulted);
+				
+				for(Username username : usernames)
+				{
+					ResponseInfo pmResponseInfo = new ResponseInfo(ResponseInfoFactory.base);
+					pmResponseInfo.addTemporaryString("lender", username.username);
+					pmResponseInfo.addTemporaryString("borrower", user1Username.username);
+					pmResponseInfo.addTemporaryString("comment permalink", comment.linkURL());
+					
+					String messageText = new ResponseFormatter(pmFormat, pmResponseInfo).getFormattedResponse(config, database);
+					
+					lenderPMs.add(new PMResponse(username.username, "Unpaid Borrower Notification", messageText));
+				}
+			}
+			
+			return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(responseFormat, responseInfo).getFormattedResponse(config, database), null, lenderPMs);
 		}
 		return null;
 	}
