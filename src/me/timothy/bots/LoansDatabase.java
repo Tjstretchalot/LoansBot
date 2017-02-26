@@ -13,6 +13,7 @@ import me.timothy.bots.database.FullnameMapping;
 import me.timothy.bots.database.LCCMapping;
 import me.timothy.bots.database.LoanMapping;
 import me.timothy.bots.database.MappingDatabase;
+import me.timothy.bots.database.RecentPostsMapping;
 import me.timothy.bots.database.RecheckMapping;
 import me.timothy.bots.database.RepaymentMapping;
 import me.timothy.bots.database.ResetPasswordRequestMapping;
@@ -28,6 +29,7 @@ import me.timothy.bots.database.mysql.MysqlCreationInfoMapping;
 import me.timothy.bots.database.mysql.MysqlFullnameMapping;
 import me.timothy.bots.database.mysql.MysqlLCCMapping;
 import me.timothy.bots.database.mysql.MysqlLoanMapping;
+import me.timothy.bots.database.mysql.MysqlRecentPostsMapping;
 import me.timothy.bots.database.mysql.MysqlRecheckMapping;
 import me.timothy.bots.database.mysql.MysqlRepaymentMapping;
 import me.timothy.bots.database.mysql.MysqlResetPasswordRequestMapping;
@@ -75,6 +77,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	private UserMapping userMapping;
 	private UsernameMapping usernameMapping;
 	private WarningMapping warningMapping;
+	private RecentPostsMapping recentPostsMapping;
 	
 	private SchemaValidator adminUpdateValidator;
 	private SchemaValidator creationInfoValidator;
@@ -90,6 +93,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	private SchemaValidator userValidator;
 	private SchemaValidator usernameValidator;
 	private SchemaValidator warningValidator;
+	private SchemaValidator recentPostsValidator;
 	
 	public LoansDatabase() {
 		logger = LogManager.getLogger();
@@ -129,6 +133,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		userMapping = new MysqlUserMapping(this, connection);
 		usernameMapping = new MysqlUsernameMapping(this, connection);
 		warningMapping = new MysqlWarningMapping(this, connection);
+		recentPostsMapping = new MysqlRecentPostsMapping(this, connection);
 		
 		fullnameValidator = (SchemaValidator) fullnameMapping;
 		adminUpdateValidator = (SchemaValidator) adminUpdateMapping;
@@ -144,6 +149,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		userValidator = (SchemaValidator) userMapping;
 		usernameValidator = (SchemaValidator) usernameMapping;
 		warningValidator = (SchemaValidator) warningMapping;
+		recentPostsValidator = (SchemaValidator) recentPostsMapping;
 	}
 	
 	/**
@@ -153,6 +159,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	 */
 	public void purgeAll() {
 		// REVERSE ORDER of validateTableState
+		recentPostsValidator.purgeSchema();
 		warningValidator.purgeSchema();
 		shareCodeValidator.purgeSchema();
 		responseHistoryValidator.purgeSchema();
@@ -192,6 +199,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		responseHistoryValidator.validateSchema();
 		shareCodeValidator.validateSchema();
 		warningValidator.validateSchema();
+		recentPostsValidator.validateSchema();
 	}
 	
 	/**
@@ -219,6 +227,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		userMapping = null;
 		usernameMapping = null;
 		warningMapping = null;
+		recentPostsMapping = null;
 		
 		adminUpdateValidator = null;
 		creationInfoValidator = null;
@@ -234,6 +243,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		userValidator = null;
 		usernameValidator = null;
 		warningValidator = null;
+		recentPostsValidator = null;
 	}
 	
 	public AdminUpdateMapping getAdminUpdateMapping() {
@@ -277,6 +287,9 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	}
 	public WarningMapping getWarningMapping() {
 		return warningMapping;
+	}
+	public RecentPostsMapping getRecentPostsMapping() {
+		return recentPostsMapping;
 	}
 	
 	/*

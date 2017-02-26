@@ -114,6 +114,9 @@ public class LoansBotDriver extends BotDriver {
 		logger.debug("Performing self-assessment...");
 		handleDiagnostics();
 		
+		logger.debug("Pruning recent posts table...");
+		pruneRecentPosts();
+		
 		super.doLoop();
 	}
 
@@ -420,5 +423,13 @@ public class LoansBotDriver extends BotDriver {
 	 */
 	private void handleDiagnostics() {
 		diagnostics.diagnose();
+	}
+	
+	/**
+	 * Prune recent posts table
+	 */
+	private void pruneRecentPosts() {
+		LoansDatabase ldb = (LoansDatabase) database;
+		ldb.getRecentPostsMapping().deleteOldEntries();
 	}
 }

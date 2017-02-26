@@ -16,6 +16,7 @@ import me.timothy.bots.summon.LinkSummon;
 import me.timothy.bots.summon.LoanSummon;
 import me.timothy.bots.summon.PMSummon;
 import me.timothy.bots.summon.PaidSummon;
+import me.timothy.bots.summon.RecentPostsSummon;
 import me.timothy.bots.summon.SuicideSummon;
 import me.timothy.bots.summon.UnpaidSummon;
 import me.timothy.jreddit.requests.Utils;
@@ -65,7 +66,7 @@ public class LoansBotMain {
 		BotDriver driver = new LoansBotDriver(database, config, loansBot,
 				new CommentSummon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon(), new SuicideSummon(), new BadLoanSummon() }, 
 				new PMSummon[] { },
-				new LinkSummon[] { new CheckSummon(), new SuicideSummon() });
+				new LinkSummon[] { new CheckSummon(), new SuicideSummon(), new RecentPostsSummon() });
 		
 		while(true) {
 			try {
