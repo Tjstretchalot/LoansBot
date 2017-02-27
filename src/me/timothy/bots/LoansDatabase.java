@@ -13,7 +13,7 @@ import me.timothy.bots.database.FullnameMapping;
 import me.timothy.bots.database.LCCMapping;
 import me.timothy.bots.database.LoanMapping;
 import me.timothy.bots.database.MappingDatabase;
-import me.timothy.bots.database.RecentPostsMapping;
+import me.timothy.bots.database.RecentPostMapping;
 import me.timothy.bots.database.RecheckMapping;
 import me.timothy.bots.database.RepaymentMapping;
 import me.timothy.bots.database.ResetPasswordRequestMapping;
@@ -29,7 +29,7 @@ import me.timothy.bots.database.mysql.MysqlCreationInfoMapping;
 import me.timothy.bots.database.mysql.MysqlFullnameMapping;
 import me.timothy.bots.database.mysql.MysqlLCCMapping;
 import me.timothy.bots.database.mysql.MysqlLoanMapping;
-import me.timothy.bots.database.mysql.MysqlRecentPostsMapping;
+import me.timothy.bots.database.mysql.MysqlRecentPostMapping;
 import me.timothy.bots.database.mysql.MysqlRecheckMapping;
 import me.timothy.bots.database.mysql.MysqlRepaymentMapping;
 import me.timothy.bots.database.mysql.MysqlResetPasswordRequestMapping;
@@ -77,7 +77,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	private UserMapping userMapping;
 	private UsernameMapping usernameMapping;
 	private WarningMapping warningMapping;
-	private RecentPostsMapping recentPostsMapping;
+	private RecentPostMapping recentPostsMapping;
 	
 	private SchemaValidator adminUpdateValidator;
 	private SchemaValidator creationInfoValidator;
@@ -133,7 +133,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		userMapping = new MysqlUserMapping(this, connection);
 		usernameMapping = new MysqlUsernameMapping(this, connection);
 		warningMapping = new MysqlWarningMapping(this, connection);
-		recentPostsMapping = new MysqlRecentPostsMapping(this, connection);
+		recentPostsMapping = new MysqlRecentPostMapping(this, connection);
 		
 		fullnameValidator = (SchemaValidator) fullnameMapping;
 		adminUpdateValidator = (SchemaValidator) adminUpdateMapping;
@@ -288,7 +288,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	public WarningMapping getWarningMapping() {
 		return warningMapping;
 	}
-	public RecentPostsMapping getRecentPostsMapping() {
+	public RecentPostMapping getRecentPostMapping() {
 		return recentPostsMapping;
 	}
 	

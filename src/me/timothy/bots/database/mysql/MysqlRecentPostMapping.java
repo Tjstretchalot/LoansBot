@@ -13,13 +13,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import me.timothy.bots.LoansDatabase;
-import me.timothy.bots.database.RecentPostsMapping;
+import me.timothy.bots.database.RecentPostMapping;
 import me.timothy.bots.models.RecentPost;
 
-public class MysqlRecentPostsMapping extends MysqlObjectMapping<RecentPost> implements RecentPostsMapping {
+public class MysqlRecentPostMapping extends MysqlObjectMapping<RecentPost> implements RecentPostMapping {
 	private static final Logger logger = LogManager.getLogger();
 
-	public MysqlRecentPostsMapping(LoansDatabase database, Connection connection) {
+	public MysqlRecentPostMapping(LoansDatabase database, Connection connection) {
 		super(database, connection, "recent_posts", 
 				new MysqlColumn(Types.INTEGER, "id", true),
 				new MysqlColumn(Types.VARCHAR, "author"),
@@ -99,7 +99,7 @@ public class MysqlRecentPostsMapping extends MysqlObjectMapping<RecentPost> impl
 	@Override
 	public List<RecentPost> fetchByUsername(String username) {
 		try {
-			PreparedStatement statement = connection.prepareStatement("SELECT * FROM recent_posts WHERE username=?");
+			PreparedStatement statement = connection.prepareStatement("SELECT * FROM recent_posts WHERE author=?");
 			statement.setString(1, username);
 			
 			ResultSet results = statement.executeQuery();

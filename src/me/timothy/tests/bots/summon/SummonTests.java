@@ -10,7 +10,8 @@ import org.junit.runners.Suite.SuiteClasses;
 	ConfirmSummonTests.class,
 	UnpaidSummonTests.class,
 	BadLoanSummonTests.class,
-	LoanSummonTests.class
+	LoanSummonTests.class,
+	RecentPostSummonTests.class
 })
 public class SummonTests {
 

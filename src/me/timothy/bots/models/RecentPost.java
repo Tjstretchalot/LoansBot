@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 
 /**
  * Enough information to determine if a user is reposting too often. Describes
- * one post to a subreddit, and is expected to prune >1 week old entries
+ * one post to a subreddit, and is expected to prune 1 week old entries
  * 
  * @author Timothy
  */

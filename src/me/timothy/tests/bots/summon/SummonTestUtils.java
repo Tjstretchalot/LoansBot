@@ -40,6 +40,28 @@ public class SummonTestUtils {
 		obj.put("data", data);
 		return new Link(obj);
 	}
+
+	/**
+	 * Creates a link that has the specified title, author, subreddit, and time. Everything else
+	 * will throw a null pointer exception
+	 * 
+	 * @param title the title of the link
+	 * @param author the author of the link
+	 * @param subreddit the subreddit of the link
+	 * @param timestamp the created timestamp
+ 	 * @return the link
+	 */
+	@SuppressWarnings("unchecked")
+	public static Link createLinkByTitleAndAuthorAndSubAndTime(String title, String author, String subreddit, long timestamp) {
+		JSONObject obj = new JSONObject();
+		JSONObject data = new JSONObject();
+		data.put("title", title);
+		data.put("author", author);
+		data.put("subreddit", subreddit);
+		data.put("created_utc", timestamp / 1000.0);
+		obj.put("data", data);
+		return new Link(obj);
+	}
 	
 	/**
 	 * Creates a link that has the specified title as it's title. Everything

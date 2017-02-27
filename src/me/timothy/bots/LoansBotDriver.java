@@ -430,6 +430,6 @@ public class LoansBotDriver extends BotDriver {
 	 */
 	private void pruneRecentPosts() {
 		LoansDatabase ldb = (LoansDatabase) database;
-		ldb.getRecentPostsMapping().deleteOldEntries();
+		ldb.getRecentPostMapping().deleteOldEntries();
 	}
 }

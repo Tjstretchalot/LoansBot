@@ -20,11 +20,11 @@ import me.timothy.jreddit.info.Link;
  * 
  * @author Timothy
  */
-public class RecentPostsSummon implements LinkSummon {
+public class RecentPostSummon implements LinkSummon {
 
 	private Logger logger;
 	
-	public RecentPostsSummon()
+	public RecentPostSummon()
 	{
 		logger = LogManager.getLogger();
 	}
@@ -36,10 +36,11 @@ public class RecentPostsSummon implements LinkSummon {
 		
 		LoansDatabase database = (LoansDatabase) db;
 		
-		RecentPost rPost = new RecentPost(0, link.author().toLowerCase(), link.subreddit().toLowerCase(), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()));
-		database.getRecentPostsMapping().save(rPost);
+		long createdUTC = (long)(link.createdUTC() * 1000);
+		RecentPost rPost = new RecentPost(-1, link.author().toLowerCase(), link.subreddit().toLowerCase(), new Timestamp(createdUTC), new Timestamp(createdUTC));
+		database.getRecentPostMapping().save(rPost);
 		
-		List<RecentPost> recentPostsByAuthor = database.getRecentPostsMapping().fetchByUsername(link.author().toLowerCase());
+		List<RecentPost> recentPostsByAuthor = database.getRecentPostMapping().fetchByUsername(link.author().toLowerCase());
 		
 		Date yesterday = new Date(System.currentTimeMillis() - 1000 * 60 * 60 * 24);
 		int numRecent = 0;

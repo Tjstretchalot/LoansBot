@@ -20,7 +20,8 @@ import org.junit.runners.Suite.SuiteClasses;
 			MysqlResponseMappingTest.class, 
 			MysqlResponseHistoryMappingTest.class,
 			MysqlShareCodeMappingTest.class,
-			MysqlWarningMappingTest.class
+			MysqlWarningMappingTest.class,
+			MysqlRecentPostMappingTest.class
 			
 		})
 public class MysqlDatabaseTests {

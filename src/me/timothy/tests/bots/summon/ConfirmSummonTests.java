@@ -28,6 +28,7 @@ import me.timothy.jreddit.info.Comment;
 public class ConfirmSummonTests {
 	private ConfirmSummon summon;
 	private LoansDatabase database;
+	private User user;
 	private LoansFileConfiguration config;
 	private Timestamp now;
 	

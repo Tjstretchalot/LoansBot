@@ -95,7 +95,7 @@ public class MysqlLoanMapping extends MysqlObjectMapping<Loan> implements LoanMa
 	@Override
 	public List<Integer> fetchLenderIdsWithNewLoanSince(Timestamp timestamp) {
 		try {
-			PreparedStatement statement = connection.prepareStatement("SELECT DISTINCT lender_id FROM loans WHERE created_at>?");
+			PreparedStatement statement = connection.prepareStatement("SELECT DISTINCT lender_id FROM loans WHERE created_at>? AND deleted=0");
 			statement.setTimestamp(1, timestamp);
 			
 			ResultSet results = statement.executeQuery();

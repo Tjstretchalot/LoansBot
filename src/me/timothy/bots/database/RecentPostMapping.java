@@ -9,7 +9,7 @@ import me.timothy.bots.models.RecentPost;
  * 
  * @author Timothy
  */
-public interface RecentPostsMapping extends ObjectMapping<RecentPost> {
+public interface RecentPostMapping extends ObjectMapping<RecentPost> {
 	/**
 	 * Fetch all the recent posts by the specified username
 	 * 

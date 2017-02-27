@@ -20,4 +20,5 @@ public interface MappingDatabase {
 	public UserMapping getUserMapping();
 	public UsernameMapping getUsernameMapping();
 	public WarningMapping getWarningMapping();
+	public RecentPostMapping getRecentPostMapping();
 }
