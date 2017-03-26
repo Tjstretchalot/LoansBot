@@ -186,6 +186,7 @@ public class MysqlAdminUpdateMapping extends MysqlObjectMapping<AdminUpdate> imp
 				+ "FOREIGN KEY (new_lender_id) REFERENCES users(id), "
 				+ "FOREIGN KEY (new_borrower_id) REFERENCES users(id)"
 				+ ")");
+		statement.close();
 	}
 
 }

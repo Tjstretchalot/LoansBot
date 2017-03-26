@@ -21,8 +21,8 @@ import org.junit.runners.Suite.SuiteClasses;
 			MysqlResponseHistoryMappingTest.class,
 			MysqlShareCodeMappingTest.class,
 			MysqlWarningMappingTest.class,
-			MysqlRecentPostMappingTest.class
-			
+			MysqlRecentPostMappingTest.class,
+			MysqlBannedUserMappingTest.class
 		})
 public class MysqlDatabaseTests {
 

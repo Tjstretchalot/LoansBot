@@ -34,7 +34,7 @@ public class LoansBotUtils {
 	/**
 	 * The secondary subreddits the bot is for
 	 */
-	public static final List<String> SECONDARY_SUBREDDITS = Collections.unmodifiableList(Arrays.asList("loans", "loansbot"));
+	public static final List<String> SECONDARY_SUBREDDITS = Collections.unmodifiableList(Arrays.asList("loansbot"));
 
 	/*
 	 * Acquired from http://stackoverflow.com/questions/6710094/how-to-format-an-elapsed-time-interval-in-hhmmss-sss-format-in-java

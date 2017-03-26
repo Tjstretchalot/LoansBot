@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import me.timothy.bots.database.AdminUpdateMapping;
+import me.timothy.bots.database.BannedUserMapping;
 import me.timothy.bots.database.CreationInfoMapping;
 import me.timothy.bots.database.FullnameMapping;
 import me.timothy.bots.database.LCCMapping;
@@ -25,6 +26,7 @@ import me.timothy.bots.database.UserMapping;
 import me.timothy.bots.database.UsernameMapping;
 import me.timothy.bots.database.WarningMapping;
 import me.timothy.bots.database.mysql.MysqlAdminUpdateMapping;
+import me.timothy.bots.database.mysql.MysqlBannedUserMapping;
 import me.timothy.bots.database.mysql.MysqlCreationInfoMapping;
 import me.timothy.bots.database.mysql.MysqlFullnameMapping;
 import me.timothy.bots.database.mysql.MysqlLCCMapping;
@@ -78,6 +80,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	private UsernameMapping usernameMapping;
 	private WarningMapping warningMapping;
 	private RecentPostMapping recentPostsMapping;
+	private BannedUserMapping bannedUsersMapping;
 	
 	private SchemaValidator adminUpdateValidator;
 	private SchemaValidator creationInfoValidator;
@@ -94,6 +97,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	private SchemaValidator usernameValidator;
 	private SchemaValidator warningValidator;
 	private SchemaValidator recentPostsValidator;
+	private SchemaValidator bannedUsersValidator;
 	
 	public LoansDatabase() {
 		logger = LogManager.getLogger();
@@ -134,6 +138,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		usernameMapping = new MysqlUsernameMapping(this, connection);
 		warningMapping = new MysqlWarningMapping(this, connection);
 		recentPostsMapping = new MysqlRecentPostMapping(this, connection);
+		bannedUsersMapping = new MysqlBannedUserMapping(this, connection);
 		
 		fullnameValidator = (SchemaValidator) fullnameMapping;
 		adminUpdateValidator = (SchemaValidator) adminUpdateMapping;
@@ -150,6 +155,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		usernameValidator = (SchemaValidator) usernameMapping;
 		warningValidator = (SchemaValidator) warningMapping;
 		recentPostsValidator = (SchemaValidator) recentPostsMapping;
+		bannedUsersValidator = (SchemaValidator) bannedUsersMapping;
 	}
 	
 	/**
@@ -159,6 +165,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	 */
 	public void purgeAll() {
 		// REVERSE ORDER of validateTableState
+		bannedUsersValidator.purgeSchema();
 		recentPostsValidator.purgeSchema();
 		warningValidator.purgeSchema();
 		shareCodeValidator.purgeSchema();
@@ -200,6 +207,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		shareCodeValidator.validateSchema();
 		warningValidator.validateSchema();
 		recentPostsValidator.validateSchema();
+		bannedUsersValidator.validateSchema();
 	}
 	
 	/**
@@ -228,6 +236,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		usernameMapping = null;
 		warningMapping = null;
 		recentPostsMapping = null;
+		bannedUsersMapping = null;
 		
 		adminUpdateValidator = null;
 		creationInfoValidator = null;
@@ -244,6 +253,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		usernameValidator = null;
 		warningValidator = null;
 		recentPostsValidator = null;
+		bannedUsersValidator = null;
 	}
 	
 	public AdminUpdateMapping getAdminUpdateMapping() {
@@ -290,6 +300,9 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	}
 	public RecentPostMapping getRecentPostMapping() {
 		return recentPostsMapping;
+	}
+	public BannedUserMapping getBannedUserMapping() {
+		return bannedUsersMapping;
 	}
 	
 	/*

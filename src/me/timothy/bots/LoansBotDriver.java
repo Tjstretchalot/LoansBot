@@ -13,7 +13,9 @@ import java.util.Properties;
 
 import org.json.simple.parser.ParseException;
 
+import me.timothy.bots.database.MappingDatabase;
 import me.timothy.bots.diagnostics.Diagnostics;
+import me.timothy.bots.models.BannedUser;
 import me.timothy.bots.models.LendersCampContributor;
 import me.timothy.bots.models.Recheck;
 import me.timothy.bots.models.ResetPasswordRequest;
@@ -567,4 +569,55 @@ public class LoansBotDriver extends BotDriver {
 		}
 		return result;
 	}
+
+	@Override
+	protected void handleBanUser(String userToBan, String banMessage, String banReason, String banNote) {
+		MappingDatabase db = (MappingDatabase) database;
+		Username userToBanUsername = db.getUsernameMapping().fetchByUsername(userToBan);
+		if(userToBanUsername == null) {
+			logger.info(String.format("Tried to ban %s but we don't know any users by that name.", userToBan));
+			return;
+		}
+		
+		super.handleBanUser(userToBan, banMessage, banReason, banNote);
+	}
+	
+	
+	@Override
+	protected void onSuccessfullyBannedUser(String username) {
+		super.onSuccessfullyBannedUser(username);
+
+		Timestamp now = new Timestamp(System.currentTimeMillis());
+		MappingDatabase db = (MappingDatabase) database;
+		Username usernameObj = db.getUsernameMapping().fetchByUsername(username);
+		db.getBannedUserMapping().save(new BannedUser(-1, usernameObj.userId, now, now));
+	}
+
+	@Override
+	protected void onSuccessfullyUnbanUser(String username) {
+		super.onSuccessfullyUnbanUser(username);
+
+		MappingDatabase db = (MappingDatabase) database;
+		Username usernameObj = db.getUsernameMapping().fetchByUsername(username);
+		db.getBannedUserMapping().removeByUserID(usernameObj.userId);
+	}
+
+	@Override
+	protected void handleUnbanUser(final String userToUnban) {
+		MappingDatabase db = (MappingDatabase) database;
+		Username userToUnbanUsername = db.getUsernameMapping().fetchByUsername(userToUnban);
+		if(userToUnbanUsername == null) {
+			logger.info(String.format("Tried to unban %s but we don't know any users by that name.", userToUnban));
+			return;
+		}
+		
+		if(!db.getBannedUserMapping().containsUserID(userToUnbanUsername.userId)) {
+			logger.info(String.format("Tried to unban %s but we didn't ban them.", userToUnban));
+			return;
+		}
+		
+		super.handleUnbanUser(userToUnban);
+	}
+	
+	
 }
