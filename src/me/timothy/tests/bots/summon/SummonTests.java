@@ -9,6 +9,7 @@ import org.junit.runners.Suite.SuiteClasses;
 	CheckSummonTests.class,
 	ConfirmSummonTests.class,
 	UnpaidSummonTests.class,
+	PaidSummonTests.class,
 	BadLoanSummonTests.class,
 	LoanSummonTests.class,
 	RecentPostSummonTests.class

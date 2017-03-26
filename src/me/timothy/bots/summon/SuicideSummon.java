@@ -22,27 +22,30 @@ public class SuicideSummon implements LinkSummon, CommentSummon {
 	 */
 	private static final Pattern PATTERN = Pattern.compile("suicide");
 	
-	private String user;
-
-	private SummonResponse getReply(FileConfiguration config, Database db) {
+	private SummonResponse getReply(FileConfiguration config, Database db, String user) {
 		LoansDatabase database = (LoansDatabase) db;
 		return new SummonResponse(SummonResponse.ResponseType.VALID, database.getResponseMapping().fetchByName("suicide").responseBody.replace("<user>", user));
 	}
 
 	@Override
-	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
-		user = comment.author();
-		if(PATTERN.matcher(comment.body()).find())
-			return getReply(config, db);
-		return null;
+	public boolean mightInteractWith(Comment comment, Database db, FileConfiguration config) {
+		return PATTERN.matcher(comment.body()).find();
 	}
 
 	@Override
-	public SummonResponse handleLink(Link link, Database db, FileConfiguration config) {
-		user = link.author();
-		if(PATTERN.matcher(link.title()).find() || PATTERN.matcher(link.selftext()).find())
-			return getReply(config, db);
-		return null;
+	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
+		return getReply(config, db, comment.author());
 	}
+
+	@Override
+	public boolean mightInteractWith(Link link, Database db, FileConfiguration config) {
+		return PATTERN.matcher(link.title()).find() || PATTERN.matcher(link.selftext()).find();
+	}
+	
+	@Override
+	public SummonResponse handleLink(Link link, Database db, FileConfiguration config) {
+		return getReply(config, db, link.author());
+	}
+
 
 }

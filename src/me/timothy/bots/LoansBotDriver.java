@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -38,6 +39,33 @@ import me.timothy.jreddit.info.Thing;
  * @author Timothy
  */
 public class LoansBotDriver extends BotDriver {
+	private static final int MAX_RECENTLY_CHECKED = 50;
+	private static final long FORCE_RECHECK_TIME_MS = 1000 * 60 * 60 * 24;
+	
+	/**
+	 * Describes a very simply mapping of the username and time
+	 * it was checked, for canInteractWithUsFull, to prevent 
+	 * excessive checking of power users karma. 
+	 * 
+	 * @author Timothy
+	 *
+	 */
+	private static class RequirementsCheckedUser {
+		public String username;
+		public long timeCheckedMS;
+		
+		public RequirementsCheckedUser(String username, long timeChecked) {
+			this.username = username;
+			this.timeCheckedMS = timeChecked;
+		}
+	}
+	
+	/**
+	 * The list of users that have recently passed as full
+	 * canInteractWithUsFull
+	 */
+	private List<RequirementsCheckedUser> recentlyPassedCheckUsers;
+	
 	private Diagnostics diagnostics;
 	
 	/**
@@ -55,6 +83,8 @@ public class LoansBotDriver extends BotDriver {
 		super(database, config, bot, commentSummons, pmSummons, submissionSummons);
 		
 		diagnostics = new Diagnostics(new File("diagnostics.log"));
+		
+		recentlyPassedCheckUsers = new ArrayList<RequirementsCheckedUser>();
 	}
 
 	/* (non-Javadoc)
@@ -418,6 +448,7 @@ public class LoansBotDriver extends BotDriver {
 		}
 	}
 	
+	
 	/**
 	 * Handles diagnosing the diagnostics 
 	 */
@@ -431,5 +462,109 @@ public class LoansBotDriver extends BotDriver {
 	private void pruneRecentPosts() {
 		LoansDatabase ldb = (LoansDatabase) database;
 		ldb.getRecentPostMapping().deleteOldEntries();
+	}
+	
+	@Override
+	protected boolean canInteractWithUsFull(final String username) {
+		if(!super.canInteractWithUsFull(username))
+			return false;
+		
+		for(int i = recentlyPassedCheckUsers.size() - 1; i >= 0; i--) {
+			RequirementsCheckedUser checked = recentlyPassedCheckUsers.get(i);
+			if(checked.username.equals(username))
+			{
+				long timeSinceChecked = System.currentTimeMillis() - checked.timeCheckedMS;
+				
+				if(timeSinceChecked >= FORCE_RECHECK_TIME_MS)
+				{
+					recentlyPassedCheckUsers.remove(i);
+					break;
+				}else {
+					return true;
+				}
+			}else {
+				// prune while we're here
+				long timeSinceChecked = System.currentTimeMillis() - checked.timeCheckedMS;
+				
+				if(timeSinceChecked >= FORCE_RECHECK_TIME_MS) {
+					recentlyPassedCheckUsers.remove(i);
+				}
+			}
+		}
+		
+		logger.debug(String.format("%s has not been recently checked for interaction requirements, so fetching acount information..", username));
+		Boolean meetsRequirements = new Retryable<Boolean>("meets interaction requirements") {
+
+			@Override
+			protected Boolean runImpl() throws Exception {
+				Account account = RedditUtils.getAccountFor(bot.getUser(), username);
+				sleepFor(BRIEF_PAUSE_MS);
+				
+				if(account == null) {
+					logger.debug(String.format("Got not account information for %s, assuming he fails the test", username));
+					return false;
+				}
+				
+				if(account.commentKarma() + account.linkKarma() < 1000) {
+					logger.debug(String.format("%s has %d comment karma and %d link karma, for a cumulative karma of %d, which is below minimum threshold - ignoring", username, account.commentKarma(), account.linkKarma(), account.commentKarma() + account.linkKarma()));
+					return false;
+				}
+				
+				double nowUTCSeconds = System.currentTimeMillis() / 1000.0;
+				double minAge = nowUTCSeconds - 60 * 60 * 24 * 90;
+				
+				if(account.createdUTC() > minAge) {
+					long timeInMS = (Math.round(minAge) * 1000);
+					SimpleDateFormat sdf = new SimpleDateFormat("EEE, d MMM yyyy, hh:mm aaa");
+					String createdAt = sdf.format(new Date(timeInMS));
+					logger.debug(String.format("%s created his account around %s, which does not meet the 90 day requirement", username, createdAt));
+					return false;
+				}
+				
+				return true;
+			}
+			
+		}.run();
+		
+		if(meetsRequirements == null)
+			return false;
+		
+		boolean result = meetsRequirements.booleanValue();
+		if(result) {
+			if(recentlyPassedCheckUsers.size() == MAX_RECENTLY_CHECKED) {
+				boolean removedOne = false;
+				int oldestIndex = -1;
+				long oldestTime = 0;
+				
+				for(int i = recentlyPassedCheckUsers.size() - 1; i >= 0; i--) {
+					RequirementsCheckedUser checked = recentlyPassedCheckUsers.get(i);
+
+					long timeSinceChecked = System.currentTimeMillis() - checked.timeCheckedMS;
+					if(timeSinceChecked >= FORCE_RECHECK_TIME_MS) {
+						recentlyPassedCheckUsers.remove(i);
+						removedOne = true;
+					}
+					
+					if(!removedOne) {
+						if(oldestIndex == -1 || checked.timeCheckedMS < oldestTime) {
+							oldestIndex = i;
+							oldestTime = checked.timeCheckedMS;
+						}
+					}
+				}
+				
+				if(!removedOne) {
+					// just replace the oldest one with us, no need to change array
+					RequirementsCheckedUser checked = recentlyPassedCheckUsers.get(oldestIndex);
+					checked.timeCheckedMS = System.currentTimeMillis();
+					checked.username = username;
+				}else {
+					recentlyPassedCheckUsers.add(new RequirementsCheckedUser(username, System.currentTimeMillis()));
+				}
+			}else {
+				recentlyPassedCheckUsers.add(new RequirementsCheckedUser(username, System.currentTimeMillis()));
+			}
+		}
+		return result;
 	}
 }

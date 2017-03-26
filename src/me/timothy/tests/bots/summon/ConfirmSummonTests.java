@@ -1,11 +1,11 @@
 package me.timothy.tests.bots.summon;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
-import java.io.IOException;
 import java.sql.Timestamp;
 
-import org.json.simple.parser.ParseException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,7 +17,6 @@ import me.timothy.bots.models.Response;
 import me.timothy.bots.models.User;
 import me.timothy.bots.summon.ConfirmSummon;
 import me.timothy.bots.summon.SummonResponse;
-import me.timothy.jreddit.RedditUtils;
 import me.timothy.jreddit.info.Comment;
 
 /**
@@ -28,7 +27,6 @@ import me.timothy.jreddit.info.Comment;
 public class ConfirmSummonTests {
 	private ConfirmSummon summon;
 	private LoansDatabase database;
-	private User user;
 	private LoansFileConfiguration config;
 	private Timestamp now;
 	
@@ -63,16 +61,6 @@ public class ConfirmSummonTests {
 		Comment comment = SummonTestUtils.createComment("$confirm /u/john 100", "LoansBot");
 		SummonResponse response = summon.handleComment(comment, database, config);
 		assertNull(response);
-	}
-	
-	@Test
-	public void testRespondsToWeirdSpacesComment() throws IOException, ParseException {
-		database.getResponseMapping().save(new Response(-1, "confirmNoLoan", "no loan", now, now));
-		Comment comment = (Comment) RedditUtils.getThing("t1_d2e5glx", null);
-		SummonResponse response = summon.handleComment(comment, database, config);
-		assertNotNull(response);
-		assertEquals(SummonResponse.ResponseType.VALID, response.getResponseType());
-		assertEquals("no loan", response.getResponseMessage());
 	}
 	
 	@Test

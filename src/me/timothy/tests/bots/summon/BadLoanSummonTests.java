@@ -53,17 +53,14 @@ public class BadLoanSummonTests {
 	
 	@Test
 	public void testDoesNotReplyToValidSummon() {
-		Comment comment = SummonTestUtils.createComment("$loan 100", "paul");
-		SummonResponse response = summon.handleComment(comment, database, config);
-		assertNull(response);
+		Comment comment = SummonTestUtils.createComment("$loan 100", "paul");		
+		assertFalse(summon.mightInteractWith(comment, database, config));
 		
 		comment = SummonTestUtils.createComment("$loan $100.00", "paul");		
-		response = summon.handleComment(comment, database, config);
-		assertNull(response);
+		assertFalse(summon.mightInteractWith(comment, database, config));
 		
-		comment = SummonTestUtils.createComment("$loan 100 EUR", "paul");
-		response = summon.handleComment(comment, database, config);
-		assertNull(response);
+		comment = SummonTestUtils.createComment("$loan 100 EUR", "paul");		
+		assertFalse(summon.mightInteractWith(comment, database, config));
 	}
 	
 	@Test
@@ -97,8 +94,7 @@ public class BadLoanSummonTests {
 		assertEquals(SummonResponse.ResponseType.INVALID, response.getResponseType());
 		assertEquals("bad loan", response.getResponseMessage());
 		
-		comment = SummonTestUtils.createComment("$loan /u/john $5.001", "paul");
-		response = summon.handleComment(comment, database, config);
-		assertNull(response);
+		comment = SummonTestUtils.createComment("$loan /u/john $5.001", "paul");		
+		assertFalse(summon.mightInteractWith(comment, database, config));
 	}
 }

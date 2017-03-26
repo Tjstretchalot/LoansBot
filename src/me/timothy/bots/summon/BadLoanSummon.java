@@ -19,13 +19,16 @@ public class BadLoanSummon implements CommentSummon {
 
 	private static final Pattern BAD_LOAN_PATTERN = Pattern.compile("\\$loan\\s/u/\\S+\\s" + BotUtils.getDollarAmountPatternString());
 
+
+	@Override
+	public boolean mightInteractWith(Comment comment, Database db, FileConfiguration config) {
+		return BAD_LOAN_PATTERN.matcher(comment.body()).find();
+	}
+	
 	@Override
 	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
-		if(BAD_LOAN_PATTERN.matcher(comment.body()).find()) {
-			LoansDatabase database = (LoansDatabase) db;
-			return new SummonResponse(SummonResponse.ResponseType.INVALID, database.getResponseMapping().fetchByName("bad_loan_summon").responseBody);
-		}
-		return null;
+		LoansDatabase database = (LoansDatabase) db;
+		return new SummonResponse(SummonResponse.ResponseType.INVALID, database.getResponseMapping().fetchByName("bad_loan_summon").responseBody);
 	}
 
 }

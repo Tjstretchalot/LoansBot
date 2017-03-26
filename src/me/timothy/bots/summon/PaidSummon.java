@@ -134,9 +134,17 @@ public class PaidSummon implements CommentSummon {
 			}
 		}
 	}
+
+	@Override
+	public boolean mightInteractWith(Comment comment, Database db, FileConfiguration config) {
+		return PAID_PATTERN_WITH_CURRENCY.matcher(comment.body()).find();
+	}
 	
 	@Override
 	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
+		if(comment.author().equalsIgnoreCase(config.getProperty("user.username")))
+			return null;
+		
 		LoansDatabase database = (LoansDatabase) db;
 		Matcher matcher = PAID_PATTERN_WITH_CURRENCY.matcher(comment.body());
 		
@@ -178,6 +186,17 @@ public class PaidSummon implements CommentSummon {
 				return null;
 			}
 			
+			List<Loan> borrowerLoans = database.getLoanMapping().fetchWithBorrowerAndOrLender(user1User.id, user1User.id, false);
+			boolean hadAnyUnpaid = false;
+			for(int i = borrowerLoans.size() - 1; i >= 0; i--) {
+				Loan loan = borrowerLoans.get(i);
+				if(loan.borrowerId == user1User.id && loan.unpaid)
+				{
+					hadAnyUnpaid = true;
+					break;
+				}
+			}
+			
 			List<Loan> relevantLoans = database.getLoanMapping().fetchWithBorrowerAndOrLender(user1User.id, authorUser.id, true);
 			removeFinishedLoans(relevantLoans);
 			
@@ -188,8 +207,6 @@ public class PaidSummon implements CommentSummon {
 				ResponseFormatter formatter = new ResponseFormatter(database.getResponseMapping().fetchByName("no_loans_to_repay").responseBody, respInfo);
 				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));
 			}
-			
-			
 			
 			int interest = updateLoans(relevantLoans, amountRepaid, database);
 			respInfo.addTemporaryObject("interest", new MoneyFormattableObject(interest));
@@ -204,9 +221,31 @@ public class PaidSummon implements CommentSummon {
 				response = database.getResponseMapping().fetchByName("repayment").responseBody;
 			}
 			
+			boolean unbanUser = false;
+			String userToUnban = null;
+			
+			if(hadAnyUnpaid) {
+				borrowerLoans = database.getLoanMapping().fetchWithBorrowerAndOrLender(user1User.id, user1User.id, false);
+				boolean haveAnyUnpaid = false;
+				
+				for(int i = borrowerLoans.size() - 1; i >= 0; i--) {
+					Loan loan = borrowerLoans.get(i);
+					if(loan.borrowerId == user1User.id && loan.unpaid)
+					{
+						haveAnyUnpaid = true;
+						break;
+					}
+				}
+				
+				if(!haveAnyUnpaid) {
+					unbanUser = true;
+					userToUnban = user1.toLowerCase();
+				}
+			}
 			
 			ResponseFormatter formatter = new ResponseFormatter(response, respInfo);
-			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, database));
+			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, database), null, null, null, false,
+					null, null, null, null, unbanUser, userToUnban);
 		}
 		return null;
 	}

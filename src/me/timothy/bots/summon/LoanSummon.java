@@ -49,6 +49,12 @@ public class LoanSummon implements CommentSummon {
 	public LoanSummon() {
 		logger = LogManager.getLogger();
 	}
+
+	@Override
+	public boolean mightInteractWith(Comment comment, Database db, FileConfiguration config) {
+		return LOAN_PATTERN.matcher(comment.body()).find();
+	}
+	
 	@Override
 	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
 		if(comment.author().equalsIgnoreCase(config.getProperty("user.username"))) {

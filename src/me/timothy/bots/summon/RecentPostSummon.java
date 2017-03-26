@@ -28,12 +28,14 @@ public class RecentPostSummon implements LinkSummon {
 	{
 		logger = LogManager.getLogger();
 	}
-	
+
+	@Override
+	public boolean mightInteractWith(Link link, Database db, FileConfiguration config) {
+		return link.title().contains("[REQ]");
+	}
+
 	@Override
 	public SummonResponse handleLink(Link link, Database db, FileConfiguration config) {
-		if(!link.title().contains("[REQ]"))
-			return null;
-		
 		LoansDatabase database = (LoansDatabase) db;
 		
 		long createdUTC = (long)(link.createdUTC() * 1000);
@@ -59,5 +61,4 @@ public class RecentPostSummon implements LinkSummon {
 		
 		return null;
 	}
-
 }

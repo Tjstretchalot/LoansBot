@@ -41,13 +41,15 @@ public class CheckSummon implements CommentSummon, LinkSummon {
 	public CheckSummon() {
 		logger = LogManager.getLogger();
 	}
+
+	@Override
+	public boolean mightInteractWith(Link link, Database db, FileConfiguration config) {
+		String title = link.title();
+		return !title.toUpperCase().startsWith("[META]");
+	}
 	
 	@Override
 	public SummonResponse handleLink(Link submission, Database db, FileConfiguration config) {
-		String title = submission.title();
-		if(title.toUpperCase().startsWith("[META]"))
-			return null;
-		
 		LoansDatabase database = (LoansDatabase) db;
 		
 		ResponseInfo respInfo = new ResponseInfo(ResponseInfoFactory.base);
@@ -57,6 +59,12 @@ public class CheckSummon implements CommentSummon, LinkSummon {
 		logger.printf(Level.DEBUG, "%s posted a non-meta submission and recieved a check", respInfo.getObject("author").toString());
 		return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, (LoansDatabase) db));
 	}
+
+	@Override
+	public boolean mightInteractWith(Comment comment, Database db, FileConfiguration config) {
+		return CHECK_PATTERN.matcher(comment.body()).find();
+	}
+	
 	@Override
 	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
 		if(comment.author().equalsIgnoreCase(config.getProperty("user.username"))) {
@@ -78,5 +86,6 @@ public class CheckSummon implements CommentSummon, LinkSummon {
 		
 		return null;
 	}
+
 
 }

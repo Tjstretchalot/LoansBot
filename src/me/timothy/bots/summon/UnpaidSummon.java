@@ -43,7 +43,11 @@ public class UnpaidSummon implements CommentSummon {
 	public UnpaidSummon() {
 		logger = LogManager.getLogger();
 	}
-	
+
+	@Override
+	public boolean mightInteractWith(Comment comment, Database db, FileConfiguration config) {
+		return UNPAID_PATTERN.matcher(comment.body()).find();
+	}
 	
 	@Override
 	public SummonResponse handleComment(Comment comment, Database db, FileConfiguration config) {
@@ -82,40 +86,59 @@ public class UnpaidSummon implements CommentSummon {
 			String responseFormat = database.getResponseMapping().fetchByName("unpaid").responseBody;
 			
 			// Also send pms to all affected lenders telling them about the default
-			List<Loan> loansWithBorrowerThatDefaulted = database.getLoanMapping().fetchWithBorrowerAndOrLender(user1Username.userId, 0, false);
-			Set<Integer> userIdsWithBorrowerThatDefaulted = new HashSet<>();
-			for(Loan loanWithBorrowerThatDefaulted : loansWithBorrowerThatDefaulted)
-			{
-				int lenderId = loanWithBorrowerThatDefaulted.lenderId;
-				
-				if(lenderId != authorUsername.userId)
-				{
-					userIdsWithBorrowerThatDefaulted.add(lenderId);
-				}
-			}
-			
-			String pmFormat = database.getResponseMapping().fetchByName("unpaid_lender_pm").responseBody;
 			List<PMResponse> lenderPMs = new ArrayList<>();
-			for(int userIdWithBorrowerThatDefaulted : userIdsWithBorrowerThatDefaulted)
-			{
-				List<Username> usernames = database.getUsernameMapping().fetchByUserId(userIdWithBorrowerThatDefaulted);
-				
-				for(Username username : usernames)
+			if(user1Username != null) {
+				List<Loan> loansWithBorrowerThatDefaulted = database.getLoanMapping().fetchWithBorrowerAndOrLender(user1Username.userId, 0, false);
+				Set<Integer> userIdsWithBorrowerThatDefaulted = new HashSet<>();
+				for(Loan loanWithBorrowerThatDefaulted : loansWithBorrowerThatDefaulted)
 				{
-					ResponseInfo pmResponseInfo = new ResponseInfo(ResponseInfoFactory.base);
-					pmResponseInfo.addTemporaryString("lender", username.username);
-					pmResponseInfo.addTemporaryString("borrower", user1Username.username);
-					pmResponseInfo.addTemporaryString("comment permalink", comment.linkURL());
-					
-					String messageText = new ResponseFormatter(pmFormat, pmResponseInfo).getFormattedResponse(config, database);
-					
-					lenderPMs.add(new PMResponse(username.username, "Unpaid Borrower Notification", messageText));
+					int lenderId = loanWithBorrowerThatDefaulted.lenderId;
+
+					if(lenderId != authorUsername.userId)
+					{
+						userIdsWithBorrowerThatDefaulted.add(lenderId);
+					}
+				}
+
+
+				String pmFormat = database.getResponseMapping().fetchByName("unpaid_lender_pm").responseBody;
+				for(int userIdWithBorrowerThatDefaulted : userIdsWithBorrowerThatDefaulted)
+				{
+					List<Username> usernames = database.getUsernameMapping().fetchByUserId(userIdWithBorrowerThatDefaulted);
+
+					for(Username username : usernames)
+					{
+						ResponseInfo pmResponseInfo = new ResponseInfo(ResponseInfoFactory.base);
+						pmResponseInfo.addTemporaryString("lender", username.username);
+						pmResponseInfo.addTemporaryString("borrower", user1Username.username);
+						pmResponseInfo.addTemporaryString("comment permalink", comment.linkURL());
+
+						String messageText = new ResponseFormatter(pmFormat, pmResponseInfo).getFormattedResponse(config, database);
+
+						lenderPMs.add(new PMResponse(username.username, "Unpaid Borrower Notification", messageText));
+					}
 				}
 			}
+
+			boolean banUser = changed.size() > 0;
+			String banMessage = null, banReason = null, banNote = null, userToBan = null;
+
+			if(banUser) {
+				ResponseInfo banMessageAndReasonInfo = new ResponseInfo(ResponseInfoFactory.base);
+				banMessageAndReasonInfo.addTemporaryString("lender", authorUsername.username);
+				banMessageAndReasonInfo.addTemporaryString("borrower", user1Username.username);
+				banMessageAndReasonInfo.addTemporaryString("comment permalink", comment.linkURL());
+
+				banMessage = new ResponseFormatter(database.getResponseMapping().fetchByName("unpaid_ban_message").responseBody, banMessageAndReasonInfo).getFormattedResponse(config, database);
+				banReason = new ResponseFormatter(database.getResponseMapping().fetchByName("unpaid_ban_reason").responseBody, banMessageAndReasonInfo).getFormattedResponse(config, database);
+				banNote = new ResponseFormatter(database.getResponseMapping().fetchByName("unpaid_ban_note").responseBody, banMessageAndReasonInfo).getFormattedResponse(config, database);
+				userToBan = user1Username.username;
+			}
 			
-			return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(responseFormat, responseInfo).getFormattedResponse(config, database), null, lenderPMs);
+			//return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(responseFormat, responseInfo).getFormattedResponse(config, database), null, lenderPMs);
+			return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(responseFormat, responseInfo).getFormattedResponse(config, database), null, lenderPMs, null,
+					banUser, userToBan, banMessage, banReason, banNote, false, null);
 		}
 		return null;
 	}
-
 }

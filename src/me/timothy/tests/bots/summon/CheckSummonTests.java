@@ -66,8 +66,7 @@ public class CheckSummonTests {
 	public void testDoesntRespondToMetaLinks() {
 		Link link = SummonTestUtils.createLinkByTitle("[META] LoansBot update queued");
 		
-		SummonResponse response = summon.handleLink(link, database, config);
-		assertNull(response);
+		assertFalse(summon.mightInteractWith(link, database, config));
 	}
 	
 	@Test
