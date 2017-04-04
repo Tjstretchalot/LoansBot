@@ -30,6 +30,7 @@ import me.timothy.bots.summon.PMSummon;
 import me.timothy.jreddit.RedditUtils;
 import me.timothy.jreddit.info.Account;
 import me.timothy.jreddit.info.Comment;
+import me.timothy.jreddit.info.ContributorsListing;
 import me.timothy.jreddit.info.Link;
 import me.timothy.jreddit.info.Listing;
 import me.timothy.jreddit.info.Message;
@@ -120,6 +121,8 @@ public class LoansBotDriver extends BotDriver {
 		}
 		super.handleReply(replyable, response);
 	}
+	
+	
 
 	/* (non-Javadoc)
 	 * @see me.timothy.bots.BotDriver#doLoop()
@@ -528,6 +531,27 @@ public class LoansBotDriver extends BotDriver {
 			
 		}.run();
 		
+		if(meetsRequirements != Boolean.TRUE) {
+			logger.debug(String.format("%s did not meet the interaction requirements. Checking if approved submitter", username));
+			meetsRequirements = new Retryable<Boolean>("is contributor to borrow - interact reqs") {
+
+				@Override
+				protected Boolean runImpl() throws Exception {
+					ContributorsListing contrib = RedditUtils.getContributorsForSubredditByName("borrow", username, bot.getUser());
+					sleepFor(BRIEF_PAUSE_MS);
+					
+					if(contrib == null || contrib.numChildren() != 1) {
+						logger.debug(String.format("%s is not an approved submitter to /r/borrow", username));
+						return false;
+					}
+					
+					logger.debug(String.format("%s is an approved submitter to /r/borrow", username));
+					return true;
+				}
+				
+			}.run();
+		}
+		
 		if(meetsRequirements == null)
 			return false;
 		
@@ -568,6 +592,19 @@ public class LoansBotDriver extends BotDriver {
 			}
 		}
 		return result;
+	}
+
+	
+	@Override
+	protected void onFailedInteractCheck(Thing thing) {
+		super.onFailedInteractCheck(thing);
+		
+		if(thing instanceof Comment) {
+			Comment comment = (Comment) thing;
+			
+			logger.info(String.format("Reporting comment id=%s by %s because it failed an interaction check", comment.id(), comment.author()));
+			super.handleReport(comment.fullname(), "loansbot autoreport");
+		}
 	}
 
 	@Override
