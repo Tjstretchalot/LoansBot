@@ -100,26 +100,52 @@ public class UnpaidSummon implements CommentSummon {
 					}
 				}
 
-
-				String pmFormat = database.getResponseMapping().fetchByName("unpaid_lender_pm").responseBody;
+				String affectedPMTitleFormat = database.getResponseMapping().fetchByName("unpaid_affected_lender_alert_pm_title").responseBody;
+				String affectedPMFormat = database.getResponseMapping().fetchByName("unpaid_affected_lender_alert_pm_text").responseBody;
 				for(int userIdWithBorrowerThatDefaulted : userIdsWithBorrowerThatDefaulted)
 				{
 					List<Username> usernames = database.getUsernameMapping().fetchByUserId(userIdWithBorrowerThatDefaulted);
 
 					for(Username username : usernames)
 					{
-						ResponseInfo pmResponseInfo = new ResponseInfo(ResponseInfoFactory.base);
-						pmResponseInfo.addTemporaryString("lender", username.username);
-						pmResponseInfo.addTemporaryString("borrower", user1Username.username);
-						pmResponseInfo.addTemporaryString("comment permalink", comment.linkURL());
+						ResponseInfo pmTitleResponseInfo = new ResponseInfo(ResponseInfoFactory.base);
+						pmTitleResponseInfo.addTemporaryString("lender", authorUsername != null ? authorUsername.username : author);
+						pmTitleResponseInfo.addTemporaryString("borrower", user1Username.username);
+						pmTitleResponseInfo.addTemporaryString("affected", username.username);
+						
+						ResponseInfo pmTextResponseInfo = new ResponseInfo(ResponseInfoFactory.base);
+						pmTextResponseInfo.addTemporaryString("lender", authorUsername != null ? authorUsername.username : author);
+						pmTextResponseInfo.addTemporaryString("borrower", user1Username.username);
+						pmTextResponseInfo.addTemporaryString("affected", username.username);
+						pmTextResponseInfo.addTemporaryString("comment permalink", comment.linkURL());
+						
+						String titleText = new ResponseFormatter(affectedPMTitleFormat, pmTitleResponseInfo).getFormattedResponse(config, database);
+						String messageText = new ResponseFormatter(affectedPMFormat, pmTextResponseInfo).getFormattedResponse(config, database);
 
-						String messageText = new ResponseFormatter(pmFormat, pmResponseInfo).getFormattedResponse(config, database);
-
-						lenderPMs.add(new PMResponse(username.username, "Unpaid Borrower Notification", messageText));
+						lenderPMs.add(new PMResponse(username.username, titleText, messageText));
 					}
 				}
 			}
-
+			
+			// add the reminder pm
+			String reminderPMTitleFormat = database.getResponseMapping().fetchByName("unpaid_lender_reminder_pm_title").responseBody;
+			String reminderPMFormat = database.getResponseMapping().fetchByName("unpaid_lender_reminder_pm_text").responseBody;
+			
+			ResponseInfo reminderPMTitleResponseInfo = new ResponseInfo(ResponseInfoFactory.base);
+			reminderPMTitleResponseInfo.addTemporaryString("lender", authorUsername != null ? authorUsername.username : author);
+			reminderPMTitleResponseInfo.addTemporaryString("borrower", user1Username != null ? user1Username.username : user1);
+			
+			ResponseInfo reminderPMResponseInfo = new ResponseInfo(ResponseInfoFactory.base);
+			reminderPMResponseInfo.addTemporaryString("lender", authorUsername != null ? authorUsername.username : author);
+			reminderPMResponseInfo.addTemporaryString("borrower", user1Username != null ? user1Username.username : user1);
+			reminderPMResponseInfo.addTemporaryString("comment permalink", comment.linkURL());
+			
+			String reminderTitle = new ResponseFormatter(reminderPMTitleFormat, reminderPMTitleResponseInfo).getFormattedResponse(config, database);
+			String reminderText = new ResponseFormatter(reminderPMFormat, reminderPMResponseInfo).getFormattedResponse(config, database);
+			
+			lenderPMs.add(new PMResponse(authorUsername != null ? authorUsername.username : author, reminderTitle, reminderText));
+			
+			// ban if at least 1 changed loan
 			boolean banUser = changed.size() > 0;
 			String banMessage = null, banReason = null, banNote = null, userToBan = null;
 
