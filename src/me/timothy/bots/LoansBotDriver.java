@@ -608,7 +608,7 @@ public class LoansBotDriver extends BotDriver {
 	}
 
 	@Override
-	protected void handleBanUser(String userToBan, String banMessage, String banReason, String banNote) {
+	protected void handleBanUserOnAllSubreddits(String userToBan, String banMessage, String banReason, String banNote) {
 		MappingDatabase db = (MappingDatabase) database;
 		Username userToBanUsername = db.getUsernameMapping().fetchByUsername(userToBan);
 		if(userToBanUsername == null) {
@@ -616,7 +616,7 @@ public class LoansBotDriver extends BotDriver {
 			return;
 		}
 		
-		super.handleBanUser(userToBan, banMessage, banReason, banNote);
+		super.handleBanUserOnAllSubreddits(userToBan, banMessage, banReason, banNote);
 	}
 	
 	
