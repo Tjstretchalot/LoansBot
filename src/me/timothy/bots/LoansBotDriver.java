@@ -640,7 +640,7 @@ public class LoansBotDriver extends BotDriver {
 	}
 
 	@Override
-	protected void handleUnbanUser(final String userToUnban) {
+	protected void handleUnbanUserOnAllSubreddits(final String userToUnban) {
 		MappingDatabase db = (MappingDatabase) database;
 		Username userToUnbanUsername = db.getUsernameMapping().fetchByUsername(userToUnban);
 		if(userToUnbanUsername == null) {
@@ -653,7 +653,7 @@ public class LoansBotDriver extends BotDriver {
 			return;
 		}
 		
-		super.handleUnbanUser(userToUnban);
+		super.handleUnbanUserOnAllSubreddits(userToUnban);
 	}
 	
 	
