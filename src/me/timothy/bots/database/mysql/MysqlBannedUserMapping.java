@@ -6,8 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -67,27 +65,6 @@ public class MysqlBannedUserMapping extends MysqlObjectMapping<BannedUser> imple
 			throw new RuntimeException(ex);
 		}
 	}
-
-	@Override
-	public List<BannedUser> fetchAll() {
-		try {
-			PreparedStatement statement = connection.prepareStatement("SELECT * FROM " + table);
-			
-			ResultSet results = statement.executeQuery();
-			
-			List<BannedUser> users = new ArrayList<>();
-			while(results.next()) {
-				users.add(fetchFromRow(results));
-			}
-			
-			results.close();
-			statement.close();
-			return users;
-		}catch(SQLException ex) {
-			logger.throwing(ex);
-			throw new RuntimeException(ex);
-		}
-	}
 	
 	/**
 	 * Fetches the banned user in the current row of the set
@@ -95,7 +72,8 @@ public class MysqlBannedUserMapping extends MysqlObjectMapping<BannedUser> imple
 	 * @return the banned user in the current row
 	 * @throws SQLException if one occurs
 	 */
-	protected BannedUser fetchFromRow(ResultSet set) throws SQLException {
+	@Override
+	protected BannedUser fetchFromSet(ResultSet set) throws SQLException {
 		return new BannedUser(set.getInt("id"), set.getInt("user_id"), set.getTimestamp("created_at"), set.getTimestamp("updated_at"));
 	}
 

@@ -22,4 +22,5 @@ public interface MappingDatabase {
 	public WarningMapping getWarningMapping();
 	public RecentPostMapping getRecentPostMapping();
 	public BannedUserMapping getBannedUserMapping();
+	public SiteSessionMapping getSiteSessionMapping();
 }

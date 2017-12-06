@@ -3,6 +3,10 @@ package me.timothy.bots;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,6 +18,7 @@ import me.timothy.bots.database.FullnameMapping;
 import me.timothy.bots.database.LCCMapping;
 import me.timothy.bots.database.LoanMapping;
 import me.timothy.bots.database.MappingDatabase;
+import me.timothy.bots.database.ObjectMapping;
 import me.timothy.bots.database.RecentPostMapping;
 import me.timothy.bots.database.RecheckMapping;
 import me.timothy.bots.database.RepaymentMapping;
@@ -22,6 +27,7 @@ import me.timothy.bots.database.ResponseHistoryMapping;
 import me.timothy.bots.database.ResponseMapping;
 import me.timothy.bots.database.SchemaValidator;
 import me.timothy.bots.database.ShareCodeMapping;
+import me.timothy.bots.database.SiteSessionMapping;
 import me.timothy.bots.database.UserMapping;
 import me.timothy.bots.database.UsernameMapping;
 import me.timothy.bots.database.WarningMapping;
@@ -38,10 +44,27 @@ import me.timothy.bots.database.mysql.MysqlResetPasswordRequestMapping;
 import me.timothy.bots.database.mysql.MysqlResponseHistoryMapping;
 import me.timothy.bots.database.mysql.MysqlResponseMapping;
 import me.timothy.bots.database.mysql.MysqlShareCodeMapping;
+import me.timothy.bots.database.mysql.MysqlSiteSessionMapping;
 import me.timothy.bots.database.mysql.MysqlUserMapping;
 import me.timothy.bots.database.mysql.MysqlUsernameMapping;
 import me.timothy.bots.database.mysql.MysqlWarningMapping;
+import me.timothy.bots.models.AdminUpdate;
+import me.timothy.bots.models.BannedUser;
+import me.timothy.bots.models.CreationInfo;
 import me.timothy.bots.models.Fullname;
+import me.timothy.bots.models.LendersCampContributor;
+import me.timothy.bots.models.Loan;
+import me.timothy.bots.models.RecentPost;
+import me.timothy.bots.models.Recheck;
+import me.timothy.bots.models.Repayment;
+import me.timothy.bots.models.ResetPasswordRequest;
+import me.timothy.bots.models.Response;
+import me.timothy.bots.models.ResponseHistory;
+import me.timothy.bots.models.ShareCode;
+import me.timothy.bots.models.SiteSession;
+import me.timothy.bots.models.User;
+import me.timothy.bots.models.Username;
+import me.timothy.bots.models.Warning;
 
 /**
  * An implementation of a mapping database for the MySQL mappings.
@@ -52,56 +75,13 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	private Logger logger;
 	private Connection connection;
 	
-	/*
-	 * This is quite.. wordy. But schema validators are different from mappings,
-	 * particularly when networking is involved (which is a planned addition). In that 
-	 * cause, its quite likely I'll want to have seperate classes for it, since they will
-	 * all have the same schema validator (verifies the protocol version).
-	 * 
-	 * Arrays aren't used because this is very business-logic-like; I may need to handle
-	 * certain mappings "specially" at some point in the future, and a map / list would
-	 * complicate that. Also, the getXMapping() pattern actually looks pretty nice
-	 * when it's being used, and an array wouldn't look significantly better for that
-	 * pattern.
-	 */
-	
-	private AdminUpdateMapping adminUpdateMapping;
-	private CreationInfoMapping creationInfoMapping;
-	private FullnameMapping fullnameMapping;
-	private LCCMapping lccMapping;
-	private LoanMapping loanMapping;
-	private RecheckMapping recheckMapping;
-	private RepaymentMapping repaymentMapping;
-	private ResetPasswordRequestMapping resetPasswordRequestMapping;
-	private ResponseHistoryMapping responseHistoryMapping;
-	private ResponseMapping responseMapping;
-	private ShareCodeMapping shareCodeMapping;
-	private UserMapping userMapping;
-	private UsernameMapping usernameMapping;
-	private WarningMapping warningMapping;
-	private RecentPostMapping recentPostsMapping;
-	private BannedUserMapping bannedUsersMapping;
-	
-	private SchemaValidator adminUpdateValidator;
-	private SchemaValidator creationInfoValidator;
-	private SchemaValidator fullnameValidator;
-	private SchemaValidator lccValidator;
-	private SchemaValidator loanValidator;
-	private SchemaValidator recheckValidator;
-	private SchemaValidator repaymentValidator;
-	private SchemaValidator resetPasswordRequestValidator;
-	private SchemaValidator responseHistoryValidator;
-	private SchemaValidator responseValidator;
-	private SchemaValidator shareCodeValidator;
-	private SchemaValidator userValidator;
-	private SchemaValidator usernameValidator;
-	private SchemaValidator warningValidator;
-	private SchemaValidator recentPostsValidator;
-	private SchemaValidator bannedUsersValidator;
+	private List<ObjectMapping<?>> mappings;
+	private Map<Class<?>, ObjectMapping<?>> mappingsDict;
 	
 	public LoansDatabase() {
 		logger = LogManager.getLogger();
 	}
+	
 	/**
 	 * Connects to the specified database. If there is an active connection
 	 * already, the active connection is explicity closed.
@@ -123,39 +103,30 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		
 		connection = DriverManager.getConnection(url, username, password);
 		
-		fullnameMapping = new MysqlFullnameMapping(this, connection);
-		adminUpdateMapping = new MysqlAdminUpdateMapping(this, connection);
-		creationInfoMapping = new MysqlCreationInfoMapping(this, connection);
-		lccMapping = new MysqlLCCMapping(this, connection);
-		loanMapping = new MysqlLoanMapping(this, connection);
-		recheckMapping = new MysqlRecheckMapping(this, connection);
-		repaymentMapping = new MysqlRepaymentMapping(this, connection);
-		resetPasswordRequestMapping = new MysqlResetPasswordRequestMapping(this, connection);
-		responseHistoryMapping = new MysqlResponseHistoryMapping(this, connection);
-		responseMapping = new MysqlResponseMapping(this, connection);
-		shareCodeMapping = new MysqlShareCodeMapping(this, connection);
-		userMapping = new MysqlUserMapping(this, connection);
-		usernameMapping = new MysqlUsernameMapping(this, connection);
-		warningMapping = new MysqlWarningMapping(this, connection);
-		recentPostsMapping = new MysqlRecentPostMapping(this, connection);
-		bannedUsersMapping = new MysqlBannedUserMapping(this, connection);
-		
-		fullnameValidator = (SchemaValidator) fullnameMapping;
-		adminUpdateValidator = (SchemaValidator) adminUpdateMapping;
-		creationInfoValidator = (SchemaValidator) creationInfoMapping;
-		lccValidator = (SchemaValidator) lccMapping;
-		loanValidator = (SchemaValidator) loanMapping;
-		recheckValidator = (SchemaValidator) recheckMapping;
-		repaymentValidator = (SchemaValidator) repaymentMapping;
-		resetPasswordRequestValidator = (SchemaValidator) resetPasswordRequestMapping;
-		responseHistoryValidator = (SchemaValidator) responseHistoryMapping;
-		responseValidator = (SchemaValidator) responseMapping;
-		shareCodeValidator = (SchemaValidator) shareCodeMapping;
-		userValidator = (SchemaValidator) userMapping;
-		usernameValidator = (SchemaValidator) usernameMapping;
-		warningValidator = (SchemaValidator) warningMapping;
-		recentPostsValidator = (SchemaValidator) recentPostsMapping;
-		bannedUsersValidator = (SchemaValidator) bannedUsersMapping;
+		mappings = new ArrayList<>();
+		mappingsDict = new HashMap<>();
+		addMapping(Fullname.class, new MysqlFullnameMapping(this, connection));
+		addMapping(User.class, new MysqlUserMapping(this, connection));
+		addMapping(Username.class, new MysqlUsernameMapping(this, connection));
+		addMapping(Loan.class, new MysqlLoanMapping(this, connection));
+		addMapping(AdminUpdate.class, new MysqlAdminUpdateMapping(this, connection));
+		addMapping(CreationInfo.class, new MysqlCreationInfoMapping(this, connection));
+		addMapping(LendersCampContributor.class, new MysqlLCCMapping(this, connection));
+		addMapping(Recheck.class, new MysqlRecheckMapping(this, connection));
+		addMapping(Repayment.class, new MysqlRepaymentMapping(this, connection));
+		addMapping(ResetPasswordRequest.class, new MysqlResetPasswordRequestMapping(this, connection));
+		addMapping(Response.class, new MysqlResponseMapping(this, connection));
+		addMapping(ResponseHistory.class, new MysqlResponseHistoryMapping(this, connection));
+		addMapping(ShareCode.class, new MysqlShareCodeMapping(this, connection));
+		addMapping(Warning.class, new MysqlWarningMapping(this, connection));
+		addMapping(RecentPost.class, new MysqlRecentPostMapping(this, connection));
+		addMapping(BannedUser.class, new MysqlBannedUserMapping(this, connection));
+		addMapping(SiteSession.class, new MysqlSiteSessionMapping(this, connection));
+	}
+	
+	private <A> void addMapping(Class<A> cl, ObjectMapping<A> mapping) {
+		mappings.add(mapping);
+		mappingsDict.put(cl, mapping);
 	}
 	
 	/**
@@ -164,23 +135,9 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	 * @see me.timothy.bots.database.SchemaValidator#purgeSchema()
 	 */
 	public void purgeAll() {
-		// REVERSE ORDER of validateTableState
-		bannedUsersValidator.purgeSchema();
-		recentPostsValidator.purgeSchema();
-		warningValidator.purgeSchema();
-		shareCodeValidator.purgeSchema();
-		responseHistoryValidator.purgeSchema();
-		responseValidator.purgeSchema();
-		resetPasswordRequestValidator.purgeSchema();
-		repaymentValidator.purgeSchema();
-		recheckValidator.purgeSchema();
-		lccValidator.purgeSchema();
-		creationInfoValidator.purgeSchema();
-		adminUpdateValidator.purgeSchema();
-		loanValidator.purgeSchema();
-		usernameValidator.purgeSchema();
-		userValidator.purgeSchema();
-		fullnameValidator.purgeSchema();
+		for(int i = mappings.size() - 1; i >= 0; i--) {
+			((SchemaValidator)mappings.get(i)).purgeSchema();
+		}
 	}
 	
 	/**
@@ -192,22 +149,9 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	 * @see me.timothy.bots.database.SchemaValidator#validateSchema()
 	 */
 	public void validateTableState() {
-		fullnameValidator.validateSchema();
-		userValidator.validateSchema();
-		usernameValidator.validateSchema();
-		loanValidator.validateSchema();
-		adminUpdateValidator.validateSchema();
-		creationInfoValidator.validateSchema();
-		lccValidator.validateSchema();
-		recheckValidator.validateSchema();
-		repaymentValidator.validateSchema();
-		resetPasswordRequestValidator.validateSchema();
-		responseValidator.validateSchema();
-		responseHistoryValidator.validateSchema();
-		shareCodeValidator.validateSchema();
-		warningValidator.validateSchema();
-		recentPostsValidator.validateSchema();
-		bannedUsersValidator.validateSchema();
+		for(int i = 0; i < mappings.size(); i++) {
+			((SchemaValidator)mappings.get(i)).validateSchema();
+		}
 	}
 	
 	/**
@@ -221,88 +165,60 @@ public class LoansDatabase extends Database implements MappingDatabase {
 			logger.throwing(e);
 		}
 		
-		adminUpdateMapping = null;
-		creationInfoMapping = null;
-		fullnameMapping = null;
-		lccMapping = null;
-		loanMapping = null;
-		recheckMapping = null;
-		repaymentMapping = null;
-		resetPasswordRequestMapping = null;
-		responseHistoryMapping = null;
-		responseMapping = null;
-		shareCodeMapping = null;
-		userMapping = null;
-		usernameMapping = null;
-		warningMapping = null;
-		recentPostsMapping = null;
-		bannedUsersMapping = null;
-		
-		adminUpdateValidator = null;
-		creationInfoValidator = null;
-		fullnameValidator = null;
-		lccValidator = null;
-		loanValidator = null;
-		recheckValidator = null;
-		repaymentValidator = null;
-		resetPasswordRequestValidator = null;
-		responseHistoryValidator = null;
-		responseValidator = null;
-		shareCodeValidator = null;
-		userValidator = null;
-		usernameValidator = null;
-		warningValidator = null;
-		recentPostsValidator = null;
-		bannedUsersValidator = null;
+		mappings = null;
+		mappingsDict = null;
 	}
 	
 	public AdminUpdateMapping getAdminUpdateMapping() {
-		return adminUpdateMapping;
+		return (AdminUpdateMapping) mappingsDict.get(AdminUpdate.class);
 	}
 	public CreationInfoMapping getCreationInfoMapping() {
-		return creationInfoMapping;
+		return (CreationInfoMapping) mappingsDict.get(CreationInfo.class);
 	}
 	public FullnameMapping getFullnameMapping() {
-		return fullnameMapping;
+		return (FullnameMapping) mappingsDict.get(Fullname.class);
 	}
 	public LCCMapping getLccMapping() {
-		return lccMapping;
+		return (LCCMapping) mappingsDict.get(LendersCampContributor.class);
 	}
 	public LoanMapping getLoanMapping() {
-		return loanMapping;
+		return (LoanMapping) mappingsDict.get(Loan.class);
 	}
 	public RecheckMapping getRecheckMapping() {
-		return recheckMapping;
+		return (RecheckMapping) mappingsDict.get(Recheck.class);
 	}
 	public RepaymentMapping getRepaymentMapping() {
-		return repaymentMapping;
+		return (RepaymentMapping) mappingsDict.get(Repayment.class);
 	}
 	public ResetPasswordRequestMapping getResetPasswordRequestMapping() {
-		return resetPasswordRequestMapping;
+		return (ResetPasswordRequestMapping) mappingsDict.get(ResetPasswordRequest.class);
 	}
 	public ResponseHistoryMapping getResponseHistoryMapping() {
-		return responseHistoryMapping;
+		return (ResponseHistoryMapping) mappingsDict.get(ResponseHistory.class);
 	}
 	public ResponseMapping getResponseMapping() {
-		return responseMapping;
+		return (ResponseMapping) mappingsDict.get(Response.class);
 	}
 	public ShareCodeMapping getShareCodeMapping() {
-		return shareCodeMapping;
+		return (ShareCodeMapping) mappingsDict.get(ShareCode.class);
 	}
 	public UserMapping getUserMapping() {
-		return userMapping;
+		return (UserMapping) mappingsDict.get(User.class);
 	}
 	public UsernameMapping getUsernameMapping() {
-		return usernameMapping;
+		return (UsernameMapping) mappingsDict.get(Username.class);
 	}
 	public WarningMapping getWarningMapping() {
-		return warningMapping;
+		return (WarningMapping) mappingsDict.get(Warning.class);
 	}
 	public RecentPostMapping getRecentPostMapping() {
-		return recentPostsMapping;
+		return (RecentPostMapping) mappingsDict.get(RecentPost.class);
 	}
 	public BannedUserMapping getBannedUserMapping() {
-		return bannedUsersMapping;
+		return (BannedUserMapping) mappingsDict.get(BannedUser.class);
+	}
+	public SiteSessionMapping getSiteSessionMapping() {
+		return (SiteSessionMapping) mappingsDict.get(SiteSession.class);
 	}
 	
 	/*
@@ -318,7 +234,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	 */
 	@Override
 	public void addFullname(String id) {
-		fullnameMapping.save(new Fullname(-1, id));
+		getFullnameMapping().save(new Fullname(-1, id));
 	}
 
 	/**
@@ -329,6 +245,6 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	 */
 	@Override
 	public boolean containsFullname(String id) {
-		return fullnameMapping.contains(id);
+		return getFullnameMapping().contains(id);
 	}
 }
