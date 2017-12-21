@@ -23,4 +23,7 @@ public interface MappingDatabase {
 	public RecentPostMapping getRecentPostMapping();
 	public BannedUserMapping getBannedUserMapping();
 	public SiteSessionMapping getSiteSessionMapping();
+	public SavedQueryMapping getSavedQueryMapping();
+	public SavedQueryParamMapping getSavedQueryParamMapping();
+	public SavedQueryUserMapping getSavedQueryUserMapping();
 }

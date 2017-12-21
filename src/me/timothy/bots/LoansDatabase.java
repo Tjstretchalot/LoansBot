@@ -25,6 +25,9 @@ import me.timothy.bots.database.RepaymentMapping;
 import me.timothy.bots.database.ResetPasswordRequestMapping;
 import me.timothy.bots.database.ResponseHistoryMapping;
 import me.timothy.bots.database.ResponseMapping;
+import me.timothy.bots.database.SavedQueryMapping;
+import me.timothy.bots.database.SavedQueryParamMapping;
+import me.timothy.bots.database.SavedQueryUserMapping;
 import me.timothy.bots.database.SchemaValidator;
 import me.timothy.bots.database.ShareCodeMapping;
 import me.timothy.bots.database.SiteSessionMapping;
@@ -43,6 +46,9 @@ import me.timothy.bots.database.mysql.MysqlRepaymentMapping;
 import me.timothy.bots.database.mysql.MysqlResetPasswordRequestMapping;
 import me.timothy.bots.database.mysql.MysqlResponseHistoryMapping;
 import me.timothy.bots.database.mysql.MysqlResponseMapping;
+import me.timothy.bots.database.mysql.MysqlSavedQueryMapping;
+import me.timothy.bots.database.mysql.MysqlSavedQueryParamMapping;
+import me.timothy.bots.database.mysql.MysqlSavedQueryUserMapping;
 import me.timothy.bots.database.mysql.MysqlShareCodeMapping;
 import me.timothy.bots.database.mysql.MysqlSiteSessionMapping;
 import me.timothy.bots.database.mysql.MysqlUserMapping;
@@ -60,6 +66,9 @@ import me.timothy.bots.models.Repayment;
 import me.timothy.bots.models.ResetPasswordRequest;
 import me.timothy.bots.models.Response;
 import me.timothy.bots.models.ResponseHistory;
+import me.timothy.bots.models.SavedQuery;
+import me.timothy.bots.models.SavedQueryParam;
+import me.timothy.bots.models.SavedQueryUser;
 import me.timothy.bots.models.ShareCode;
 import me.timothy.bots.models.SiteSession;
 import me.timothy.bots.models.User;
@@ -122,6 +131,9 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		addMapping(RecentPost.class, new MysqlRecentPostMapping(this, connection));
 		addMapping(BannedUser.class, new MysqlBannedUserMapping(this, connection));
 		addMapping(SiteSession.class, new MysqlSiteSessionMapping(this, connection));
+		addMapping(SavedQuery.class, new MysqlSavedQueryMapping(this, connection));
+		addMapping(SavedQueryParam.class, new MysqlSavedQueryParamMapping(this, connection));
+		addMapping(SavedQueryUser.class, new MysqlSavedQueryUserMapping(this, connection));
 	}
 	
 	private <A> void addMapping(Class<A> cl, ObjectMapping<A> mapping) {
@@ -219,6 +231,15 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	}
 	public SiteSessionMapping getSiteSessionMapping() {
 		return (SiteSessionMapping) mappingsDict.get(SiteSession.class);
+	}
+	public SavedQueryMapping getSavedQueryMapping() {
+		return (SavedQueryMapping) mappingsDict.get(SavedQuery.class);
+	}
+	public SavedQueryParamMapping getSavedQueryParamMapping() {
+		return (SavedQueryParamMapping) mappingsDict.get(SavedQueryParam.class);
+	}
+	public SavedQueryUserMapping getSavedQueryUserMapping() {
+		return (SavedQueryUserMapping) mappingsDict.get(SavedQueryUser.class);
 	}
 	
 	/*
