@@ -43,7 +43,8 @@ public class MysqlSavedQueryMapping extends MysqlObjectWithIDMapping<SavedQuery>
 				+ "created_at timestamp NOT NULL DEFAULT '1970-01-01 00:00:01', "
 				+ "updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
 				+ "PRIMARY KEY (id), "
-				+ "INDEX ind_sq_shared (shared)"
+				+ "INDEX ind_sq_shared (shared), "
+				+ "INDEX ind_sq_alshared (always_shared)"
 				+ ")");
 		statement.close();
 	}
