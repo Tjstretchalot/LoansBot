@@ -101,6 +101,38 @@ public class PaidSummonTests {
 	}
 	
 	@Test
+	public void testDoesntRequireLeadingSlashOnUsername() {
+		database.getResponseMapping().save(new Response(-1, "repayment", "has loan", now, now));
+		User paul = database.getUserMapping().fetchOrCreateByName("paul");
+		User greg = database.getUserMapping().fetchOrCreateByName("greg");
+		Loan loanPaulToGreg = new Loan(
+				-1, 		/* loanId */ 			paul.id, 		/* lenderId */
+				greg.id, 	/* borrowerId*/			10050, 		/* principal */
+				0,			/* princ. repay */		false,			/* unpaid */
+				false,		/* deleted */			null,			/* deleted reason */
+				now,		/* created at */		now,			/* updated at */
+				null		/* deleted at */
+				);
+		database.getLoanMapping().save(loanPaulToGreg);
+		
+		Comment comment = SummonTestUtils.createComment("some stuff $paid u/greg $100.50 more stuff", "paul");
+		SummonResponse response = summon.handleComment(comment, database, config);
+		assertNotNull(response);
+		assertEquals(SummonResponse.ResponseType.VALID, response.getResponseType());
+		assertEquals("has loan", response.getResponseMessage());
+		assertFalse(response.shouldUnbanUser());
+		
+		List<Loan> fromDB = database.getLoanMapping().fetchAll();
+		assertNotNull(fromDB);
+		assertEquals(1, fromDB.size());
+		
+		Loan loanFromDB = fromDB.get(0);
+		assertEquals(loanPaulToGreg.id, loanFromDB.id);
+		
+		assertEquals(10050, loanFromDB.principalRepaymentCents);
+	}
+	
+	@Test
 	public void testUnbansUser()
 	{
 		database.getResponseMapping().save(new Response(-1, "repayment", "has loan", now, now));

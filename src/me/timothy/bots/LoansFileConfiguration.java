@@ -21,7 +21,7 @@ public class LoansFileConfiguration extends FileConfiguration {
 	public void load() throws IOException, NullPointerException {
 		super.load();
 		
-		addProperties("database", true, "url", "username", "password");
+		addProperties("database", true, "url", "username", "password", "use_ssl");
 		addProperties("currencylayer", true, "access_code");
 		addProperties("rechecks", true, "silent_mode");
 	}

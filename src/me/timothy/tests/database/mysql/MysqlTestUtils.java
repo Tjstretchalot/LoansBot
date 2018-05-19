@@ -54,6 +54,7 @@ public class MysqlTestUtils {
 		String username = properties.getProperty("username");
 		String password = properties.getProperty("password");
 		String url = properties.getProperty("url");
+		boolean useSSL = Boolean.getBoolean(properties.getProperty("database.useSSL"));
 		
 		if(username == null || password == null || url == null) {
 			throw new IllegalArgumentException("username and password and url cannot be null");
@@ -65,7 +66,7 @@ public class MysqlTestUtils {
 		
 		LoansDatabase db = new LoansDatabase();
 		try {
-			db.connect(username, password, url);
+			db.connect(username, password, url, useSSL);
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}

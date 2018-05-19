@@ -44,7 +44,7 @@ public class PaidSummon implements CommentSummon {
 	 * $paid /u/asdf 50.00 EUR
 	 * $paid /u/fdaa 5 USD
 	 */
-	private static final Pattern PAID_PATTERN_WITH_CURRENCY = Pattern.compile("\\s*(\\$paid\\s/u/\\S+\\s" + BotUtils.getDollarAmountPatternString() + ")([A-Z]{3})?");
+	private static final Pattern PAID_PATTERN_WITH_CURRENCY = Pattern.compile("\\s*(\\$paid\\s/?u/\\S+\\s" + BotUtils.getDollarAmountPatternString() + ")([A-Z]{3})?");
 	private static final String PAID_FORMAT = "$paid <user1> <money1>";
 
 	private Logger logger;

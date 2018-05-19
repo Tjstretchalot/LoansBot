@@ -7,23 +7,23 @@ package me.timothy.bots.models;
  */
 public class SavedQueryUser {
 	public int id;
-	public int saved_query_id;
-	public int user_id;
+	public int savedQueryId;
+	public int userId;
 	public boolean owned;
 	public boolean inverse;
 	
 	/**
 	 * @param id the unique database id
-	 * @param saved_query_id the id for the saved query
-	 * @param user_id the id for the user who has the query on their list
+	 * @param savedQueryId the id for the saved query
+	 * @param userId the id for the user who has the query on their list
 	 * @param owned if the user owns the query
 	 * @param inverse if this is negating an alwaysShared query
 	 */
-	public SavedQueryUser(int id, int saved_query_id, int user_id, boolean owned, boolean inverse) {
+	public SavedQueryUser(int id, int savedQueryId, int userId, boolean owned, boolean inverse) {
 		super();
 		this.id = id;
-		this.saved_query_id = saved_query_id;
-		this.user_id = user_id;
+		this.savedQueryId = savedQueryId;
+		this.userId = userId;
 		this.owned = owned;
 		this.inverse = inverse;
 	}
@@ -35,8 +35,8 @@ public class SavedQueryUser {
 		result = prime * result + id;
 		result = prime * result + (inverse ? 1231 : 1237);
 		result = prime * result + (owned ? 1231 : 1237);
-		result = prime * result + saved_query_id;
-		result = prime * result + user_id;
+		result = prime * result + savedQueryId;
+		result = prime * result + userId;
 		return result;
 	}
 	
@@ -55,16 +55,16 @@ public class SavedQueryUser {
 			return false;
 		if (owned != other.owned)
 			return false;
-		if (saved_query_id != other.saved_query_id)
+		if (savedQueryId != other.savedQueryId)
 			return false;
-		if (user_id != other.user_id)
+		if (userId != other.userId)
 			return false;
 		return true;
 	}
 	
 	@Override
 	public String toString() {
-		return "SavedQueryUser [id=" + id + ", saved_query_id=" + saved_query_id + ", user_id=" + user_id + ", owned="
+		return "SavedQueryUser [id=" + id + ", saved_query_id=" + savedQueryId + ", user_id=" + userId + ", owned="
 				+ owned + ", inverse=" + inverse + "]";
 	}
 	

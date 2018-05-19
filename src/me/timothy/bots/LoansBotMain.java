@@ -53,7 +53,7 @@ public class LoansBotMain {
 		LoansDatabase database = new LoansDatabase();
 		
 		try {
-			database.connect(config.getProperty("database.username"), config.getProperty("database.password"), config.getProperty("database.url"));
+			database.connect(config.getProperty("database.username"), config.getProperty("database.password"), config.getProperty("database.url"), Boolean.getBoolean(config.getProperty("database.useSSL")));
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return;

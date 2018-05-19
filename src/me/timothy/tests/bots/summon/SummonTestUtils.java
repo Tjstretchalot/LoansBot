@@ -71,7 +71,7 @@ public class SummonTestUtils {
 	 * @return the link
 	 */
 	public static Link createLinkByTitle(String title) {
-		return createLinkByTitleAndAuthor(title, null);
+		return createLinkByTitleAndAuthor(title, "test_author");
 	}
 	
 	/**

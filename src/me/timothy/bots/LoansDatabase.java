@@ -104,13 +104,14 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	 * @throws SQLException
 	 *             if a sql-related exception occurs
 	 */
-	public void connect(String username, String password, String url)
+	public void connect(String username, String password, String url, boolean useSSL)
 			throws SQLException {
 		if (connection != null) {
 			disconnect();
 		}
 		
-		connection = DriverManager.getConnection(url, username, password);
+		String trueURL = url + "?useSSL=" + useSSL;
+		connection = DriverManager.getConnection(trueURL, username, password);
 		
 		mappings = new ArrayList<>();
 		mappingsDict = new HashMap<>();
