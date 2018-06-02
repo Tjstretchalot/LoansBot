@@ -243,6 +243,24 @@ public class UnpaidSummonTests {
 	}
 	
 	@Test
+	public void testDoesntRequireLeadingSlash() {
+		String unpaidFormat = "Sorry about that =(";
+		String expectedResponse = unpaidFormat;
+		database.getResponseMapping().save(new Response(-1, "unpaid", unpaidFormat, now, now));
+		database.getResponseMapping().save(new Response(-1, "unpaid_lender_reminder_pm_title", "not testing this", now, now));
+		database.getResponseMapping().save(new Response(-1, "unpaid_lender_reminder_pm_text", "not testing this", now, now));
+		database.getResponseMapping().save(new Response(-1, "unpaid_affected_lender_alert_pm_title", "not testing this", now, now));
+		database.getResponseMapping().save(new Response(-1, "unpaid_affected_lender_alert_pm_text", "not testing this", now, now));
+		
+		Comment comment = SummonTestUtils.createComment("$unpaid u/johndoe", "paul");
+		
+		SummonResponse response = summon.handleComment(comment, database, config);
+		assertNotNull(response);
+		assertEquals(SummonResponse.ResponseType.VALID, response.getResponseType());
+		assertEquals(expectedResponse, response.getResponseMessage());
+	}
+	
+	@Test
 	public void testDoesntHandleDeletedLoans() {
 		/*
 		 * There exists only a deleted loan between john and paul, and paul does

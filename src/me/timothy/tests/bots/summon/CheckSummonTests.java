@@ -79,6 +79,24 @@ public class CheckSummonTests {
 	}
 	
 	@Test
+	public void testRespondsWithoutLeadingSlashOnUsername() {
+		database.getResponseMapping().save(new Response(-1, "check", "test check body", now, now));
+		Comment comment = SummonTestUtils.createComment("$check u/john", "paul");
+		
+		SummonResponse response = summon.handleComment(comment, database, config);
+		assertNotNull(response);
+	}
+	
+	@Test
+	public void testRespondsToLinkedUsername() {
+		database.getResponseMapping().save(new Response(-1, "check", "test check body", now, now));
+		Comment comment = SummonTestUtils.createComment("$check [john](https://reddit.com/user/john)", "paul");
+		
+		SummonResponse response = summon.handleComment(comment, database, config);
+		assertNotNull(response);
+	}
+	
+	@Test
 	public void testDoesntRespondToSelfComment() {
 		Comment comment = SummonTestUtils.createComment("$check /u/john", "LoansBot");
 		

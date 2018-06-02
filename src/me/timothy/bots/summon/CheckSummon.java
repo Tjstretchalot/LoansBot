@@ -1,8 +1,5 @@
 package me.timothy.bots.summon;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,6 +12,9 @@ import me.timothy.bots.responses.GenericFormattableObject;
 import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
 import me.timothy.bots.responses.ResponseInfoFactory;
+import me.timothy.bots.summon.patterns.PatternFactory;
+import me.timothy.bots.summon.patterns.SummonMatcher;
+import me.timothy.bots.summon.patterns.SummonPattern;
 import me.timothy.jreddit.info.Comment;
 import me.timothy.jreddit.info.Link;
 
@@ -29,13 +29,7 @@ public class CheckSummon implements CommentSummon, LinkSummon {
 	 * 
 	 * $check /u/John $check /u/Asdf_Jkl
 	 */
-	private static final Pattern CHECK_PATTERN = Pattern
-			.compile("\\s*\\$check\\s/u/\\S+");
-	
-	/**
-	 * The format that the check summon expects
-	 */
-	public static final String CHECK_FORMAT = "$check <user1>";
+	private static final SummonPattern CHECK_PATTERN = new PatternFactory().addLiteral("$check").addUsername("user1").build();
 
 	private Logger logger;
 
@@ -82,14 +76,14 @@ public class CheckSummon implements CommentSummon, LinkSummon {
 			return null;
 		}
 		
-		Matcher matcher = CHECK_PATTERN.matcher(comment.body());
+		SummonMatcher matcher = CHECK_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
 			LoansDatabase database = (LoansDatabase) db;
 			
-			String text = matcher.group().trim();
+			ResponseInfo respInfo = matcher.group();
 			String author = comment.author();
-			ResponseInfo respInfo = ResponseInfoFactory.getResponseInfo(CHECK_FORMAT, text, comment);
+			ResponseInfoFactory.addCommentDetails(respInfo, comment);
 			String checked = respInfo.getObject("user1").toString();
 			logger.printf(Level.INFO, "%s requested a check on %s", author, checked);
 

@@ -2,8 +2,10 @@ package me.timothy.bots.summon;
 
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
@@ -17,11 +19,10 @@ import me.timothy.bots.responses.MoneyFormattableObject;
 import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
 import me.timothy.bots.responses.ResponseInfoFactory;
+import me.timothy.bots.summon.patterns.PatternFactory;
+import me.timothy.bots.summon.patterns.SummonMatcher;
+import me.timothy.bots.summon.patterns.SummonPattern;
 import me.timothy.jreddit.info.Comment;
-
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * For creating a loan where the user the loan is being made out
@@ -41,8 +42,11 @@ public class LoanSummon implements CommentSummon {
 	 * $loan 50 EUR
 	 * $loan 50 USD
 	 */
-	private static final Pattern LOAN_PATTERN = Pattern.compile("(\\s*\\$loan\\s" + BotUtils.getDollarAmountPatternString() + ")([A-Z]{3})?");
-	private static final String LOAN_FORMAT = "$loan <money1>";
+	private static final SummonPattern LOAN_PATTERN = new PatternFactory()
+			.addLiteral("$loan")
+			.addMoney("money1")
+			.addCurrency("convert_from", true)
+			.build();
 	
 	private Logger logger;
 	
@@ -61,12 +65,12 @@ public class LoanSummon implements CommentSummon {
 			return null;
 		}
 		
-		Matcher matcher = LOAN_PATTERN.matcher(comment.body());
+		SummonMatcher matcher = LOAN_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
-			String withoutCurrency = matcher.group(1);
 			LoansDatabase database = (LoansDatabase) db;
-			ResponseInfo respInfo = ResponseInfoFactory.getResponseInfo(LOAN_FORMAT, withoutCurrency.trim(), comment);
+			ResponseInfo respInfo = matcher.group();
+			ResponseInfoFactory.addCommentDetails(respInfo, comment);
 			
 			if(respInfo.getObject("author").toString().equals(respInfo.getObject("link_author").toString()))
 				return null;
@@ -76,9 +80,10 @@ public class LoanSummon implements CommentSummon {
 			String url = respInfo.getObject("link_url").toString();
 			MoneyFormattableObject moneyObj = (MoneyFormattableObject) respInfo.getObject("money1");
 			int amountPennies = moneyObj.getAmount();
-			boolean hasConversion = matcher.group(2) != null; 
+			
+			String convertFrom = respInfo.getObject("convert_from") != null ? respInfo.getObject("convert_from").toString() : null;
+			boolean hasConversion = convertFrom != null;
 			if(hasConversion) {
-				String convertFrom = matcher.group(2).trim();
 				double conversionRate = CurrencyHandler.getInstance().getConversionRate(convertFrom, "USD");
 				logger.debug("Converting from " + convertFrom + " to USD using rate " + conversionRate);
 				respInfo.addTemporaryString("convert_from", convertFrom);

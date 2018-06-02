@@ -62,6 +62,14 @@ public class ConfirmSummonTests {
 		SummonResponse response = summon.handleComment(comment, database, config);
 		assertNull(response);
 	}
+
+	@Test
+	public void testRespondsWhenNoLeadingSlash() {
+		database.getResponseMapping().save(new Response(-1, "confirmNoLoan", "has loan", now, now));
+		Comment comment = SummonTestUtils.createComment("$confirm u/john 100", "other");
+		SummonResponse response = summon.handleComment(comment, database, config);
+		assertNotNull(response);
+	}
 	
 	@Test
 	public void testRespondsToCommentWithLoan() {
@@ -130,5 +138,26 @@ public class ConfirmSummonTests {
 		assertNotNull(response);
 		assertEquals(SummonResponse.ResponseType.VALID, response.getResponseType());
 		assertEquals("$1,000.00", response.getResponseMessage());
+	}
+	
+	@Test
+	public void testDoesntRespondToMalformedNumberWithComma() throws Exception {
+		database.getResponseMapping().save(new Response(-1, "confirmNoLoan", "<money1>", now, now));
+		
+		Comment comment = SummonTestUtils.createComment("$confirm /u/paul $50,00", "greg");
+		SummonResponse response = summon.handleComment(comment, database, config);
+		assertNull(response);
+		
+		comment = SummonTestUtils.createComment("$confirm /u/paul $10,00.00", "greg");
+		response = summon.handleComment(comment, database, config);
+		assertNull(response);
+
+		comment = SummonTestUtils.createComment("$confirm /u/paul 33,00 and other stuff", "greg");
+		response = summon.handleComment(comment, database, config);
+		assertNull(response);
+
+		comment = SummonTestUtils.createComment("asdf $confirm /u/paul 3,3$ asdf", "greg");
+		response = summon.handleComment(comment, database, config);
+		assertNull(response);
 	}
 }

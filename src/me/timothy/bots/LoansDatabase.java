@@ -119,13 +119,13 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		addMapping(User.class, new MysqlUserMapping(this, connection));
 		addMapping(Username.class, new MysqlUsernameMapping(this, connection));
 		addMapping(Loan.class, new MysqlLoanMapping(this, connection));
+		addMapping(Response.class, new MysqlResponseMapping(this, connection));
 		addMapping(AdminUpdate.class, new MysqlAdminUpdateMapping(this, connection));
 		addMapping(CreationInfo.class, new MysqlCreationInfoMapping(this, connection));
 		addMapping(LendersCampContributor.class, new MysqlLCCMapping(this, connection));
 		addMapping(Recheck.class, new MysqlRecheckMapping(this, connection));
 		addMapping(Repayment.class, new MysqlRepaymentMapping(this, connection));
 		addMapping(ResetPasswordRequest.class, new MysqlResetPasswordRequestMapping(this, connection));
-		addMapping(Response.class, new MysqlResponseMapping(this, connection));
 		addMapping(ResponseHistory.class, new MysqlResponseHistoryMapping(this, connection));
 		addMapping(ShareCode.class, new MysqlShareCodeMapping(this, connection));
 		addMapping(Warning.class, new MysqlWarningMapping(this, connection));

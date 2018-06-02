@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -20,6 +18,9 @@ import me.timothy.bots.models.Username;
 import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
 import me.timothy.bots.responses.ResponseInfoFactory;
+import me.timothy.bots.summon.patterns.PatternFactory;
+import me.timothy.bots.summon.patterns.SummonMatcher;
+import me.timothy.bots.summon.patterns.SummonPattern;
 import me.timothy.jreddit.info.Comment;
 
 /**
@@ -35,8 +36,11 @@ public class UnpaidSummon implements CommentSummon {
 	 * $unpaid /u/John
 	 * $unpaid /u/Asdf_Jkl
 	 */
-	private static final Pattern UNPAID_PATTERN = Pattern.compile("\\s*\\$unpaid\\s/u/\\S+");
-	private static final String UNPAID_FORMAT = "$unpaid <user1>";
+	private static final SummonPattern UNPAID_PATTERN = new PatternFactory()
+			.addLiteral("$unpaid")
+			.addUsername("user1")
+			.build();
+	
 
 	private Logger logger;
 
@@ -54,11 +58,12 @@ public class UnpaidSummon implements CommentSummon {
 		if(comment.author().equalsIgnoreCase(config.getProperty("user.username")))
 			return null;
 		
-		Matcher matcher = UNPAID_PATTERN.matcher(comment.body());
+		SummonMatcher matcher = UNPAID_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
-			String group = matcher.group().trim();
-			ResponseInfo responseInfo = ResponseInfoFactory.getResponseInfo(UNPAID_FORMAT, group, comment);
+			ResponseInfo responseInfo = matcher.group();
+			ResponseInfoFactory.addCommentDetails(responseInfo, comment);
+			
 			LoansDatabase database = (LoansDatabase) db;
 
 			String author = responseInfo.getObject("author").toString();

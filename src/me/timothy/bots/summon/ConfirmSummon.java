@@ -1,14 +1,11 @@
 package me.timothy.bots.summon;
 
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansDatabase;
@@ -20,6 +17,9 @@ import me.timothy.bots.responses.MoneyFormattableObject;
 import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
 import me.timothy.bots.responses.ResponseInfoFactory;
+import me.timothy.bots.summon.patterns.PatternFactory;
+import me.timothy.bots.summon.patterns.SummonMatcher;
+import me.timothy.bots.summon.patterns.SummonPattern;
 import me.timothy.jreddit.info.Comment;
 
 /**
@@ -31,12 +31,14 @@ public class ConfirmSummon implements CommentSummon {
 	/**
 	 * Matches things like
 	 * 
-	 * $confirm /u/John $10
+	 * $confirm /u/John $10 USD
 	 */
-	private static final Pattern CONFIRM_PATTERN = Pattern
-			.compile("(\\s*\\$confirm\\s/u/\\S+\\s" + BotUtils.getDollarAmountPatternString() + ")([A-Z]{3})?");
-	
-	private static final String CONFIRM_FORMAT = "$confirm <user1> <money1>";
+	private static final SummonPattern CONFIRM_PATTERN = new PatternFactory()
+			.addLiteral("$confirm")
+			.addUsername("user1")
+			.addMoney("money1")
+			.addCurrency("convert_from", true)
+			.build();
 
 	private Logger logger;
 
@@ -54,10 +56,10 @@ public class ConfirmSummon implements CommentSummon {
 		if(comment.author().equalsIgnoreCase(config.getProperty("user.username")))
 			return null;
 		
-		Matcher matcher = CONFIRM_PATTERN.matcher(comment.body());
+		SummonMatcher matcher = CONFIRM_PATTERN.matcher(comment.body());
 		if(matcher.find()) {
-			String text = matcher.group(1).trim();
-			ResponseInfo ri = ResponseInfoFactory.getResponseInfo(CONFIRM_FORMAT, text, comment);
+			ResponseInfo ri = matcher.group();
+			ResponseInfoFactory.addCommentDetails(ri, comment);
 			
 			String borrower = ri.getObject("author").toString().toLowerCase();
 			String lender = ri.getObject("user1").toString().toLowerCase();
@@ -68,11 +70,13 @@ public class ConfirmSummon implements CommentSummon {
 			}
 			
 			final int originalMoneyPennies = money;
-			boolean hasConversion = matcher.group(2) != null;
-			String convertFrom = "USD";
+			
+			String convertFrom = ri.getObject("convert_from") != null ? ri.getObject("convert_from").toString() : null;
+			boolean hasConversion = convertFrom != null;
+			convertFrom = convertFrom == null ? "USD" : convertFrom;
+			
 			double conversionRate = 1;
 			if(hasConversion) {
-				convertFrom = matcher.group(2).trim();
 				conversionRate = CurrencyHandler.getInstance().getConversionRate(convertFrom, "USD");
 				logger.debug("Converting from " + convertFrom + " to USD using rate " + conversionRate);
 				money *= conversionRate;
@@ -103,7 +107,6 @@ public class ConfirmSummon implements CommentSummon {
 			ri.addTemporaryString("numloans", Integer.toString(numLoans));
 			
 			if(hasConversion) {
-				ri.addTemporaryString("convert_from", convertFrom);
 				ri.addTemporaryString("conversion_rate", Double.toString(conversionRate));
 				ri.addTemporaryObject("original_money", new MoneyFormattableObject(originalMoneyPennies));
 				ri.addTemporaryObject("money1", new MoneyFormattableObject(money));

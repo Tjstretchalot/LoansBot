@@ -132,6 +132,7 @@ public class PaidSummonTests {
 		assertEquals(10050, loanFromDB.principalRepaymentCents);
 	}
 	
+	
 	@Test
 	public void testUnbansUser()
 	{

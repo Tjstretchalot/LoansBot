@@ -3,8 +3,6 @@ package me.timothy.bots.summon;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -26,6 +24,9 @@ import me.timothy.bots.responses.MoneyFormattableObject;
 import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
 import me.timothy.bots.responses.ResponseInfoFactory;
+import me.timothy.bots.summon.patterns.PatternFactory;
+import me.timothy.bots.summon.patterns.SummonMatcher;
+import me.timothy.bots.summon.patterns.SummonPattern;
 import me.timothy.jreddit.info.Comment;
 
 /**
@@ -44,8 +45,12 @@ public class PaidSummon implements CommentSummon {
 	 * $paid /u/asdf 50.00 EUR
 	 * $paid /u/fdaa 5 USD
 	 */
-	private static final Pattern PAID_PATTERN_WITH_CURRENCY = Pattern.compile("\\s*(\\$paid\\s/?u/\\S+\\s" + BotUtils.getDollarAmountPatternString() + ")([A-Z]{3})?");
-	private static final String PAID_FORMAT = "$paid <user1> <money1>";
+	private static final SummonPattern PAID_PATTERN = new PatternFactory()
+			.addLiteral("$paid")
+			.addUsername("user1")
+			.addMoney("money1")
+			.addCurrency("convert_from", true)
+			.build();
 
 	private Logger logger;
 	
@@ -137,7 +142,7 @@ public class PaidSummon implements CommentSummon {
 
 	@Override
 	public boolean mightInteractWith(Comment comment, Database db, FileConfiguration config) {
-		return PAID_PATTERN_WITH_CURRENCY.matcher(comment.body()).find();
+		return PAID_PATTERN.matcher(comment.body()).find();
 	}
 	
 	@Override
@@ -146,18 +151,20 @@ public class PaidSummon implements CommentSummon {
 			return null;
 		
 		LoansDatabase database = (LoansDatabase) db;
-		Matcher matcher = PAID_PATTERN_WITH_CURRENCY.matcher(comment.body());
+		SummonMatcher matcher = PAID_PATTERN.matcher(comment.body());
 		
 		if(matcher.find()) {
-			ResponseInfo respInfo = ResponseInfoFactory.getResponseInfo(PAID_FORMAT, matcher.group(1).trim(), comment);
+			ResponseInfo respInfo = matcher.group();
+			ResponseInfoFactory.addCommentDetails(respInfo, comment);
 			
 			String author = respInfo.getObject("author").toString();
 			String user1 = respInfo.getObject("user1").toString();
 			MoneyFormattableObject moneyObj = (MoneyFormattableObject) respInfo.getObject("money1");
 			int amountRepaid = moneyObj.getAmount();
-			boolean hasConversion = matcher.group(2) != null; 
+
+			String convertFrom = respInfo.getObject("convert_from") != null ? respInfo.getObject("convert_from").toString() : null;
+			boolean hasConversion = convertFrom != null;
 			if(hasConversion) {
-				String convertFrom = matcher.group(2).trim();
 				double conversionRate = CurrencyHandler.getInstance().getConversionRate(convertFrom, "USD");
 				logger.debug("Converting from " + convertFrom + " to USD using rate " + conversionRate);
 				respInfo.addTemporaryString("convert_from", convertFrom);
