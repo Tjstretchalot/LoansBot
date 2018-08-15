@@ -26,4 +26,8 @@ public interface MappingDatabase {
 	public SavedQueryMapping getSavedQueryMapping();
 	public SavedQueryParamMapping getSavedQueryParamMapping();
 	public SavedQueryUserMapping getSavedQueryUserMapping();
+	public RedFlagReportMapping getRedFlagReportMapping();
+	public RedFlagMapping getRedFlagMapping();
+	public RedFlagQueueSpotMapping getRedFlagQueueSpotMapping();
+	public RedFlagForSubredditMapping getRedFlagForSubredditMapping();
 }

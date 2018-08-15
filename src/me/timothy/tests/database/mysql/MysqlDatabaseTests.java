@@ -22,7 +22,10 @@ import org.junit.runners.Suite.SuiteClasses;
 			MysqlShareCodeMappingTest.class,
 			MysqlWarningMappingTest.class,
 			MysqlRecentPostMappingTest.class,
-			MysqlBannedUserMappingTest.class
+			MysqlBannedUserMappingTest.class,
+			MysqlRedFlagReportMappingTest.class,
+			MysqlRedFlagMappingTest.class,
+			MysqlRedFlagQueueSpotMappingTest.class
 		})
 public class MysqlDatabaseTests {
 

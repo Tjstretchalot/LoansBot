@@ -21,6 +21,10 @@ import me.timothy.bots.database.MappingDatabase;
 import me.timothy.bots.database.ObjectMapping;
 import me.timothy.bots.database.RecentPostMapping;
 import me.timothy.bots.database.RecheckMapping;
+import me.timothy.bots.database.RedFlagForSubredditMapping;
+import me.timothy.bots.database.RedFlagMapping;
+import me.timothy.bots.database.RedFlagQueueSpotMapping;
+import me.timothy.bots.database.RedFlagReportMapping;
 import me.timothy.bots.database.RepaymentMapping;
 import me.timothy.bots.database.ResetPasswordRequestMapping;
 import me.timothy.bots.database.ResponseHistoryMapping;
@@ -42,6 +46,10 @@ import me.timothy.bots.database.mysql.MysqlLCCMapping;
 import me.timothy.bots.database.mysql.MysqlLoanMapping;
 import me.timothy.bots.database.mysql.MysqlRecentPostMapping;
 import me.timothy.bots.database.mysql.MysqlRecheckMapping;
+import me.timothy.bots.database.mysql.MysqlRedFlagForSubredditMapping;
+import me.timothy.bots.database.mysql.MysqlRedFlagMapping;
+import me.timothy.bots.database.mysql.MysqlRedFlagQueueSpotMapping;
+import me.timothy.bots.database.mysql.MysqlRedFlagReportMapping;
 import me.timothy.bots.database.mysql.MysqlRepaymentMapping;
 import me.timothy.bots.database.mysql.MysqlResetPasswordRequestMapping;
 import me.timothy.bots.database.mysql.MysqlResponseHistoryMapping;
@@ -62,6 +70,10 @@ import me.timothy.bots.models.LendersCampContributor;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.RecentPost;
 import me.timothy.bots.models.Recheck;
+import me.timothy.bots.models.RedFlag;
+import me.timothy.bots.models.RedFlagForSubreddit;
+import me.timothy.bots.models.RedFlagQueueSpot;
+import me.timothy.bots.models.RedFlagReport;
 import me.timothy.bots.models.Repayment;
 import me.timothy.bots.models.ResetPasswordRequest;
 import me.timothy.bots.models.Response;
@@ -135,6 +147,10 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		addMapping(SavedQuery.class, new MysqlSavedQueryMapping(this, connection));
 		addMapping(SavedQueryParam.class, new MysqlSavedQueryParamMapping(this, connection));
 		addMapping(SavedQueryUser.class, new MysqlSavedQueryUserMapping(this, connection));
+		addMapping(RedFlagReport.class, new MysqlRedFlagReportMapping(this, connection));
+		addMapping(RedFlag.class, new MysqlRedFlagMapping(this, connection));
+		addMapping(RedFlagQueueSpot.class, new MysqlRedFlagQueueSpotMapping(this, connection));
+		addMapping(RedFlagForSubreddit.class, new MysqlRedFlagForSubredditMapping(this, connection));
 	}
 	
 	private <A> void addMapping(Class<A> cl, ObjectMapping<A> mapping) {
@@ -241,6 +257,18 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	}
 	public SavedQueryUserMapping getSavedQueryUserMapping() {
 		return (SavedQueryUserMapping) mappingsDict.get(SavedQueryUser.class);
+	}
+	public RedFlagReportMapping getRedFlagReportMapping() {
+		return (RedFlagReportMapping) mappingsDict.get(RedFlagReport.class);
+	}
+	public RedFlagMapping getRedFlagMapping() {
+		return (RedFlagMapping) mappingsDict.get(RedFlag.class);
+	}
+	public RedFlagQueueSpotMapping getRedFlagQueueSpotMapping() {
+		return (RedFlagQueueSpotMapping) mappingsDict.get(RedFlagQueueSpot.class);
+	}
+	public RedFlagForSubredditMapping getRedFlagForSubredditMapping() {
+		return (RedFlagForSubredditMapping) mappingsDict.get(RedFlagForSubreddit.class);
 	}
 	
 	/*

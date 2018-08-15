@@ -22,11 +22,13 @@ import me.timothy.bots.models.ResetPasswordRequest;
 import me.timothy.bots.models.Response;
 import me.timothy.bots.models.User;
 import me.timothy.bots.models.Username;
+import me.timothy.bots.redflags.RedFlagsDriver;
 import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
 import me.timothy.bots.summon.CommentSummon;
 import me.timothy.bots.summon.LinkSummon;
 import me.timothy.bots.summon.PMSummon;
+import me.timothy.bots.summon.RedFlagSummon;
 import me.timothy.jreddit.RedditUtils;
 import me.timothy.jreddit.info.Account;
 import me.timothy.jreddit.info.Comment;
@@ -71,6 +73,8 @@ public class LoansBotDriver extends BotDriver {
 	
 	private Diagnostics diagnostics;
 	
+	private RedFlagsDriver redFlagsDriver;
+	
 	/**
 	 * Exact echo of BotDriver constructor; initializes diagnostics
 	 * @param database database
@@ -88,6 +92,14 @@ public class LoansBotDriver extends BotDriver {
 		diagnostics = new Diagnostics(new File("diagnostics.log"));
 		
 		recentlyPassedCheckUsers = new ArrayList<RequirementsCheckedUser>();
+		
+		redFlagsDriver = new RedFlagsDriver((LoansDatabase)database, (LoansFileConfiguration)config, bot, maybeLoginAgainRunnable, BRIEF_PAUSE_MS);
+		for(LinkSummon l : submissionSummons) {
+			if(l instanceof RedFlagSummon) {
+				((RedFlagSummon)l).setDriver(redFlagsDriver);
+				break;
+			}
+		}
 	}
 
 	/* (non-Javadoc)
@@ -151,6 +163,9 @@ public class LoansBotDriver extends BotDriver {
 		
 		logger.debug("Pruning recent posts table...");
 		pruneRecentPosts();
+		
+		logger.debug("Running the red flags driver...");
+		redFlagsDriver.handleQueue(7);
 		
 		super.doLoop();
 	}

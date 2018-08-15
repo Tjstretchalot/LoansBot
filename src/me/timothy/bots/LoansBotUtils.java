@@ -1,9 +1,12 @@
 package me.timothy.bots;
 
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -51,6 +54,20 @@ public class LoansBotUtils {
 		final long sec = TimeUnit.MILLISECONDS.toSeconds(l - TimeUnit.HOURS.toMillis(hr) - TimeUnit.MINUTES.toMillis(min));
 		final long ms = TimeUnit.MILLISECONDS.toMillis(l - TimeUnit.HOURS.toMillis(hr) - TimeUnit.MINUTES.toMillis(min) - TimeUnit.SECONDS.toMillis(sec));
 		return String.format("%02d:%02d:%02d.%03d", hr, min, sec, ms);
+	}
+	
+	/**
+	 * Format the given timestamp in a really detailed way using simple date format
+	 * 
+	 * Looks like Saturday November 2012 10:45:42.720+0100
+     * 
+	 * @param timestamp the timestamp you want to format
+	 * @return the formatted representation of the timestamp as best as possible
+	 */
+	public static String formatDate(Timestamp timestamp) {
+		Date dt = new Date(timestamp.getTime());
+		SimpleDateFormat formatter = new SimpleDateFormat("EEEEE MMMMM yyyy HH:mm:ss.SSSZ");
+		return formatter.format(dt);
 	}
 	
 	/**
