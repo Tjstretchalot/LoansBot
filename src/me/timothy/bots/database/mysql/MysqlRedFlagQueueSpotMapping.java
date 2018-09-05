@@ -24,8 +24,6 @@ public class MysqlRedFlagQueueSpotMapping extends MysqlObjectWithIDMapping<RedFl
 					new MysqlColumn(Types.INTEGER, "id", true),
 					new MysqlColumn(Types.INTEGER, "report_id"),
 					new MysqlColumn(Types.INTEGER, "username_id"),
-					new MysqlColumn(Types.VARCHAR, "respond_to_fullname"),
-					new MysqlColumn(Types.VARCHAR, "comment_fullname"),
 					new MysqlColumn(Types.TIMESTAMP, "created_at"),
 					new MysqlColumn(Types.TIMESTAMP, "started_at"),
 					new MysqlColumn(Types.TIMESTAMP, "completed_at")
@@ -44,11 +42,11 @@ public class MysqlRedFlagQueueSpotMapping extends MysqlObjectWithIDMapping<RedFl
 		try {
 			PreparedStatement statement;
 			if (a.id <= 0) {
-				statement = connection.prepareStatement("INSERT INTO " + table + " (report_id, username_id, respond_to_fullname, "
-						+ "comment_fullname, created_at, started_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+				statement = connection.prepareStatement("INSERT INTO " + table + " (report_id, username_id, "
+						+ "created_at, started_at, completed_at) VALUES (?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 			}else {
-				statement = connection.prepareStatement("UPDATE " + table + " SET report_id=?, username_id=?, respond_to_fullname=?, "
-						+ "comment_fullname=?, created_at=?, started_at=?, completed_at=? WHERE id=?");
+				statement = connection.prepareStatement("UPDATE " + table + " SET report_id=?, username_id=?, "
+						+ "created_at=?, started_at=?, completed_at=? WHERE id=?");
 			}
 			
 			int counter = 1;
@@ -58,13 +56,6 @@ public class MysqlRedFlagQueueSpotMapping extends MysqlObjectWithIDMapping<RedFl
 				statement.setNull(counter++, Types.INTEGER);
 			
 			statement.setInt(counter++, a.usernameId);
-			statement.setString(counter++, a.respondToFullname);
-			
-			if(a.commentFullname != null)
-				statement.setString(counter++, a.commentFullname);
-			else 
-				statement.setNull(counter++, Types.VARCHAR);
-			
 			statement.setTimestamp(counter++, a.createdAt);
 			statement.setTimestamp(counter++, a.startedAt);
 			statement.setTimestamp(counter++, a.completedAt);
@@ -124,13 +115,11 @@ public class MysqlRedFlagQueueSpotMapping extends MysqlObjectWithIDMapping<RedFl
 		if(set.wasNull())
 			reportId = null;
 		int usernameId = set.getInt("username_id");
-		String respondToFullname = set.getString("respond_to_fullname");
-		String commentFullname = set.getString("comment_fullname");
 		Timestamp createdAt = set.getTimestamp("created_at");
 		Timestamp startedAt = set.getTimestamp("started_at");
 		Timestamp completedAt = set.getTimestamp("completed_at");
 		
-		return new RedFlagQueueSpot(id, reportId, usernameId, respondToFullname, commentFullname, 
+		return new RedFlagQueueSpot(id, reportId, usernameId,  
 				createdAt, startedAt, completedAt);
 	}
 
@@ -141,8 +130,6 @@ public class MysqlRedFlagQueueSpotMapping extends MysqlObjectWithIDMapping<RedFl
 				+ "id int NOT NULL AUTO_INCREMENT, "
 				+ "report_id int NULL, "
 				+ "username_id int NOT NULL, "
-				+ "respond_to_fullname VARCHAR(50) NOT NULL, " 
-				+ "comment_fullname VARCHAR(50) NULL, "
 				+ "created_at timestamp NOT NULL DEFAULT '0000-00-00 00:00:00', "
 				+ "started_at timestamp NULL DEFAULT NULL, "
 				+ "completed_at timestamp NULL DEFAULT NULL, "

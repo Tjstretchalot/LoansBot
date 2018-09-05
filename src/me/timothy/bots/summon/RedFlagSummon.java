@@ -50,7 +50,7 @@ public class RedFlagSummon implements LinkSummon {
 		}
 		
 		logger.trace("Enqueuing link " + link.title() + " by " + link.author() + " for red flag report");
-		driver.enqueue(link, uname.id);
+		driver.enqueue(uname.id);
 		return null;
 	}
 

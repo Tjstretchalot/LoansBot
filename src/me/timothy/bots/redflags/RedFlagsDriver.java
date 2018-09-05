@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import org.json.simple.parser.ParseException;
 
 import me.timothy.bots.Bot;
-import me.timothy.bots.LoansBotUtils;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.LoansFileConfiguration;
 import me.timothy.bots.Retryable;
@@ -18,12 +17,8 @@ import me.timothy.bots.models.RedFlag;
 import me.timothy.bots.models.RedFlagQueueSpot;
 import me.timothy.bots.models.RedFlagReport;
 import me.timothy.bots.models.Username;
-import me.timothy.bots.responses.ResponseFormatter;
-import me.timothy.bots.responses.ResponseInfo;
-import me.timothy.bots.responses.ResponseInfoFactory;
 import me.timothy.jreddit.RedditUtils;
 import me.timothy.jreddit.info.Comment;
-import me.timothy.jreddit.info.CommentResponse;
 import me.timothy.jreddit.info.Link;
 import me.timothy.jreddit.info.Listing;
 import me.timothy.jreddit.info.Thing;
@@ -137,7 +132,7 @@ public class RedFlagsDriver {
 	 * @return the number of requests made
 	 */
 	private int continueQueuedRedFlagReport(RedFlagQueueSpot spot, int numRequests) {
-		// if we got here we have a started_at, report_id, and comment_fullname 
+		// if we got here we have a started_at and report_id 
 		// we may or may not have an after_fullname, but that's fine since we
 		// can pass null to start at the beginning (which is what we want if 
 		// we haven't started yet)
@@ -146,6 +141,8 @@ public class RedFlagsDriver {
 		
 		RedFlagReport report = database.getRedFlagReportMapping().fetchByID(spot.reportId);
 		Username username = database.getUsernameMapping().fetchById(spot.usernameId);
+		logger.info("Continuing queued red flag report on " + username);
+		
 		if(report.afterFullname == null) {
 			for(IRedFlagDetector detector : redFlagDetectors) {
 				detector.start(username);
@@ -208,21 +205,9 @@ public class RedFlagsDriver {
 				
 				report.completedAt = new Timestamp(System.currentTimeMillis());
 				database.getRedFlagReportMapping().save(report);
-				
-				String newMessage = RedFlagFormatUtils.formatReport(database, config, report);
-				new Retryable<Boolean>("continueQueuedRedFlagReport#edit", maybeLoginAgainRunnable) {
-
-					@Override
-					protected Boolean runImpl() throws Exception {
-						requests[0]++;
-						RedditUtils.edit(bot.getUser(), spot.commentFullname, newMessage);
-						return Boolean.TRUE;
-					}
-					
-				}.run();
 				break;
 			}else {
-				logger.trace("We found more history");
+				logger.trace("We found more history (oldest fullname is now " + oldestFullname + " @ " + oldestRedditUTC + ")");
 				report.afterFullname = oldestFullname;
 				database.getRedFlagReportMapping().save(report);
 			}
@@ -260,54 +245,23 @@ public class RedFlagsDriver {
 			
 			if(latestReport != null) {
 				// we found an already completed report; let's verify that it is fairly recent (last month)
-				Timestamp oneMonthAgo = new Timestamp(System.currentTimeMillis() - 1000 * 60 * 60 * 24 * 30);
+				long msAllowed = Long.valueOf(config.getProperty("red_flags.refresh_ms"));
+				Timestamp oneMonthAgo = new Timestamp(System.currentTimeMillis() - msAllowed);
 				if(latestReport.completedAt.after(oneMonthAgo)) {
 					// it's recent enough!
-					return handleQueuedRedFlagReportWithPreviousReport(spot, latestReport);
+					spot.startedAt = new Timestamp(System.currentTimeMillis());
+					spot.completedAt = new Timestamp(System.currentTimeMillis());
+					spot.reportId = latestReport.id;
+					database.getRedFlagQueueSpotMapping().save(spot);
+					Username username = database.getUsernameMapping().fetchById(spot.usernameId);
+					logger.debug("Not generating report on " + username.username + " - have recent enough report");
+					return 0;
 				}
 			}
 		}
 		
-		// okay we don't have a good report to use; lets post a temporary comment to note that we're thinking about this
-		
+		// no report to use, lets get started
 		return startQueuedRedFlagReportWithNoPreviousReports(spot, numRequests);
-	}
-
-	/**
-	 * Handles a queued red flag report request by posting a summary of a previous report.
-	 * 
-	 * @param spot the spot in the queue
-	 * @param latestReport the available report
-	 * @return the number of requests we made
-	 */
-	private int handleQueuedRedFlagReportWithPreviousReport(RedFlagQueueSpot spot, RedFlagReport latestReport) {
-		int[] requests = new int[] { 0 };
-		
-		logger.debug("Fetching the replyable for responding to " + spot.respondToFullname);
-		Thing replyable = new Retryable<Thing>("handleQueuedRedFlagReportWithPreviousReport#getreplyable", maybeLoginAgainRunnable) {
-			@Override
-			protected Thing runImpl() throws Exception {
-				requests[0]++;
-				return RedditUtils.getThing(spot.respondToFullname, bot.getUser());
-			}
-		}.run();
-		sleepFor(briefPauseMS);
-		
-		String response = RedFlagFormatUtils.formatReport(database, config, latestReport);
-		logger.info("Posting old red flag report about " + latestReport.usernameId + " in response to " + spot.respondToFullname);
-		new Retryable<Boolean>("handleQueuedRedFlagReportWithPreviousReport#reply", maybeLoginAgainRunnable) {
-
-			@Override
-			protected Boolean runImpl() throws Exception {
-				requests[0]++;
-				bot.respondTo(replyable, response);
-				return Boolean.TRUE;
-			}
-			
-		}.run();
-		sleepFor(briefPauseMS);
-		
-		return requests[0];
 	}
 	
 	/**
@@ -318,64 +272,10 @@ public class RedFlagsDriver {
 	 * @return the number of requests we made
 	 */
 	private int startQueuedRedFlagReportWithNoPreviousReports(RedFlagQueueSpot spot, int numRequests) {
-		// we're going to post a comment
+		Username username = database.getUsernameMapping().fetchById(spot.usernameId);
+		logger.info("Starting red flag report on " + username.username);
 		final long now = System.currentTimeMillis();
 		
-		
-		int[] requests = new int[] { 0 };
-		ResponseInfo respInfo = new ResponseInfo(ResponseInfoFactory.base);
-		respInfo.addTemporaryString("user", database.getUsernameMapping().fetchById(spot.usernameId).username);
-		respInfo.addTemporaryString("started_at", LoansBotUtils.formatDate(new Timestamp(now)));
-		
-		String format = database.getResponseMapping().fetchByName("red_flags_placeholder").responseBody;
-		String message = new ResponseFormatter(format, respInfo).getFormattedResponse(config, database);
-		logger.info("Posting placeholder red flag report in response to " + spot.respondToFullname);
-		CommentResponse cr = new Retryable<CommentResponse>("startQueuedRedFlagReportWithNoPreviousReports#reply", maybeLoginAgainRunnable) {
-
-			@Override
-			protected CommentResponse runImpl() throws Exception {
-				requests[0]++;
-				CommentResponse resp = RedditUtils.comment(bot.getUser(), spot.respondToFullname, message);
-				
-				if(resp.getErrors() != null && resp.getErrors().size() > 0) {
-					List<?> errors = resp.getErrors();
-					
-					logger.trace("Got errors for reply to " + spot.respondToFullname + ": " + errors.toString());
-					
-					for(Object o : errors) {
-						if(o instanceof List) {
-							List<?> error = (List<?>) o;
-							for(Object o2 : error) {
-								if(o2 instanceof String) {
-									String errorMessage = (String) o2;
-									
-									if(errorMessage.equals("TOO_OLD")) {
-										logger.trace("TOO_OLD error => response was a success (for our purposes)");
-										return resp;
-									}
-								}
-							}
-						}
-					}
-					return null;
-				}
-				
-				return resp;
-			}
-			
-		}.run();
-		
-		if(cr.getErrors() != null && cr.getErrors().size() > 0) {
-			// we got the TOO_OLD thing; we're just gonna mark this as complete
-			spot.startedAt = new Timestamp(now);
-			spot.completedAt = new Timestamp(now);
-			database.getRedFlagQueueSpotMapping().save(spot);
-			return requests[0];
-		}
-		
-		// ok we got a real comment response. we're going to save that comment & start the report
-		Comment ourComment = cr.getComment();
-		spot.commentFullname = ourComment.fullname();
 		spot.startedAt = new Timestamp(now);
 		
 		RedFlagReport report = new RedFlagReport(-1, spot.usernameId, null, new Timestamp(now), new Timestamp(now), null);
@@ -384,8 +284,7 @@ public class RedFlagsDriver {
 		spot.reportId = report.id;
 		database.getRedFlagQueueSpotMapping().save(spot);
 		
-		requests[0] += continueQueuedRedFlagReport(spot, numRequests - requests[0]);
-		return requests[0];
+		return continueQueuedRedFlagReport(spot, numRequests);
 	}
 	
 	/**
@@ -395,12 +294,12 @@ public class RedFlagsDriver {
 	 * @param respondTo the thing to respond to
 	 * @param usernameId the id of the username to generate a report on
 	 */
-	public void enqueue(Thing respondTo, int usernameId) {
+	public void enqueue(int usernameId) {
 		if(config.getProperty("red_flags.suppress").equals("true"))
 			return;
 		
 		database.getRedFlagQueueSpotMapping().save(
-				new RedFlagQueueSpot(-1, null, usernameId, respondTo.fullname(), null, 
+				new RedFlagQueueSpot(-1, null, usernameId,
 						new Timestamp(System.currentTimeMillis()), null, null));
 	}
 

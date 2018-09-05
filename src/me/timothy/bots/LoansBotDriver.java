@@ -93,7 +93,7 @@ public class LoansBotDriver extends BotDriver {
 		
 		recentlyPassedCheckUsers = new ArrayList<RequirementsCheckedUser>();
 		
-		redFlagsDriver = new RedFlagsDriver((LoansDatabase)database, (LoansFileConfiguration)config, bot, maybeLoginAgainRunnable, BRIEF_PAUSE_MS);
+		redFlagsDriver = new RedFlagsDriver((LoansDatabase)database, (LoansFileConfiguration)config, bot, maybeLoginAgainRunnable, 2000);
 		for(LinkSummon l : submissionSummons) {
 			if(l instanceof RedFlagSummon) {
 				((RedFlagSummon)l).setDriver(redFlagsDriver);
@@ -165,7 +165,7 @@ public class LoansBotDriver extends BotDriver {
 		pruneRecentPosts();
 		
 		logger.debug("Running the red flags driver...");
-		redFlagsDriver.handleQueue(7);
+		redFlagsDriver.handleQueue(21);
 		
 		super.doLoop();
 	}

@@ -58,7 +58,7 @@ protected MappingDatabase database;
 		assertListContents(database.getRedFlagQueueSpotMapping().fetchByReportId(paulReport.id, false));
 		assertListContents(database.getRedFlagQueueSpotMapping().fetchByReportId(johnReport.id, false));
 		
-		RedFlagQueueSpot paulSpot = new RedFlagQueueSpot(-1, paulReport.id, paulUsername.id, "fullname1", null, new Timestamp(now), null, null);
+		RedFlagQueueSpot paulSpot = new RedFlagQueueSpot(-1, paulReport.id, paulUsername.id, new Timestamp(now), null, null);
 		database.getRedFlagQueueSpotMapping().save(paulSpot);
 		
 		assertNotEquals(-1, paulSpot.id);
@@ -71,7 +71,7 @@ protected MappingDatabase database;
 		fromDb = database.getRedFlagQueueSpotMapping().fetchByID(paulSpot.id);
 		assertEquals(paulSpot, fromDb);
 		
-		RedFlagQueueSpot johnSpot = new RedFlagQueueSpot(-1, null, johnUsername.id, "fullname2", null, new Timestamp(now + 5000), null, null);
+		RedFlagQueueSpot johnSpot = new RedFlagQueueSpot(-1, null, johnUsername.id, new Timestamp(now + 5000), null, null);
 		database.getRedFlagQueueSpotMapping().save(johnSpot);
 		
 		assertNotEquals(-1, johnSpot.id);
@@ -101,7 +101,7 @@ protected MappingDatabase database;
 		assertListContents(database.getRedFlagQueueSpotMapping().fetchByReportId(johnReport.id, true), johnSpot);
 		assertListContents(database.getRedFlagQueueSpotMapping().fetchByReportId(johnReport.id, false), johnSpot);
 		
-		RedFlagQueueSpot alexSpot = new RedFlagQueueSpot(-1, null, alexUsername.id, "fullname3", null, new Timestamp(now + 30000), null, null);
+		RedFlagQueueSpot alexSpot = new RedFlagQueueSpot(-1, null, alexUsername.id, new Timestamp(now + 30000), null, null);
 		database.getRedFlagQueueSpotMapping().save(alexSpot);
 		
 		assertNotEquals(-1, alexSpot.id);
