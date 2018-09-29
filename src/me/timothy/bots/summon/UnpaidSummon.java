@@ -167,8 +167,10 @@ public class UnpaidSummon implements CommentSummon {
 			}
 			
 			//return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(responseFormat, responseInfo).getFormattedResponse(config, database), null, lenderPMs);
+			
+			// we unban as well as ban to ensure it's propagated by the uslbot
 			return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(responseFormat, responseInfo).getFormattedResponse(config, database), null, lenderPMs, null,
-					banUser, userToBan, banMessage, banReason, banNote, false, null);
+					banUser, userToBan, banMessage, banReason, banNote, banUser, userToBan);
 		}
 		return null;
 	}

@@ -235,7 +235,8 @@ public class UnpaidSummonTests {
 		assertEquals("paul", pmResponse.getTo());
 		assertEquals(expectedReminderPMTitle, pmResponse.getTitle());
 		assertEquals(expectedReminderPMText, pmResponse.getText());
-		assertFalse(response.shouldUnbanUser());
+		assertTrue(response.shouldUnbanUser());
+		assertEquals("john", response.getUsernameToUnban());
 		
 		Loan fromDb = database.getLoanMapping().fetchAll().get(0);
 		assertEquals(loanPaulToJohn.id, fromDb.id);
