@@ -152,7 +152,7 @@ public class RedFlagsDriver {
 		
 		RedFlagReport report = database.getRedFlagReportMapping().fetchByID(spot.reportId);
 		Username username = database.getUsernameMapping().fetchById(spot.usernameId);
-		logger.info("Continuing queued red flag report on " + username);
+		logger.printf(Level.TRACE, "Continuing queued red flag report on %s (report id = %s)", username.username, report.id);
 		int[] requests = new int[] { 0 };
 		while(requests[0] < numRequests) {
 			logger.trace("Fetching another page of history about " + username.username);

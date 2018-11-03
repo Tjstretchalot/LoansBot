@@ -60,8 +60,9 @@ public class RedFlagUserHistoryComment {
 	 * Generate a new comment that is not in the database based on an actual reddit comment
 	 * @param comment the reddit comment
 	 * @param reportId the report this is for
+	 * @param personId the person who made the comment
 	 */
-	public RedFlagUserHistoryComment(Comment comment, int personId, int reportId) {
+	public RedFlagUserHistoryComment(Comment comment, int reportId, int personId) {
 		this(-1, reportId, personId, comment.fullname(), comment.permalink(), comment.body(), 
 				comment.subreddit(), new Timestamp((long)(comment.createdUTC() * 1000)), 
 				comment.edited() ? new Timestamp((long)(comment.editedTime() * 1000)) : null);
