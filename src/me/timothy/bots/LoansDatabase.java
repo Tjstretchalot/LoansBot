@@ -25,6 +25,9 @@ import me.timothy.bots.database.RedFlagForSubredditMapping;
 import me.timothy.bots.database.RedFlagMapping;
 import me.timothy.bots.database.RedFlagQueueSpotMapping;
 import me.timothy.bots.database.RedFlagReportMapping;
+import me.timothy.bots.database.RedFlagUserHistoryCommentMapping;
+import me.timothy.bots.database.RedFlagUserHistoryLinkMapping;
+import me.timothy.bots.database.RedFlagUserHistorySortMapping;
 import me.timothy.bots.database.RepaymentMapping;
 import me.timothy.bots.database.ResetPasswordRequestMapping;
 import me.timothy.bots.database.ResponseHistoryMapping;
@@ -50,6 +53,9 @@ import me.timothy.bots.database.mysql.MysqlRedFlagForSubredditMapping;
 import me.timothy.bots.database.mysql.MysqlRedFlagMapping;
 import me.timothy.bots.database.mysql.MysqlRedFlagQueueSpotMapping;
 import me.timothy.bots.database.mysql.MysqlRedFlagReportMapping;
+import me.timothy.bots.database.mysql.MysqlRedFlagUserHistoryCommentMapping;
+import me.timothy.bots.database.mysql.MysqlRedFlagUserHistoryLinkMapping;
+import me.timothy.bots.database.mysql.MysqlRedFlagUserHistorySortMapping;
 import me.timothy.bots.database.mysql.MysqlRepaymentMapping;
 import me.timothy.bots.database.mysql.MysqlResetPasswordRequestMapping;
 import me.timothy.bots.database.mysql.MysqlResponseHistoryMapping;
@@ -74,6 +80,9 @@ import me.timothy.bots.models.RedFlag;
 import me.timothy.bots.models.RedFlagForSubreddit;
 import me.timothy.bots.models.RedFlagQueueSpot;
 import me.timothy.bots.models.RedFlagReport;
+import me.timothy.bots.models.RedFlagUserHistoryComment;
+import me.timothy.bots.models.RedFlagUserHistoryLink;
+import me.timothy.bots.models.RedFlagUserHistorySort;
 import me.timothy.bots.models.Repayment;
 import me.timothy.bots.models.ResetPasswordRequest;
 import me.timothy.bots.models.Response;
@@ -151,6 +160,9 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		addMapping(RedFlag.class, new MysqlRedFlagMapping(this, connection));
 		addMapping(RedFlagQueueSpot.class, new MysqlRedFlagQueueSpotMapping(this, connection));
 		addMapping(RedFlagForSubreddit.class, new MysqlRedFlagForSubredditMapping(this, connection));
+		addMapping(RedFlagUserHistoryComment.class, new MysqlRedFlagUserHistoryCommentMapping(this, connection));
+		addMapping(RedFlagUserHistoryLink.class, new MysqlRedFlagUserHistoryLinkMapping(this, connection));
+		addMapping(RedFlagUserHistorySort.class, new MysqlRedFlagUserHistorySortMapping(this, connection));
 	}
 	
 	private <A> void addMapping(Class<A> cl, ObjectMapping<A> mapping) {
@@ -270,7 +282,15 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	public RedFlagForSubredditMapping getRedFlagForSubredditMapping() {
 		return (RedFlagForSubredditMapping) mappingsDict.get(RedFlagForSubreddit.class);
 	}
-	
+	public RedFlagUserHistoryCommentMapping getRedFlagUserHistoryCommentMapping() {
+		return (RedFlagUserHistoryCommentMapping) mappingsDict.get(RedFlagUserHistoryComment.class);
+	}
+	public RedFlagUserHistoryLinkMapping getRedFlagUserHistoryLinkMapping() {
+		return (RedFlagUserHistoryLinkMapping) mappingsDict.get(RedFlagUserHistoryLink.class);
+	}
+	public RedFlagUserHistorySortMapping getRedFlagUserHistorySortMapping() {
+		return (RedFlagUserHistorySortMapping) mappingsDict.get(RedFlagUserHistorySort.class);
+	}
 	/*
 	 * The following don't match the "MapperDatabase" I have setup, because I'm subclassing
 	 * from the generic Database from SummonableBot. I'm brainstorming ways to refactor this

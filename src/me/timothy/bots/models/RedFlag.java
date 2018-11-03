@@ -23,7 +23,9 @@ public class RedFlag {
 		 */
 		NUKED_HISTORY("NUKED_HISTORY"),
 		
-		SUBREDDIT("SUBREDDIT")
+		SUBREDDIT("SUBREDDIT"),
+		
+		ACTIVITY_GAP("ACTIVITY_GAP")
 		
 		;
 		

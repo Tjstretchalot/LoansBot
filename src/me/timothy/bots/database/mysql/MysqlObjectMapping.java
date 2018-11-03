@@ -84,6 +84,9 @@ public abstract class MysqlObjectMapping<A> implements ObjectMapping<A>, SchemaV
 				case Types.INTEGER:
 					statement.setInt(counter++, (int)tuple.value);
 					break;
+				case Types.TINYINT:
+					statement.setByte(counter++, (byte)tuple.value);
+					break;
 				case Types.BIT:
 					statement.setBoolean(counter++, (boolean)tuple.value);
 					break;
@@ -178,6 +181,27 @@ public abstract class MysqlObjectMapping<A> implements ObjectMapping<A>, SchemaV
 			return result;
 		}catch(SQLException e) {
 			logger.error("SQLException occurred on MysqlObjectMapping<A>#fetchByAction. statement=" + statement + ", table=" + table);
+			logger.throwing(e);
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 * Runs the given statement, setting the given variables if they are given, and ignores the result.
+	 * 
+	 * @param statement the SQL to execute
+	 * @param setVars the variables to set, if any
+	 */
+	protected void runStatement(String statement, PreparedStatementSetVars setVars) {
+		try {
+			PreparedStatement pStatement = connection.prepareStatement(statement);
+			if(setVars != null)
+				setVars.setVars(pStatement);
+			
+			pStatement.execute();
+			pStatement.close();
+		}catch(SQLException e) {
+			logger.error("SQLException occurred on MysqlObjectMapping<A>#runStatement. statement=" + statement + ", table=" + table);
 			logger.throwing(e);
 			throw new RuntimeException(e);
 		}

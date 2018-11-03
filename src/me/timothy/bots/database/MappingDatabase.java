@@ -30,4 +30,7 @@ public interface MappingDatabase {
 	public RedFlagMapping getRedFlagMapping();
 	public RedFlagQueueSpotMapping getRedFlagQueueSpotMapping();
 	public RedFlagForSubredditMapping getRedFlagForSubredditMapping();
+	public RedFlagUserHistoryCommentMapping getRedFlagUserHistoryCommentMapping();
+	public RedFlagUserHistoryLinkMapping getRedFlagUserHistoryLinkMapping();
+	public RedFlagUserHistorySortMapping getRedFlagUserHistorySortMapping();
 }

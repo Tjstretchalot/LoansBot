@@ -3,15 +3,12 @@ package me.timothy.bots.redflags;
 import java.util.List;
 
 import me.timothy.bots.models.RedFlag;
+import me.timothy.bots.models.RedFlagUserHistoryComment;
+import me.timothy.bots.models.RedFlagUserHistoryLink;
 import me.timothy.bots.models.Username;
-import me.timothy.jreddit.info.Comment;
-import me.timothy.jreddit.info.Link;
 
 /**
- * Describes something capable of detecting red flags. These are given lots
- * of calls because many of them will need tables of their own. However,
- * they should delete anything they make after the finish callback and use
- * the red flags themselves for historic purposes
+ * Describes something capable of detecting red flags. These are guaranteed to do the entire
  * 
  * @author Timothy
  */
@@ -23,14 +20,6 @@ public interface IRedFlagDetector {
 	 * @param username the username we are scanning
 	 */
 	public void start(Username username);
-	
-	/**
-	 * Called when we are about to resume looking at a usernames history.
-	 * 
-	 * @param username the username who we've previously paused
-	 */
-	public void resume(Username username);
-	
 	/**
 	 * Parse the given comment and return any red flags it raised for you. The 
 	 * resulting red flags should not have been saved to the database yet, and
@@ -39,7 +28,7 @@ public interface IRedFlagDetector {
 	 * @param comment the comment
 	 * @return the red flags we should save due to the comment
 	 */
-	public List<RedFlag> parseComment(Comment comment);
+	public List<RedFlag> parseComment(RedFlagUserHistoryComment comment);
 	
 	/**
 	 * Parse the given link and return any red flags it raised for you. The 
@@ -49,12 +38,7 @@ public interface IRedFlagDetector {
 	 * @param link the link
 	 * @return the red flags we should save due to the link
 	 */
-	public List<RedFlag> parseLink(Link link);
-	
-	/**
-	 * Pause parsing for the current username.
-	 */
-	public void pause();
+	public List<RedFlag> parseLink(RedFlagUserHistoryLink link);
 	
 	/**
 	 * Called when we've completed parsing the username passed to the last start
@@ -63,4 +47,12 @@ public interface IRedFlagDetector {
 	 * @return any final red flags we should save
 	 */
 	public List<RedFlag> finish();
+	
+	/**
+	 * This is called immediately after finish() and can return true to 
+	 * get the same user reprocessed immediately.
+	 * 
+	 * @return true for a resweep, false otherwise
+	 */
+	public boolean requiresResweep();
 }

@@ -25,7 +25,10 @@ import org.junit.runners.Suite.SuiteClasses;
 			MysqlBannedUserMappingTest.class,
 			MysqlRedFlagReportMappingTest.class,
 			MysqlRedFlagMappingTest.class,
-			MysqlRedFlagQueueSpotMappingTest.class
+			MysqlRedFlagQueueSpotMappingTest.class,
+			MysqlRedFlagUserHistoryCommentMappingTest.class,
+			MysqlRedFlagUserHistoryLinkMappingTest.class,
+			MysqlRedFlagUserHistorySortMappingTest.class
 		})
 public class MysqlDatabaseTests {
 

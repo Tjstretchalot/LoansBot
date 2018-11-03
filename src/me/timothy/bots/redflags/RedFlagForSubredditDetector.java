@@ -8,9 +8,9 @@ import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.LoansFileConfiguration;
 import me.timothy.bots.models.RedFlag;
 import me.timothy.bots.models.RedFlagForSubreddit;
+import me.timothy.bots.models.RedFlagUserHistoryComment;
+import me.timothy.bots.models.RedFlagUserHistoryLink;
 import me.timothy.bots.models.Username;
-import me.timothy.jreddit.info.Comment;
-import me.timothy.jreddit.info.Link;
 
 /**
  * Adds a red flag for subreddits in the RedFlagForSubreddit table
@@ -28,10 +28,6 @@ public class RedFlagForSubredditDetector implements IRedFlagDetector {
 	public void start(Username username) {
 	}
 
-	@Override
-	public void resume(Username username) {
-	}
-
 	private List<RedFlag> redFlagForSubreddit(String subreddit) {
 		RedFlagForSubreddit redFlag = database.getRedFlagForSubredditMapping().fetchBySubreddit(subreddit);
 
@@ -42,17 +38,13 @@ public class RedFlagForSubredditDetector implements IRedFlagDetector {
 	}
 
 	@Override
-	public List<RedFlag> parseComment(Comment comment) {
-		return redFlagForSubreddit(comment.subreddit());
+	public List<RedFlag> parseComment(RedFlagUserHistoryComment comment) {
+		return redFlagForSubreddit(comment.subreddit);
 	}
 
 	@Override
-	public List<RedFlag> parseLink(Link link) {
-		return redFlagForSubreddit(link.subreddit());
-	}
-
-	@Override
-	public void pause() {
+	public List<RedFlag> parseLink(RedFlagUserHistoryLink link) {
+		return redFlagForSubreddit(link.subreddit);
 	}
 
 	@Override
@@ -60,4 +52,8 @@ public class RedFlagForSubredditDetector implements IRedFlagDetector {
 		return Collections.emptyList();
 	}
 
+	@Override
+	public boolean requiresResweep() {
+		return false;
+	}
 }

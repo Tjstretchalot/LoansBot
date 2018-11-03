@@ -135,7 +135,7 @@ public class MysqlRecentPostMapping extends MysqlObjectMapping<RecentPost> imple
 		try {
 			PreparedStatement statement = connection.prepareStatement("DELETE FROM recent_posts WHERE created_at < (NOW() - INTERVAL 7 DAY)");
 			
-			statement.executeUpdate();
+			statement.execute();
 
 			statement.close();
 		}catch(SQLException ex) {

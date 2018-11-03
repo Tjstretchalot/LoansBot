@@ -47,7 +47,7 @@ public class MysqlBannedUserMapping extends MysqlObjectMapping<BannedUser> imple
 			statement.setTimestamp(counter++, a.createdAt);
 			statement.setTimestamp(counter++, a.updatedAt);
 			
-			statement.executeUpdate();
+			statement.execute();
 
 			ResultSet keys = statement.getGeneratedKeys();
 			if(keys.next()) {
@@ -107,7 +107,7 @@ public class MysqlBannedUserMapping extends MysqlObjectMapping<BannedUser> imple
 			int counter = 1;
 			statement.setInt(counter++, userID);
 			
-			statement.executeUpdate();
+			statement.execute();
 			
 			statement.close();
 		}catch(SQLException ex) {

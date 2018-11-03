@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.parser.ParseException;
@@ -13,9 +14,15 @@ import me.timothy.bots.Bot;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.LoansFileConfiguration;
 import me.timothy.bots.Retryable;
+import me.timothy.bots.database.RedFlagUserHistoryCommentMapping;
+import me.timothy.bots.database.RedFlagUserHistoryLinkMapping;
+import me.timothy.bots.database.RedFlagUserHistorySortMapping;
 import me.timothy.bots.models.RedFlag;
 import me.timothy.bots.models.RedFlagQueueSpot;
 import me.timothy.bots.models.RedFlagReport;
+import me.timothy.bots.models.RedFlagUserHistoryComment;
+import me.timothy.bots.models.RedFlagUserHistoryLink;
+import me.timothy.bots.models.RedFlagUserHistorySort;
 import me.timothy.bots.models.Username;
 import me.timothy.jreddit.RedditUtils;
 import me.timothy.jreddit.info.Comment;
@@ -57,6 +64,7 @@ public class RedFlagsDriver {
 		
 		redFlagDetectors = new ArrayList<>();
 		redFlagDetectors.add(new RedFlagForSubredditDetector(loansDatabase, loansConfig));
+		redFlagDetectors.add(new RedFlagForActivityGapDetector());
 	}
 	
 	/**
@@ -112,6 +120,9 @@ public class RedFlagsDriver {
 	 * @param flags the flag
 	 */
 	private void saveFlags(RedFlagReport report, List<RedFlag> flags) {
+		if(flags == null)
+			return;
+		
 		for(RedFlag flag : flags) {
 			RedFlag similiar = database.getRedFlagMapping().fetchByReportAndTypeAndIden(report.id, flag.type.databaseIdentifier, flag.identifier);
 			if(similiar != null) {
@@ -142,16 +153,6 @@ public class RedFlagsDriver {
 		RedFlagReport report = database.getRedFlagReportMapping().fetchByID(spot.reportId);
 		Username username = database.getUsernameMapping().fetchById(spot.usernameId);
 		logger.info("Continuing queued red flag report on " + username);
-		
-		if(report.afterFullname == null) {
-			for(IRedFlagDetector detector : redFlagDetectors) {
-				detector.start(username);
-			}
-		}else {
-			for(IRedFlagDetector detector : redFlagDetectors) {
-				detector.resume(username);
-			}
-		}
 		int[] requests = new int[] { 0 };
 		while(requests[0] < numRequests) {
 			logger.trace("Fetching another page of history about " + username.username);
@@ -177,18 +178,14 @@ public class RedFlagsDriver {
 						oldestFullname = comment.fullname();
 						oldestRedditUTC = comment.createdUTC();
 					}
-					for(IRedFlagDetector detector : redFlagDetectors) {
-						saveFlags(report, detector.parseComment(comment));
-					}
+					database.getRedFlagUserHistoryCommentMapping().save(new RedFlagUserHistoryComment(comment, report.id, username.userId));
 				}else if(child instanceof Link) {
 					Link link = (Link)child;
 					if(oldestFullname == null || (link.createdUTC() < oldestRedditUTC)) {
 						oldestFullname = link.fullname();
 						oldestRedditUTC = link.createdUTC();
 					}
-					for(IRedFlagDetector detector : redFlagDetectors) {
-						saveFlags(report, detector.parseLink(link));
-					}
+					database.getRedFlagUserHistoryLinkMapping().save(new RedFlagUserHistoryLink(link, report.id, username.userId));
 				}
 			}
 			
@@ -196,9 +193,71 @@ public class RedFlagsDriver {
 				// we're at the end
 				logger.trace("Reached the end of " + username.username + "'s history");
 				
-				for(IRedFlagDetector detector : redFlagDetectors) {
-					saveFlags(report, detector.finish());
+				logger.trace("Sorting " + username.username + "'s history for faster processing...");
+				long start = System.currentTimeMillis();
+				database.getRedFlagUserHistorySortMapping().produceSort(database, report.id);
+				long time = System.currentTimeMillis() - start;
+				logger.printf(Level.TRACE, "Finished sorting history in %d milliseconds..", time);
+				
+				logger.trace("Generating red flags...");
+				start = System.currentTimeMillis();
+				List<IRedFlagDetector> detectors = redFlagDetectors;
+				RedFlagUserHistoryCommentMapping cMapping = database.getRedFlagUserHistoryCommentMapping();
+				RedFlagUserHistoryLinkMapping lMapping = database.getRedFlagUserHistoryLinkMapping();
+				RedFlagUserHistorySortMapping sMapping = database.getRedFlagUserHistorySortMapping();
+				
+				while(detectors != null) { 
+					long sweepStart = System.currentTimeMillis();
+					for(IRedFlagDetector detector : detectors) {
+						detector.start(username);
+					}
+					
+					RedFlagUserHistorySort next = sMapping.fetchNext(report.id, -1);
+					while(next != null) {
+						switch(next.table) { 
+						case Comment:
+							RedFlagUserHistoryComment comment = cMapping.fetchByID(next.foreignId);
+							for(IRedFlagDetector detector : detectors) {
+								saveFlags(report, detector.parseComment(comment));
+							}
+							break;
+						case Link:
+							RedFlagUserHistoryLink link = lMapping.fetchByID(next.foreignId);
+							for(IRedFlagDetector detector : detectors) {
+								saveFlags(report, detector.parseLink(link));
+							}
+							break;
+						}
+						
+						next = sMapping.fetchNext(report.id, next.sort);
+					}
+					
+					List<IRedFlagDetector> newDetectors = null;
+					for(IRedFlagDetector detector : detectors) {
+						saveFlags(report, detector.finish());
+						if(detector.requiresResweep()) {
+							if(newDetectors == null) {
+								newDetectors = new ArrayList<>();
+							}
+							newDetectors.add(detector);
+							
+							logger.printf(Level.TRACE, "Finished sweep in %d milliseconds - starting another sweep", System.currentTimeMillis() - sweepStart);
+						}
+					}
+					detectors = newDetectors;
 				}
+				time = System.currentTimeMillis() - start;
+				logger.printf(Level.TRACE, "Finished generating processing red flags in %d milliseconds", time);
+				
+				logger.trace("Cleaning up red flag temporary table...");
+				start = System.currentTimeMillis();
+				sMapping.deleteByReport(report.id);
+				lMapping.deleteByReportID(report.id);
+				cMapping.deleteByReportID(report.id);
+				time = System.currentTimeMillis() - start;
+				logger.printf(Level.TRACE, "Finished clearing temporary tables in %d milliseconds", time);
+				
+				
 				
 				spot.completedAt = new Timestamp(System.currentTimeMillis());
 				database.getRedFlagQueueSpotMapping().save(spot);;
@@ -210,12 +269,6 @@ public class RedFlagsDriver {
 				logger.trace("We found more history (oldest fullname is now " + oldestFullname + " @ " + oldestRedditUTC + ")");
 				report.afterFullname = oldestFullname;
 				database.getRedFlagReportMapping().save(report);
-			}
-		}
-		
-		if(spot.completedAt == null) {
-			for(IRedFlagDetector detector : redFlagDetectors) {
-				detector.pause();
 			}
 		}
 		
