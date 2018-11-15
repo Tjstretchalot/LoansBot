@@ -19,6 +19,7 @@ import me.timothy.bots.database.LCCMapping;
 import me.timothy.bots.database.LoanMapping;
 import me.timothy.bots.database.MappingDatabase;
 import me.timothy.bots.database.ObjectMapping;
+import me.timothy.bots.database.PromotionBlacklistMapping;
 import me.timothy.bots.database.RecentPostMapping;
 import me.timothy.bots.database.RecheckMapping;
 import me.timothy.bots.database.RedFlagForSubredditMapping;
@@ -47,6 +48,7 @@ import me.timothy.bots.database.mysql.MysqlCreationInfoMapping;
 import me.timothy.bots.database.mysql.MysqlFullnameMapping;
 import me.timothy.bots.database.mysql.MysqlLCCMapping;
 import me.timothy.bots.database.mysql.MysqlLoanMapping;
+import me.timothy.bots.database.mysql.MysqlPromotionBlacklistMapping;
 import me.timothy.bots.database.mysql.MysqlRecentPostMapping;
 import me.timothy.bots.database.mysql.MysqlRecheckMapping;
 import me.timothy.bots.database.mysql.MysqlRedFlagForSubredditMapping;
@@ -74,6 +76,7 @@ import me.timothy.bots.models.CreationInfo;
 import me.timothy.bots.models.Fullname;
 import me.timothy.bots.models.LendersCampContributor;
 import me.timothy.bots.models.Loan;
+import me.timothy.bots.models.PromotionBlacklist;
 import me.timothy.bots.models.RecentPost;
 import me.timothy.bots.models.Recheck;
 import me.timothy.bots.models.RedFlag;
@@ -163,6 +166,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		addMapping(RedFlagUserHistoryComment.class, new MysqlRedFlagUserHistoryCommentMapping(this, connection));
 		addMapping(RedFlagUserHistoryLink.class, new MysqlRedFlagUserHistoryLinkMapping(this, connection));
 		addMapping(RedFlagUserHistorySort.class, new MysqlRedFlagUserHistorySortMapping(this, connection));
+		addMapping(PromotionBlacklist.class, new MysqlPromotionBlacklistMapping(this, connection));
 	}
 	
 	private <A> void addMapping(Class<A> cl, ObjectMapping<A> mapping) {
@@ -290,6 +294,9 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	}
 	public RedFlagUserHistorySortMapping getRedFlagUserHistorySortMapping() {
 		return (RedFlagUserHistorySortMapping) mappingsDict.get(RedFlagUserHistorySort.class);
+	}
+	public PromotionBlacklistMapping getPromotionBlacklistMapping() { 
+		return (PromotionBlacklistMapping) mappingsDict.get(PromotionBlacklist.class);
 	}
 	/*
 	 * The following don't match the "MapperDatabase" I have setup, because I'm subclassing

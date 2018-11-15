@@ -8,6 +8,8 @@ import java.util.List;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
 import me.timothy.bots.Bot;
@@ -158,11 +160,21 @@ public class RedFlagsDriver {
 			logger.trace("Fetching another page of history about " + username.username);
 			Listing history = new Retryable<Listing>("continueQueuedRedFlagReport", maybeLoginAgainRunnable) {
 
+				@SuppressWarnings("unchecked")
 				@Override
 				protected Listing runImpl() throws Exception {
 					requests[0]++;
 					
-					return RedditUtils.getUserHistory(username.username, "new", null, report.afterFullname, null, 25, bot.getUser());
+					Listing result = RedditUtils.getUserHistory(username.username, "new", null, report.afterFullname, null, 25, bot.getUser());
+					if(result == null) {
+						logger.trace(username.username + " does not exist!");
+						
+						JSONObject jObj = new JSONObject();
+						jObj.put("data", new JSONObject());
+						jObj.put("children", new JSONArray());
+						return new Listing(jObj);
+					}
+					return result;
 				}
 				
 			}.run();

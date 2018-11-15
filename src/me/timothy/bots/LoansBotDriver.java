@@ -1,5 +1,6 @@
 package me.timothy.bots;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -441,7 +442,7 @@ public class LoansBotDriver extends BotDriver {
 			
 			List<Username> usernames = ldb.getUsernameMapping().fetchByUserId(userToCheck.id);
 			int numberOfLoansAsLender = ldb.getLoanMapping().fetchNumberOfLoansWithUserAsLender(userToCheck.id);
-			if(numberOfLoansAsLender >= 7 && !ldb.getLccMapping().contains(userToCheck.id)) {
+			if(numberOfLoansAsLender >= 7 && !ldb.getLccMapping().contains(userToCheck.id) && !ldb.getPromotionBlacklistMapping().contains(userToCheck.id)) {
 				logger.info(String.format("Inviting user %d (%s) as a contributor to lenderscamp (%d completed loans as lender)", userToCheck.id, usernames.get(0).username, numberOfLoansAsLender));
 				for(final Username username : usernames) {
 					new Retryable<Boolean>("Add contributor", maybeLoginAgainRunnable) {
@@ -461,7 +462,7 @@ public class LoansBotDriver extends BotDriver {
 		
 		lccProgressProps.setProperty("id_next", String.valueOf(idNext));
 		lccProgressProps.setProperty("last_check", String.valueOf(theTime));
-		try(FileWriter fw = new FileWriter(checkFile)) {
+		try(BufferedWriter fw = new BufferedWriter(new FileWriter(checkFile))) {
 			lccProgressProps.store(fw, "Lenders Camp Contributors Progress Information");
 		}catch(IOException ex) {
 			logger.catching(ex);

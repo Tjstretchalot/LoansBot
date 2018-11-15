@@ -33,4 +33,5 @@ public interface MappingDatabase {
 	public RedFlagUserHistoryCommentMapping getRedFlagUserHistoryCommentMapping();
 	public RedFlagUserHistoryLinkMapping getRedFlagUserHistoryLinkMapping();
 	public RedFlagUserHistorySortMapping getRedFlagUserHistorySortMapping();
+	public PromotionBlacklistMapping getPromotionBlacklistMapping();
 }
