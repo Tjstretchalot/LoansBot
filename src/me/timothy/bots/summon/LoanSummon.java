@@ -102,6 +102,8 @@ public class LoanSummon implements CommentSummon {
 			Loan loan = new Loan(-1, doerU.id, doneToU.id, amountPennies, 0, false, false, null, new Timestamp(now), new Timestamp(now), null);
 			CreationInfo cInfoRetro = attemptRetroactiveLoan(database, loan); // this may set the loan id, which will cause it to be updated rather than added
 			database.getLoanMapping().save(loan);
+			respInfo.addTemporaryString("loan id", Integer.toString(loan.id));
+			
 			CreationInfo cInfo = null;
 			if(cInfoRetro != null) {
 				cInfo = new CreationInfo(cInfoRetro.id, loan.id, CreationInfo.CreationType.REDDIT, 
