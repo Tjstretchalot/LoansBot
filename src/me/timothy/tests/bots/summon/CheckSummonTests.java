@@ -97,6 +97,70 @@ public class CheckSummonTests {
 	}
 	
 	@Test
+	public void testRespondsToEscapedUnderscore() {
+		database.getResponseMapping().save(new Response(-1, "check", "test check body", now, now));
+		Comment comment = SummonTestUtils.createComment("$check [/u/john\\_doe](https://reddit.com/user/john_doe)", "john_doe");
+		
+		SummonResponse response = summon.handleComment(comment, database, config);
+		assertNotNull(response);
+		
+		comment = SummonTestUtils.createComment("$check /u/alfred\\_the\\_third", "alfred_the_third");
+		response = summon.handleComment(comment, database, config);
+		assertNotNull(response);
+		
+		comment = SummonTestUtils.createComment("$check u/three\\_\\_two", "three__two");
+		response = summon.handleComment(comment, database, config);
+		assertNotNull(response);
+	}
+	
+	@Test
+	public void testDoesntRespondToBadEscapedUnderscore() {
+		database.getResponseMapping().save(new Response(-1, "check", "test check body", now, now));
+		Comment comment = SummonTestUtils.createComment("$check [/u/john\\_doe](https://reddit.com/user/john\\_doe)", "john_doe");
+		
+		SummonResponse response = summon.handleComment(comment, database, config);
+		assertNull(response);
+
+
+		comment = SummonTestUtils.createComment("$check [/u/pink_](https://reddit.com/user/pink\\_)", "pink_"); // cannot escape in link
+		response = summon.handleComment(comment, database, config);
+		assertNull(response);
+		
+		comment = SummonTestUtils.createComment("$check u\\_/three\\_\\_two", "three__two");
+		response = summon.handleComment(comment, database, config);
+		assertNull(response);
+
+		comment = SummonTestUtils.createComment("$check u/\\three", "three");
+		response = summon.handleComment(comment, database, config);
+		assertNull(response);
+
+		comment = SummonTestUtils.createComment("$check u/th\\ree", "three");
+		response = summon.handleComment(comment, database, config);
+		assertNull(response);
+		
+		comment = SummonTestUtils.createComment("$check u/\\three_\\test", "three");
+		response = summon.handleComment(comment, database, config);
+		assertNull(response);
+
+		comment = SummonTestUtils.createComment("$check u\\/three", "three");
+		response = summon.handleComment(comment, database, config);
+		assertNull(response);
+		
+
+		comment = SummonTestUtils.createComment("$check \\u/_three", "three");
+		response = summon.handleComment(comment, database, config);
+		assertNull(response);
+
+		comment = SummonTestUtils.createComment("$check u\\/_three", "three");
+		response = summon.handleComment(comment, database, config);
+		assertNull(response);
+
+		comment = SummonTestUtils.createComment("$check \\/u/_three", "three");
+		response = summon.handleComment(comment, database, config);
+		assertNull(response);
+	}
+	
+	@Test
 	public void testDoesntRespondToSelfComment() {
 		Comment comment = SummonTestUtils.createComment("$check /u/john", "LoansBot");
 		

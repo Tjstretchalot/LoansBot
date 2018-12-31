@@ -88,6 +88,13 @@ public class UsernameToken implements ISummonToken {
 	private boolean seenTrailingSlash;
 	
 	/**
+	 * This is set when we see a backslash character '\\'. When followed by an escapable character such as
+	 * '_' this just gives us the character '_' and the backslash is omitted. In other cases, parsing the
+	 * username fails since \\ is not an allowed character
+	 */
+	private boolean escaped;
+	
+	/**
 	 * This is the username that is being referenced. In links, the information is given
 	 * twice and this is referring to the visible section. In non-linked sections this
 	 * will be the only variable storing the text of the username and will always start
@@ -136,6 +143,7 @@ public class UsernameToken implements ISummonToken {
 		seenTrailingSlash = false;
 		textUsername = null;
 		link = null;
+		escaped = false;
 		
 		
 		if(c == '[') {
@@ -159,7 +167,8 @@ public class UsernameToken implements ISummonToken {
 				if(inLinkTextSection) {
 					if(seenU && !seenTrailingSlash)
 						return false;
-					
+					if(escaped)
+						return false;
 					if(textUsername == null || textUsername.length() < 3)
 						return false;
 					
@@ -170,7 +179,9 @@ public class UsernameToken implements ISummonToken {
 				
 				return false;
 			}else if(c == '/') {
-				if(!seenLeadingSlash && !seenU) {
+				if(escaped)
+					return false;
+				else if(!seenLeadingSlash && !seenU) {
 					seenLeadingSlash = true;
 					return true;
 				}else if(seenU && !seenTrailingSlash) {
@@ -188,8 +199,21 @@ public class UsernameToken implements ISummonToken {
 				}
 			}
 			
+			if(c == '\\') {
+				if(escaped)
+					return false;
+				escaped = true;
+				return true;
+			}
+			
 			if(!Character.isDigit(c) && !Character.isAlphabetic(c) && c != '-' && c != '_') {
 				return false;
+			}
+			
+			if(escaped) {
+				if(c != '_')
+					return false;
+				escaped = false;
 			}
 			
 			if(!seenTrailingSlash) {
@@ -237,6 +261,9 @@ public class UsernameToken implements ISummonToken {
 
 	@Override
 	public boolean finish() {
+		if(escaped)
+			return false;
+		
 		if(!isLink) {
 			if(!seenU)
 				return false;
