@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -81,6 +82,26 @@ public class MysqlPromotionBlacklistMapping extends MysqlObjectWithIDMapping<Pro
 		return fetchByAction("SELECT 1 FROM " + table + " WHERE user_id=? AND removed_at IS NULL LIMIT 1",
 				new PreparedStatementSetVarsUnsafe(new MysqlTypeValueTuple(Types.INTEGER, personId)),
 				(set) -> set.first());
+	}
+
+	@Override
+	public PromotionBlacklist fetchById(int userId) {
+		return fetchByAction("SELECT * FROM " + table + " WHERE user_id=? AND removed_at IS NULL LIMIT 1", 
+				new PreparedStatementSetVarsUnsafe(new MysqlTypeValueTuple(Types.INTEGER, userId)),
+				fetchFromSetFunction());
+	}
+
+	@Override
+	public List<PromotionBlacklist> fetchAllById(int userId) {
+		return fetchByAction("SELECT * FROM " + table + " WHERE user_id=?", 
+				new PreparedStatementSetVarsUnsafe(new MysqlTypeValueTuple(Types.INTEGER, userId)),
+				fetchListFromSetFunction());
+	}
+
+	@Override
+	public void remove(int userId) {
+		runStatement("UPDATE " + table + " SET removed_at=NOW() WHERE user_id=? AND removed_at IS NULL LIMIT 1",
+				new PreparedStatementSetVarsUnsafe(new MysqlTypeValueTuple(Types.INTEGER, userId)));
 	}
 
 	@Override

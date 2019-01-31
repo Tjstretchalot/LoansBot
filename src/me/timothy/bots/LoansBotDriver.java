@@ -18,6 +18,7 @@ import me.timothy.bots.database.MappingDatabase;
 import me.timothy.bots.diagnostics.Diagnostics;
 import me.timothy.bots.models.BannedUser;
 import me.timothy.bots.models.LendersCampContributor;
+import me.timothy.bots.models.PromotionBlacklist;
 import me.timothy.bots.models.Recheck;
 import me.timothy.bots.models.ResetPasswordRequest;
 import me.timothy.bots.models.Response;
@@ -26,10 +27,12 @@ import me.timothy.bots.models.Username;
 import me.timothy.bots.redflags.RedFlagsDriver;
 import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
+import me.timothy.bots.responses.ResponseInfoFactory;
 import me.timothy.bots.summon.CommentSummon;
 import me.timothy.bots.summon.LinkSummon;
 import me.timothy.bots.summon.PMSummon;
 import me.timothy.bots.summon.RedFlagSummon;
+import me.timothy.bots.summon.VettedSummon;
 import me.timothy.jreddit.RedditUtils;
 import me.timothy.jreddit.info.Account;
 import me.timothy.jreddit.info.Comment;
@@ -89,6 +92,16 @@ public class LoansBotDriver extends BotDriver {
 			CommentSummon[] commentSummons, PMSummon[] pmSummons,
 			LinkSummon[] submissionSummons) {
 		super(database, config, bot, commentSummons, pmSummons, submissionSummons);
+		
+		((VettedSummon)pmSummons[0]).inviter = (user) -> {
+			new Retryable<Boolean>("Invite to lenders camp", maybeLoginAgainRunnable){
+				@Override
+				protected Boolean runImpl() throws Exception {
+					RedditUtils.addContributor("lenderscamp", user.username, bot.getUser());
+					return true;
+				}
+			}.run();
+		};
 		
 		diagnostics = new Diagnostics(new File("diagnostics.log"));
 		
@@ -435,28 +448,40 @@ public class LoansBotDriver extends BotDriver {
 			idNext++;
 		}
 		
+		String bodyFormat = ldb.getResponseMapping().fetchByName("vet_user_initial_pm_body").responseBody;
+		
+		// can't be bot since bot is this.bot
+		User _bot = ldb.getUserMapping().fetchOrCreateByName(config.getProperty("user.username"));
+		
 		for(Integer userToCheckId : userIdsToCheck) {
 			User userToCheck = ldb.getUserMapping().fetchById(userToCheckId);
 			if(userToCheck == null)
 				continue;
 			
+			if(!ldb.getPromotionBlacklistMapping().fetchAllById(userToCheck.id).isEmpty())
+				continue;
+			
 			List<Username> usernames = ldb.getUsernameMapping().fetchByUserId(userToCheck.id);
 			int numberOfLoansAsLender = ldb.getLoanMapping().fetchNumberOfLoansWithUserAsLender(userToCheck.id);
 			if(numberOfLoansAsLender >= 7 && !ldb.getLccMapping().contains(userToCheck.id) && !ldb.getPromotionBlacklistMapping().contains(userToCheck.id)) {
-				logger.info(String.format("Inviting user %d (%s) as a contributor to lenderscamp (%d completed loans as lender)", userToCheck.id, usernames.get(0).username, numberOfLoansAsLender));
+				logger.info(String.format("Asking mods to vet user %d (%s) (%d completed loans as lender)", userToCheck.id, usernames.get(0).username, numberOfLoansAsLender));
+				ldb.getPromotionBlacklistMapping().save(new PromotionBlacklist(-1, userToCheck.id, _bot.id, "Vetting required", 
+						new Timestamp(System.currentTimeMillis()), null));
 				for(final Username username : usernames) {
-					new Retryable<Boolean>("Add contributor", maybeLoginAgainRunnable) {
+					ResponseInfo respInfo = new ResponseInfo(ResponseInfoFactory.base);
+					respInfo.addTemporaryString("username", username.username);
+					respInfo.addTemporaryString("num completed as lender", Integer.toString(numberOfLoansAsLender));
+					String body = new ResponseFormatter(bodyFormat, respInfo).getFormattedResponse(config, ldb);
+					
+					new Retryable<Boolean>("Send vet request", maybeLoginAgainRunnable) {
 						@Override
 						protected Boolean runImpl() throws Exception {
-							RedditUtils.addContributor("lenderscamp", username.username, bot.getUser());
+							RedditUtils.sendPersonalMessage(bot.getUser(), "/r/borrow", "Vetting Required: /u/" + username.username, body);
 							return Boolean.TRUE;
 						}
 					}.run();
+					sleepFor(BRIEF_PAUSE_MS);
 				}
-				sleepFor(BRIEF_PAUSE_MS);
-				long now = System.currentTimeMillis();
-				LendersCampContributor lcc = new LendersCampContributor(-1, userToCheck.id, true, new Timestamp(now), new Timestamp(now));
-				ldb.getLccMapping().save(lcc);
 			}
 		}
 		

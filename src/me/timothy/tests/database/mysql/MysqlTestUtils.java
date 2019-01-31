@@ -8,10 +8,12 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 
 import org.junit.Assert;
 
 import me.timothy.bots.LoansDatabase;
+import me.timothy.bots.database.MappingDatabase;
 
 /**
  * Contains utility functions that are used in many MySQL database
@@ -116,5 +118,23 @@ public class MysqlTestUtils {
 		}
 		
 		Assert.assertEquals(objs.length, list.size());
+	}
+	
+	/**
+	 * Pads the database with some random users (a random quantity) to prevent a test from passing
+	 * even when it should fail because ids happen to correspond
+	 * 
+	 * @param database the database
+	 */
+	public static void padUsers(MappingDatabase database) {
+		Random rng = new Random();
+		for(int i = 0, num = rng.nextInt(15); i < num; i++) {
+			StringBuilder name = new StringBuilder();
+			for(int j = 0, nmLen = rng.nextInt(5) + 5; j < nmLen; j++) { 
+				char c = (char) ('a' + rng.nextInt(26));
+				name.append(c);
+			}
+			database.getUserMapping().fetchOrCreateByName(name.toString());
+		}
 	}
 }

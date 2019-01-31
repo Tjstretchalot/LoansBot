@@ -240,10 +240,20 @@ public class SummonMatcher {
 		
 		currentIndex++;
 		
-		while(!isTokenEnd()) {
-			if(!token.next(string.charAt(currentIndex)))
-				return false;
-			currentIndex++;
+		if(token instanceof IExplicitTerminatingToken) {
+			IExplicitTerminatingToken eToken = (IExplicitTerminatingToken)token;
+
+			while(!eToken.isTokenEnd() && currentIndex < string.length()) {
+				if(!token.next(string.charAt(currentIndex)))
+					return false;
+				currentIndex++;
+			}
+		}else {
+			while(!isTokenEnd()) {
+				if(!token.next(string.charAt(currentIndex)))
+					return false;
+				currentIndex++;
+			}
 		}
 		
 		return token.finish();
@@ -264,10 +274,20 @@ public class SummonMatcher {
 		
 		refStartIndex[0]++;
 		
-		while(!isTokenEnd(refStartIndex[0])) {
-			if(!token.next(string.charAt(refStartIndex[0])))
-				throw new IllegalStateException("No match for token at " + refStartIndex[0]);
-			refStartIndex[0]++;
+		if(token instanceof IExplicitTerminatingToken) {
+			IExplicitTerminatingToken eToken = (IExplicitTerminatingToken) token;
+
+			while(!eToken.isTokenEnd() && refStartIndex[0] < string.length()) {
+				if(!token.next(string.charAt(refStartIndex[0])))
+					throw new IllegalStateException("No match for token at " + refStartIndex[0]);
+				refStartIndex[0]++;
+			}
+		}else {
+			while(!isTokenEnd(refStartIndex[0])) {
+				if(!token.next(string.charAt(refStartIndex[0])))
+					throw new IllegalStateException("No match for token at " + refStartIndex[0]);
+				refStartIndex[0]++;
+			}
 		}
 		
 		if(!token.finish())

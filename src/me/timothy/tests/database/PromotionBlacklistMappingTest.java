@@ -4,14 +4,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.sql.Timestamp;
 import java.util.List;
-
 import org.junit.Test;
 
 import me.timothy.bots.database.MappingDatabase;
+import me.timothy.bots.database.PromotionBlacklistMapping;
 import me.timothy.bots.models.PromotionBlacklist;
 import me.timothy.bots.models.User;
 import me.timothy.tests.database.mysql.MysqlTestUtils;
@@ -25,7 +26,7 @@ public class PromotionBlacklistMappingTest {
 	}
 	
 	@Test
-	public void testAll() {
+	public void testStandard() {
 		long now = System.currentTimeMillis();
 		
 		User john = database.getUserMapping().fetchOrCreateByName("john");
@@ -79,5 +80,40 @@ public class PromotionBlacklistMappingTest {
 		assertFalse(database.getPromotionBlacklistMapping().contains(greg.id));
 		assertFalse(database.getPromotionBlacklistMapping().contains(john.id));
 		assertFalse(database.getPromotionBlacklistMapping().contains(mod.id));
+	}
+	
+	@Test
+	public void testFetchByIdAndRemove() {
+		PromotionBlacklistMapping map = database.getPromotionBlacklistMapping();
+		long now = System.currentTimeMillis();
+		
+		MysqlTestUtils.padUsers(database);
+		User john = database.getUserMapping().fetchOrCreateByName("john");
+		User greg = database.getUserMapping().fetchOrCreateByName("greg");
+		User mod = database.getUserMapping().fetchOrCreateByName("moder");
+		
+		PromotionBlacklist pb = map.fetchById(john.id);
+		assertNull(pb);
+		
+		assertFalse(map.contains(john.id));
+		assertFalse(map.contains(mod.id));
+		
+		PromotionBlacklist gregPb = new PromotionBlacklist(-1, greg.id, mod.id, "nobody likes him", new Timestamp(now - 10000), null);
+		map.save(gregPb);
+		
+		pb = map.fetchById(greg.id);
+		assertEquals(gregPb, pb);
+		
+		assertTrue(map.contains(greg.id));
+		assertFalse(map.contains(john.id));
+		assertFalse(map.contains(mod.id));
+		
+		map.remove(greg.id);
+		
+		pb = map.fetchById(greg.id);
+		assertNull(pb);
+		assertFalse(map.contains(greg.id));
+		assertFalse(map.contains(john.id));
+		assertFalse(map.contains(mod.id));
 	}
 }

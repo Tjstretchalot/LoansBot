@@ -13,6 +13,7 @@ import me.timothy.bots.LoansResponseInfoFactory;
 import me.timothy.bots.currencies.CurrencyHandler;
 import me.timothy.jreddit.info.Comment;
 import me.timothy.jreddit.info.Link;
+import me.timothy.jreddit.info.Message;
 import me.timothy.tests.database.mysql.MysqlTestUtils;
 
 /**
@@ -115,6 +116,52 @@ public class SummonTestUtils {
 		data.put("link_url", "http://reddit.com");
 		obj.put("data", data);
 		return new Comment(obj);
+	}
+	
+	/**
+	 * Creates a pm from a given user with the given subject and body
+	 * 
+	 * @param subject the subject
+	 * @param body message body
+	 * @param author who wrote the message, not a subreddit
+	 * @return the corresponding message
+	 */
+	@SuppressWarnings("unchecked")
+	public static Message createPM(String subject, String body, String author) {
+		JSONObject obj = new JSONObject();
+		JSONObject data = new JSONObject();
+		data.put("subject", subject);
+		data.put("body", body);
+		data.put("author", author);
+		data.put("was_comment", false);
+		data.put("created_utc", System.currentTimeMillis() / 1000.);
+		data.put("created", System.currentTimeMillis() / 1000.);
+		data.put("new", true);
+		obj.put("data", data);
+		return new Message(obj);
+	}
+	
+	/**
+	 * Creates a pm from the given subreddit with the given subject and body
+	 * 
+	 * @param subject the subject
+	 * @param body the body
+	 * @param subreddit the subreddit who sent the message, not a username
+	 * @return the corresponding message
+	 */
+	@SuppressWarnings("unchecked")
+	public static Message createPMFromSub(String subject, String body, String subreddit) {
+		JSONObject obj = new JSONObject();
+		JSONObject data = new JSONObject();
+		data.put("subject", subject);
+		data.put("body", body);
+		data.put("subreddit", subreddit);
+		data.put("was_comment", false);
+		data.put("created_utc", System.currentTimeMillis() / 1000.);
+		data.put("created", System.currentTimeMillis() / 1000.);
+		data.put("new", true);
+		obj.put("data", data);
+		return new Message(obj);
 	}
 	
 	/**

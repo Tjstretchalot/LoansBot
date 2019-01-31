@@ -87,6 +87,7 @@ public class PatternFactory {
 	 * Require or allow that the next token be a currency deliminator, eg USD or GDP
 	 * 
 	 * @param id how to reference this currency later
+	 * @param optional true if this token may be omitted, false otherwise
 	 * @return this
 	 */
 	public PatternFactory addCurrency(String id, boolean optional) {
@@ -102,6 +103,31 @@ public class PatternFactory {
 	 */
 	public PatternFactory addCurrency(String id) {
 		return addCurrency(id, false);
+	}
+	
+	/**
+	 * Require that the next token be a quoted string (if optional, quotes are
+	 * required and indicate it is this token, otherwise quotes may be omitted
+	 * when there is no whitespace)
+	 * 
+	 * @param id how to reference this token later
+	 * @param optional true if this token may be omitted, false otherwise
+	 * @return this
+	 */
+	public PatternFactory addQuotedString(String id, boolean optional) {
+		tokens.add(new QuotedStringToken(id, optional));
+		return this;
+	}
+	
+	/**
+	 * Require that the next token be a quoted string or a single word which
+	 * can be referenced through id
+	 * 
+	 * @param id how to reference this token later
+	 * @return this
+	 */
+	public PatternFactory addQuotedString(String id) {
+		return addQuotedString(id, false);
 	}
 	
 	/**
