@@ -40,4 +40,15 @@ public interface LoanMapping extends ObjectMapping<Loan> {
 	 * @return the number of loans with the specified user as the lender
 	 */
 	public int fetchNumberOfLoansWithUserAsLender(int lenderId);
+	
+	/**
+	 * Fetches two integers, the first corresponds to the number of loans with the specified
+	 * user as the lender, except deleted loans. The second corresponds to the number of 
+	 * loans with the specified user as the lender which have a principal repayment equal
+	 * to the original principal, not counting deleted loans.
+	 * 
+	 * @param lenderId the id of the lender oyu are interested in
+	 * @return [loans by that lender, loans completed by that lender]
+	 */
+	public int[] fetchNumberOfLoansCompletedWithUserAsLender(int lenderId);
 }

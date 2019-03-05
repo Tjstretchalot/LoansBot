@@ -17,6 +17,7 @@ import org.json.simple.parser.ParseException;
 import me.timothy.bots.database.MappingDatabase;
 import me.timothy.bots.diagnostics.Diagnostics;
 import me.timothy.bots.models.BannedUser;
+import me.timothy.bots.models.DelayedVettingRequest;
 import me.timothy.bots.models.LendersCampContributor;
 import me.timothy.bots.models.PromotionBlacklist;
 import me.timothy.bots.models.Recheck;
@@ -448,7 +449,8 @@ public class LoansBotDriver extends BotDriver {
 			idNext++;
 		}
 		
-		String bodyFormat = ldb.getResponseMapping().fetchByName("vet_user_initial_pm_body").responseBody;
+		String bodyFormatStd = ldb.getResponseMapping().fetchByName("vet_user_initial_pm_body").responseBody;
+		String bodyFormatDvr = ldb.getResponseMapping().fetchByName("vet_user_delayed_pm_body").responseBody;
 		
 		// can't be bot since bot is this.bot
 		User _bot = ldb.getUserMapping().fetchOrCreateByName(config.getProperty("user.username"));
@@ -458,25 +460,46 @@ public class LoansBotDriver extends BotDriver {
 			if(userToCheck == null)
 				continue;
 			
-			if(!ldb.getPromotionBlacklistMapping().fetchAllById(userToCheck.id).isEmpty())
-				continue;
-			
 			List<Username> usernames = ldb.getUsernameMapping().fetchByUserId(userToCheck.id);
-			int numberOfLoansAsLender = ldb.getLoanMapping().fetchNumberOfLoansWithUserAsLender(userToCheck.id);
-			if(numberOfLoansAsLender >= 7 && !ldb.getLccMapping().contains(userToCheck.id) && !ldb.getPromotionBlacklistMapping().contains(userToCheck.id)) {
-				logger.info(String.format("Asking mods to vet user %d (%s) (%d completed loans as lender)", userToCheck.id, usernames.get(0).username, numberOfLoansAsLender));
-				ldb.getPromotionBlacklistMapping().save(new PromotionBlacklist(-1, userToCheck.id, _bot.id, "Vetting required", 
-						new Timestamp(System.currentTimeMillis()), null));
+			int[] numLoansInfo = ldb.getLoanMapping().fetchNumberOfLoansCompletedWithUserAsLender(userToCheck.id);
+			int numberOfLoansAsLender = numLoansInfo[0];
+			int numberCompletedAsLender = numLoansInfo[1];
+			
+			DelayedVettingRequest dvr = null;
+			if(!ldb.getPromotionBlacklistMapping().fetchAllById(userToCheck.id).isEmpty()) {
+				dvr = ldb.getDelayedVettingRequestMapping().fetchByUserId(userToCheck.id);
+				if(dvr == null || dvr.numberLoans > numberOfLoansAsLender)
+					continue;
+			}
+			
+			if(numberCompletedAsLender >= 2 && numberOfLoansAsLender >= 7 && !ldb.getLccMapping().contains(userToCheck.id) && (dvr != null || !ldb.getPromotionBlacklistMapping().contains(userToCheck.id))) {
+				logger.info(String.format("Asking mods to vet user %d (%s) (%d loans as lender, %d completed)", userToCheck.id, usernames.get(0).username, numberOfLoansAsLender, numberCompletedAsLender));
+				if(dvr != null) {
+					dvr.rerequestedAt = new Timestamp(System.currentTimeMillis());
+					ldb.getDelayedVettingRequestMapping().save(dvr);
+				}else {
+					ldb.getPromotionBlacklistMapping().save(new PromotionBlacklist(-1, userToCheck.id, _bot.id, "Vetting required", 
+							new Timestamp(System.currentTimeMillis()), null));
+				}
 				for(final Username username : usernames) {
 					ResponseInfo respInfo = new ResponseInfo(ResponseInfoFactory.base);
 					respInfo.addTemporaryString("username", username.username);
 					respInfo.addTemporaryString("num completed as lender", Integer.toString(numberOfLoansAsLender));
-					String body = new ResponseFormatter(bodyFormat, respInfo).getFormattedResponse(config, ldb);
+					respInfo.addTemporaryString("num actually completed as lender", Integer.toString(numberCompletedAsLender));
+					String body = null;
+					if(dvr == null) {
+						body = new ResponseFormatter(bodyFormatStd, respInfo).getFormattedResponse(config, ldb);
+					}else {
+						respInfo.addTemporaryString("delayed_at", SimpleDateFormat.getDateTimeInstance().format(dvr.createdAt));
+						respInfo.addTemporaryString("delayed_reason", dvr.reason);
+						body = new ResponseFormatter(bodyFormatDvr, respInfo).getFormattedResponse(config, ldb);
+					}
 					
+					final String bodyCp = body;
 					new Retryable<Boolean>("Send vet request", maybeLoginAgainRunnable) {
 						@Override
 						protected Boolean runImpl() throws Exception {
-							RedditUtils.sendPersonalMessage(bot.getUser(), "/r/borrow", "Vetting Required: /u/" + username.username, body);
+							RedditUtils.sendPersonalMessage(bot.getUser(), "/r/borrow", "Vetting Required: /u/" + username.username, bodyCp);
 							return Boolean.TRUE;
 						}
 					}.run();

@@ -6,6 +6,7 @@ import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.functions.IInviteToLendersCampFunction;
+import me.timothy.bots.models.DelayedVettingRequest;
 import me.timothy.bots.models.PromotionBlacklist;
 import me.timothy.bots.models.User;
 import me.timothy.bots.models.Username;
@@ -43,6 +44,12 @@ public class VettedSummon implements PMSummon {
 			.addQuotedString("reason")
 			.build();
 	
+	private static final SummonPattern REVISIT_PATTERN = new PatternFactory()
+			.addLiteral("$vetted")
+			.addLiteral("revisit")
+			.addQuotedString("reason")
+			.addInteger("number_loans")
+			.build();
 	/**
 	 * The thing that invites people to lenders camp
 	 */
@@ -75,17 +82,28 @@ public class VettedSummon implements PMSummon {
 		if(!subjMatcher.find())
 			return null;
 		
+		// Ahh! This is probably worth refactoring if it gets any crazier
 		boolean vetted = false;
-		String failReason = null;
+		boolean revisit = false;
+		String reason = null;
+		int numberLoans = -1;
 		if(IS_VETTED_PATTERN.matcher(message.body()).find()) {
 			vetted = true;
 		}else {
 			SummonMatcher matcher = IS_NOT_VETTED_PATTERN.matcher(message.body());
-			if(!matcher.find())
-				return null;
-			
-			ResponseInfo respInfo = matcher.group();
-			failReason = respInfo.getObject("reason").toString();
+			if(!matcher.find()) {
+				matcher = REVISIT_PATTERN.matcher(message.body());
+				if(!matcher.find()) 
+					return null;
+
+				ResponseInfo respInfo = matcher.group();
+				reason = respInfo.getObject("reason").toString();
+				numberLoans = Integer.valueOf(respInfo.getObject("number_loans").toString());
+				revisit = true;
+			}else {
+				ResponseInfo respInfo = matcher.group();
+				reason = respInfo.getObject("reason").toString();
+			}
 		}
 		
 		if(!isAuthorized(message, ldb, config)) 
@@ -109,12 +127,24 @@ public class VettedSummon implements PMSummon {
 			inviter.inviteToLendersCamp(username);
 			ldb.getPromotionBlacklistMapping().remove(username.userId);
 			return validAndVetted(message, ldb, config, username.username);
+		}else if(revisit) {
+			DelayedVettingRequest req = ldb.getDelayedVettingRequestMapping().fetchByUserId(username.userId);
+			if(req == null) {
+				req = new DelayedVettingRequest(-1, username.userId, 
+						numberLoans, reason, new Timestamp(System.currentTimeMillis()), null);
+			}else {
+				req.numberLoans = numberLoans;
+				req.reason = reason;
+			}
+			
+			ldb.getDelayedVettingRequestMapping().save(req);
+			return validAndDelayed(message, ldb, config, username.username, reason, numberLoans);
 		}else {
 			ldb.getPromotionBlacklistMapping().remove(username.userId);
 			ldb.getPromotionBlacklistMapping().save(new PromotionBlacklist(-1, username.userId, 
 					ldb.getUsernameMapping().fetchByUsername(config.getProperty("user.username")).userId,
-					failReason, new Timestamp(System.currentTimeMillis()), null));
-			return validAndNotVetted(message, ldb, config, username.username, failReason);
+					reason, new Timestamp(System.currentTimeMillis()), null));
+			return validAndNotVetted(message, ldb, config, username.username, reason);
 		}
 	}
 	
@@ -254,6 +284,25 @@ public class VettedSummon implements PMSummon {
 		
 		respInfo.addTemporaryString("user", user);
 		respInfo.addTemporaryString("reason", reason);
+		
+		String body = new ResponseFormatter(bodyFormat, respInfo).getFormattedResponse(config, ldb);
+		
+		return new SummonResponse(ResponseType.INVALID, body);
+	}
+	
+	private SummonResponse validAndDelayed(Message message, LoansDatabase ldb, FileConfiguration config, String user, String reason, int numberLoans) {
+		String bodyFormat = ldb.getResponseMapping().fetchByName("vetted_user_delayed_success_body").responseBody;
+		
+		ResponseInfo respInfo = new ResponseInfo(ResponseInfoFactory.base);
+
+		if(message.subreddit() != null)
+			respInfo.addTemporaryString("author", message.subreddit());
+		else
+			respInfo.addTemporaryString("author", message.author());
+		
+		respInfo.addTemporaryString("user", user);
+		respInfo.addTemporaryString("reason", reason);
+		respInfo.addTemporaryString("number_loans", Integer.toString(numberLoans));
 		
 		String body = new ResponseFormatter(bodyFormat, respInfo).getFormattedResponse(config, ldb);
 		

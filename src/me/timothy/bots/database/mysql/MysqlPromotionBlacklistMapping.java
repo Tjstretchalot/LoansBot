@@ -85,7 +85,7 @@ public class MysqlPromotionBlacklistMapping extends MysqlObjectWithIDMapping<Pro
 	}
 
 	@Override
-	public PromotionBlacklist fetchById(int userId) {
+	public PromotionBlacklist fetchByUserId(int userId) {
 		return fetchByAction("SELECT * FROM " + table + " WHERE user_id=? AND removed_at IS NULL LIMIT 1", 
 				new PreparedStatementSetVarsUnsafe(new MysqlTypeValueTuple(Types.INTEGER, userId)),
 				fetchFromSetFunction());

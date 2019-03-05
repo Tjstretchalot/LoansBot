@@ -92,7 +92,7 @@ public class PromotionBlacklistMappingTest {
 		User greg = database.getUserMapping().fetchOrCreateByName("greg");
 		User mod = database.getUserMapping().fetchOrCreateByName("moder");
 		
-		PromotionBlacklist pb = map.fetchById(john.id);
+		PromotionBlacklist pb = map.fetchByUserId(john.id);
 		assertNull(pb);
 		
 		assertFalse(map.contains(john.id));
@@ -101,7 +101,7 @@ public class PromotionBlacklistMappingTest {
 		PromotionBlacklist gregPb = new PromotionBlacklist(-1, greg.id, mod.id, "nobody likes him", new Timestamp(now - 10000), null);
 		map.save(gregPb);
 		
-		pb = map.fetchById(greg.id);
+		pb = map.fetchByUserId(greg.id);
 		assertEquals(gregPb, pb);
 		
 		assertTrue(map.contains(greg.id));
@@ -110,7 +110,7 @@ public class PromotionBlacklistMappingTest {
 		
 		map.remove(greg.id);
 		
-		pb = map.fetchById(greg.id);
+		pb = map.fetchByUserId(greg.id);
 		assertNull(pb);
 		assertFalse(map.contains(greg.id));
 		assertFalse(map.contains(john.id));

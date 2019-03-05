@@ -18,6 +18,7 @@ import org.junit.Test;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.LoansFileConfiguration;
 import me.timothy.bots.functions.IInviteToLendersCampFunction;
+import me.timothy.bots.models.DelayedVettingRequest;
 import me.timothy.bots.models.PromotionBlacklist;
 import me.timothy.bots.models.Response;
 import me.timothy.bots.models.User;
@@ -178,7 +179,7 @@ public class VettedSummonTests {
 		assertNotNull(resp.getResponseMessage());
 		assertTrue(database.getPromotionBlacklistMapping().contains(badguy.id));
 		
-		PromotionBlacklist pb = database.getPromotionBlacklistMapping().fetchById(badguy.id);
+		PromotionBlacklist pb = database.getPromotionBlacklistMapping().fetchByUserId(badguy.id);
 		assertEquals("generic", pb.reason);
 		assertEquals(bot.id, pb.modUserId);
 	}
@@ -203,7 +204,7 @@ public class VettedSummonTests {
 		assertNotNull(resp.getResponseMessage());
 		assertTrue(database.getPromotionBlacklistMapping().contains(badguy.id));
 		
-		PromotionBlacklist pb = database.getPromotionBlacklistMapping().fetchById(badguy.id);
+		PromotionBlacklist pb = database.getPromotionBlacklistMapping().fetchByUserId(badguy.id);
 		assertEquals("this guy has no history except here", pb.reason);
 		assertEquals(bot.id, pb.modUserId);
 	}
@@ -228,8 +229,38 @@ public class VettedSummonTests {
 		assertNotNull(resp.getResponseMessage());
 		assertTrue(database.getPromotionBlacklistMapping().contains(badguy.id));
 		
-		PromotionBlacklist pb = database.getPromotionBlacklistMapping().fetchById(badguy.id);
+		PromotionBlacklist pb = database.getPromotionBlacklistMapping().fetchByUserId(badguy.id);
 		assertEquals("this guy has no 'history' except here", pb.reason);
 		assertEquals(bot.id, pb.modUserId);
+	}
+	
+	@Test
+	public void testHandlesVettingDelayed() {
+		database.getResponseMapping().save(new Response(-1, "vetted_user_delayed_success_body", "valid & delayed <user> by request from <author>; reason: <reason>", now, now));
+
+		User bot = database.getUserMapping().fetchOrCreateByName("LoansBot");
+		User badguy = database.getUserMapping().fetchOrCreateByName("badguy");
+		
+		database.getPromotionBlacklistMapping().save(new PromotionBlacklist(-1, badguy.id, bot.id, "Vetting required", 
+				new Timestamp(System.currentTimeMillis()), null));
+		
+		assertTrue(database.getPromotionBlacklistMapping().contains(badguy.id));
+		
+		Message message = SummonTestUtils.createPMFromSub("re: Vetting Required: /u/badguy", "$vetted revisit \"this guy has no 'history' except here\" 15", "borrow");
+		
+		SummonResponse resp = summon.handlePM(message, database, config);
+		
+		assertNotNull(resp);
+		assertNotNull(resp.getResponseMessage());
+		assertTrue(database.getPromotionBlacklistMapping().contains(badguy.id));
+		
+		PromotionBlacklist pb = database.getPromotionBlacklistMapping().fetchByUserId(badguy.id);
+		assertEquals("Vetting required", pb.reason);
+		assertEquals(bot.id, pb.modUserId);
+		
+		DelayedVettingRequest req = database.getDelayedVettingRequestMapping().fetchByUserId(badguy.id);
+		assertNotNull(req);
+		assertEquals("this guy has no 'history' except here", req.reason);
+		assertEquals(15, req.numberLoans);
 	}
 }

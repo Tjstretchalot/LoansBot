@@ -28,7 +28,9 @@ import org.junit.runners.Suite.SuiteClasses;
 			MysqlRedFlagQueueSpotMappingTest.class,
 			MysqlRedFlagUserHistoryCommentMappingTest.class,
 			MysqlRedFlagUserHistoryLinkMappingTest.class,
-			MysqlRedFlagUserHistorySortMappingTest.class
+			MysqlRedFlagUserHistorySortMappingTest.class,
+			MysqlPromotionBlacklistMappingTest.class,
+			MysqlDelayedVettingRequestMappingTest.class
 		})
 public class MysqlDatabaseTests {
 

@@ -131,6 +131,28 @@ public class PatternFactory {
 	}
 	
 	/**
+	 * Requires that the next token is an integer.
+	 * 
+	 * @param id how to reference this token later
+	 * @param optional true if this token may be omitted, false otherwise
+	 * @return this
+	 */
+	public PatternFactory addInteger(String id, boolean optional) {
+		tokens.add(new IntegerToken(id, optional));
+		return this;
+	}
+	
+	/**
+	 * Require that the next token is an integer, and sets that token to not be optional.
+	 * 
+	 * @param id how to reference this token later
+	 * @return this
+	 */
+	public PatternFactory addInteger(String id) {
+		return addInteger(id, false);
+	}
+	
+	/**
 	 * Build the summon pattern. After calling this all functions will
 	 * throw an NPE
 	 * 

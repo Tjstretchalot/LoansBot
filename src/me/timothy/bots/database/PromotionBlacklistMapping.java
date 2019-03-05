@@ -26,7 +26,7 @@ public interface PromotionBlacklistMapping extends ObjectMapping<PromotionBlackl
 	 * @param userId the user id of the person 
 	 * @return the corresponding row in the database, null if none
 	 */
-	public PromotionBlacklist fetchById(int userId);
+	public PromotionBlacklist fetchByUserId(int userId);
 	
 	/**
 	 * Fetches all entries, including deleted entries, for the given user id

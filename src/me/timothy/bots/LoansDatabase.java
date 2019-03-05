@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import me.timothy.bots.database.AdminUpdateMapping;
 import me.timothy.bots.database.BannedUserMapping;
 import me.timothy.bots.database.CreationInfoMapping;
+import me.timothy.bots.database.DelayedVettingRequestMapping;
 import me.timothy.bots.database.FullnameMapping;
 import me.timothy.bots.database.LCCMapping;
 import me.timothy.bots.database.LoanMapping;
@@ -45,6 +46,7 @@ import me.timothy.bots.database.WarningMapping;
 import me.timothy.bots.database.mysql.MysqlAdminUpdateMapping;
 import me.timothy.bots.database.mysql.MysqlBannedUserMapping;
 import me.timothy.bots.database.mysql.MysqlCreationInfoMapping;
+import me.timothy.bots.database.mysql.MysqlDelayedVettingRequestMapping;
 import me.timothy.bots.database.mysql.MysqlFullnameMapping;
 import me.timothy.bots.database.mysql.MysqlLCCMapping;
 import me.timothy.bots.database.mysql.MysqlLoanMapping;
@@ -73,6 +75,7 @@ import me.timothy.bots.database.mysql.MysqlWarningMapping;
 import me.timothy.bots.models.AdminUpdate;
 import me.timothy.bots.models.BannedUser;
 import me.timothy.bots.models.CreationInfo;
+import me.timothy.bots.models.DelayedVettingRequest;
 import me.timothy.bots.models.Fullname;
 import me.timothy.bots.models.LendersCampContributor;
 import me.timothy.bots.models.Loan;
@@ -167,6 +170,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		addMapping(RedFlagUserHistoryLink.class, new MysqlRedFlagUserHistoryLinkMapping(this, connection));
 		addMapping(RedFlagUserHistorySort.class, new MysqlRedFlagUserHistorySortMapping(this, connection));
 		addMapping(PromotionBlacklist.class, new MysqlPromotionBlacklistMapping(this, connection));
+		addMapping(DelayedVettingRequest.class, new MysqlDelayedVettingRequestMapping(this, connection));
 	}
 	
 	private <A> void addMapping(Class<A> cl, ObjectMapping<A> mapping) {
@@ -298,6 +302,10 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	public PromotionBlacklistMapping getPromotionBlacklistMapping() { 
 		return (PromotionBlacklistMapping) mappingsDict.get(PromotionBlacklist.class);
 	}
+	public DelayedVettingRequestMapping getDelayedVettingRequestMapping() {
+		return (DelayedVettingRequestMapping) mappingsDict.get(DelayedVettingRequest.class);
+	}
+	
 	/*
 	 * The following don't match the "MapperDatabase" I have setup, because I'm subclassing
 	 * from the generic Database from SummonableBot. I'm brainstorming ways to refactor this

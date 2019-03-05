@@ -163,6 +163,31 @@ public class MysqlLoanMapping extends MysqlObjectMapping<Loan> implements LoanMa
 			throw new RuntimeException(ex);
 		}
 	}
+	
+	public int[] fetchNumberOfLoansCompletedWithUserAsLender(int lenderId) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) AS cnt_net, SUM(principal_cents = principal_repayment_cents) AS cnt_comp FROM loans WHERE lender_id=? AND deleted=0");
+			statement.setInt(1, lenderId);
+			
+			ResultSet results = statement.executeQuery();
+			int numLoans = 0;
+			int numCompletedLoans = 0;
+			if(!results.next()) {
+				results.close();
+				statement.close();
+				throw new RuntimeException("COUNT(*) should always return 1 row, but it didn't");
+			}
+			numLoans = results.getInt(1);
+			numCompletedLoans = results.getInt(2);
+			results.close();
+			
+			statement.close();
+			return new int[] { numLoans, numCompletedLoans };
+		}catch(SQLException ex) {
+			logger.throwing(ex);
+			throw new RuntimeException(ex);
+		}
+	}
 
 	@Override
 	public List<Loan> fetchAll() {
