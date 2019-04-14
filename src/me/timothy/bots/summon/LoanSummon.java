@@ -123,7 +123,7 @@ public class LoanSummon implements CommentSummon {
 			}else {
 				resp = database.getResponseMapping().fetchByName("successful_loan").responseBody;
 			}
-			return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(resp, respInfo).getFormattedResponse(config, database));
+			return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(resp, respInfo).getFormattedResponse(config, database), "991c8042-3ecc-11e4-8052-12313d05258a");
 		}
 		return null;
 	}

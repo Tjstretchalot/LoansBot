@@ -118,7 +118,7 @@ public class ConfirmSummon implements CommentSummon {
 			
 			ResponseFormatter formatter = new ResponseFormatter(database.getResponseMapping().fetchByName(responseName).responseBody, ri);
 			
-			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, (LoansDatabase) db), "991c8042-3ecc-11e4-8052-12313d05258a");
+			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, (LoansDatabase) db));
 		}
 		return null;
 	}
