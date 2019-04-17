@@ -175,8 +175,9 @@ public class RedFlagsDriver {
 						logger.trace(username.username + " does not exist!");
 						
 						JSONObject jObj = new JSONObject();
-						jObj.put("data", new JSONObject());
-						jObj.put("children", new JSONArray());
+						JSONObject data = new JSONObject();
+						jObj.put("data", data);
+						data.put("children", new JSONArray());
 						return new Listing(jObj);
 					}
 					return result;
