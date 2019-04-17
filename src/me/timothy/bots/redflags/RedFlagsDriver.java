@@ -1,5 +1,6 @@
 package me.timothy.bots.redflags;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -164,8 +165,12 @@ public class RedFlagsDriver {
 				@Override
 				protected Listing runImpl() throws Exception {
 					requests[0]++;
-					
-					Listing result = RedditUtils.getUserHistory(username.username, "new", null, report.afterFullname, null, 25, bot.getUser());
+					Listing result;
+					try {
+						result = RedditUtils.getUserHistory(username.username, "new", null, report.afterFullname, null, 25, bot.getUser());
+					}catch(FileNotFoundException exc) {
+						result = null;
+					}
 					if(result == null) {
 						logger.trace(username.username + " does not exist!");
 						
