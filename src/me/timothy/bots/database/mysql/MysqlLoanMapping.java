@@ -234,7 +234,7 @@ public class MysqlLoanMapping extends MysqlObjectMapping<Loan> implements LoanMa
 				+ "unpaid TINYINT(1) NOT NULL DEFAULT 0, "
 				+ "deleted TINYINT(1) NOT NULL DEFAULT 0, "
 				+ "deleted_reason TEXT, "
-				+ "created_at TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
+				+ "created_at TIMESTAMP NOT NULL DEFAULT '1000-01-01 00:00:00', "
 				+ "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
 				+ "deleted_at TIMESTAMP NULL DEFAULT NULL, "
 				+ "PRIMARY KEY (id), "

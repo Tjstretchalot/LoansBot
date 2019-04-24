@@ -122,7 +122,7 @@ public class MysqlBannedUserMapping extends MysqlObjectMapping<BannedUser> imple
 		statement.execute("CREATE TABLE " + table + " ("
 				+ "id INT NOT NULL AUTO_INCREMENT, "
 				+ "user_id INT NOT NULL, "
-				+ "created_at TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
+				+ "created_at TIMESTAMP NOT NULL DEFAULT '1000-01-01 00:00:00', "
 				+ "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
 				+ "PRIMARY KEY (id), "
 				+ "INDEX ind_bnuser_user_id (user_id), "

@@ -135,7 +135,7 @@ public class MysqlRepaymentMapping extends MysqlObjectMapping<Repayment> impleme
 				+ "id INT NOT NULL AUTO_INCREMENT, "
 				+ "loan_id INT NOT NULL, "
 				+ "amount_cents INT NOT NULL, "
-				+ "created_at TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
+				+ "created_at TIMESTAMP NOT NULL DEFAULT '1000-01-01 00:00:00', "
 				+ "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
 				+ "PRIMARY KEY(id), "
 				+ "INDEX ind_repay_loan_id (loan_id), "

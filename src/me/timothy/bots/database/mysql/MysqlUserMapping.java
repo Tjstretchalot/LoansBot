@@ -220,8 +220,8 @@ public class MysqlUserMapping extends MysqlObjectMapping<User> implements UserMa
 				+ "state text, "
 				+ "zip text, "
 				+ "country text, "
-				+ "claim_link_sent_at timestamp NULL DEFAULT NULL, "
-				+ "created_at timestamp NOT NULL DEFAULT '0000-00-00 00:00:00', "
+				+ "claim_link_sent_at timestamp NULL DEFAULT '1000-01-01 00:00:00', "
+				+ "created_at timestamp NOT NULL DEFAULT '1000-01-01 00:00:00', "
 				+ "updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
 				+ "PRIMARY KEY (id)"
 				+ ")");

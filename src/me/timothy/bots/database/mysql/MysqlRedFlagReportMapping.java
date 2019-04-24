@@ -99,7 +99,7 @@ public class MysqlRedFlagReportMapping extends MysqlObjectWithIDMapping<RedFlagR
 				+ "id INT NOT NULL AUTO_INCREMENT, "
 				+ "username_id INT NOT NULL, "
 				+ "after_fullname VARCHAR(50) NULL, "
-				+ "created_at TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
+				+ "created_at TIMESTAMP NOT NULL DEFAULT '1000-01-01 00:00:00', "
 				+ "started_at TIMESTAMP NULL DEFAULT NULL, "
 				+ "completed_at TIMESTAMP NULL DEFAULT NULL, "
 				+ "PRIMARY KEY (id), "

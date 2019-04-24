@@ -151,7 +151,7 @@ public class MysqlRecentPostMapping extends MysqlObjectMapping<RecentPost> imple
 				+ "id INT NOT NULL AUTO_INCREMENT, "
 				+ "author VARCHAR(255) NOT NULL, "
 				+ "subreddit VARCHAR(255) NOT NULL, "
-				+ "created_at TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
+				+ "created_at TIMESTAMP NOT NULL DEFAULT '1000-01-01 00:00:00', "
 				+ "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,"
 				+ "PRIMARY KEY(id)"
 				+ ")");

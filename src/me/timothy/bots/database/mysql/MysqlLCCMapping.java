@@ -136,7 +136,7 @@ public class MysqlLCCMapping extends MysqlObjectMapping<LendersCampContributor> 
 				+ "id INT NOT NULL AUTO_INCREMENT, "
 				+ "user_id INT NOT NULL, "
 				+ "bot_added TINYINT(1) NOT NULL DEFAULT 0, "
-				+ "created_at TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
+				+ "created_at TIMESTAMP NOT NULL DEFAULT '1000-01-01 00:00:00', "
 				+ "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
 				+ "PRIMARY KEY (id), "
 				+ "INDEX ind_lcc_user_id (user_id), "
