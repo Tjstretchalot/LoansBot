@@ -51,6 +51,7 @@ import me.timothy.jreddit.info.Thing;
 public class LoansBotDriver extends BotDriver {
 	private static final int MAX_RECENTLY_CHECKED = 50;
 	private static final long FORCE_RECHECK_TIME_MS = 1000 * 60 * 60 * 24;
+	private static final boolean TEST_SERVER = true;
 	
 	/**
 	 * Describes a very simply mapping of the username and time
@@ -161,17 +162,21 @@ public class LoansBotDriver extends BotDriver {
 		handleClaimCodes();
 		sleepFor(BRIEF_PAUSE_MS);
 		
-		logger.debug("Scanning for recheck requests..");
-		handleRechecks();
-		sleepFor(BRIEF_PAUSE_MS);
+		if(!TEST_SERVER) {
+			logger.debug("Scanning for recheck requests..");
+			handleRechecks();
+			sleepFor(BRIEF_PAUSE_MS);
+		}
 		
 		logger.debug("Scanning for reset password requests..");
 		handleResetPasswordRequests();
 		sleepFor(BRIEF_PAUSE_MS);
 		
-		logger.debug("Scanning for new lenders camp contributors..");
-		handleLendersCampContributors();
-		sleepFor(BRIEF_PAUSE_MS);
+		if(!TEST_SERVER) {
+			logger.debug("Scanning for new lenders camp contributors..");
+			handleLendersCampContributors();
+			sleepFor(BRIEF_PAUSE_MS);
+		}
 		
 		logger.debug("Performing self-assessment...");
 		handleDiagnostics();
@@ -182,7 +187,12 @@ public class LoansBotDriver extends BotDriver {
 		logger.debug("Running the red flags driver...");
 		redFlagsDriver.handleQueue(21);
 		
-		super.doLoop();
+		if(!TEST_SERVER) {
+			super.doLoop();
+		}else {
+			logger.trace("Considering relogging in..");
+			maybeLoginAgain();
+		}
 	}
 
 	/**
