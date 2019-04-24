@@ -153,7 +153,7 @@ public class MysqlShareCodeMapping extends MysqlObjectMapping<ShareCode> impleme
 				+ "id INT NOT NULL AUTO_INCREMENT, "
 				+ "user_id INT NOT NULL, "
 				+ "code VARCHAR(255) NOT NULL, "
-				+ "created_at TIMESTAMP NOT NULL DEFAULT '1000-01-01 00:00:00', "
+				+ "created_at TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:01', "
 				+ "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
 				+ "PRIMARY KEY(id), "
 				+ "INDEX ind_sc_user_id (user_id), "

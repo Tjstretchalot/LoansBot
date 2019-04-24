@@ -151,7 +151,7 @@ public class MysqlWarningMapping extends MysqlObjectMapping<Warning> implements 
 				+ "action_taken TEXT NOT NULL, "
 				+ "next_action TEXT, "
 				+ "notes TEXT, "
-				+ "created_at TIMESTAMP NOT NULL DEFAULT '1000-01-01 00:00:00', "
+				+ "created_at TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:01', "
 				+ "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
 				+ "PRIMARY KEY(id), "
 				+ "INDEX ind_warn_warned_user (warned_user_id), "

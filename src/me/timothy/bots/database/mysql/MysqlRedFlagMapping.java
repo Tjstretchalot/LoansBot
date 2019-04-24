@@ -110,7 +110,7 @@ public class MysqlRedFlagMapping extends MysqlObjectWithIDMapping<RedFlag> imple
 				+ "identifier VARCHAR(255) NOT NULL, "
 				+ "description TEXT NOT NULL, "
 				+ "count INT NOT NULL, "
-				+ "created_at timestamp NOT NULL DEFAULT '1000-01-01 00:00:00', "
+				+ "created_at timestamp NOT NULL DEFAULT '1970-01-01 00:00:01', "
 				+ "PRIMARY KEY(id), "
 				+ "INDEX ind_rf_uniq (report_id, type, identifier), " // this can be used for foreign key as well
 				+ "FOREIGN KEY (report_id) REFERENCES red_flag_reports(id)"

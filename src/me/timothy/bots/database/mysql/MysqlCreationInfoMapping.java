@@ -220,7 +220,7 @@ public class MysqlCreationInfoMapping extends MysqlObjectMapping<CreationInfo> i
 				+ "thread TEXT, "
 				+ "reason TEXT, "
 				+ "user_id INT, "
-				+ "created_at TIMESTAMP NOT NULL DEFAULT '1000-01-01 00:00:00', "
+				+ "created_at TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:01', "
 				+ "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
 				+ "PRIMARY KEY (id), "
 				+ "INDEX ind_cinfoloan_id (loan_id), "

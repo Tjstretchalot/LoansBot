@@ -146,7 +146,7 @@ public class MysqlResponseHistoryMapping extends MysqlObjectMapping<ResponseHist
 				+ "old_raw TEXT, "
 				+ "new_raw TEXT NOT NULL, "
 				+ "reason TEXT NOT NULL, "
-				+ "created_at TIMESTAMP NOT NULL DEFAULT '1000-01-01 00:00:00', "
+				+ "created_at TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:01', "
 				+ "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
 				+ "PRIMARY KEY(id), "
 				+ "INDEX ind_rehi_response_id (response_id), "

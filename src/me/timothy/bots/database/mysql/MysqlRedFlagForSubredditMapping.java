@@ -90,7 +90,7 @@ public class MysqlRedFlagForSubredditMapping extends MysqlObjectWithIDMapping<Re
 				+ "id int NOT NULL AUTO_INCREMENT, "
 				+ "subreddit varchar(64) NOT NULL, "
 				+ "description text NOT NULL, "
-				+ "created_at timestamp NOT NULL DEFAULT '1000-01-01 00:00:00', "
+				+ "created_at timestamp NOT NULL DEFAULT '1970-01-01 00:00:01', "
 				+ "PRIMARY KEY(id), "
 				+ "INDEX ind_rffs_subreddit (subreddit)"
 				+ ")");

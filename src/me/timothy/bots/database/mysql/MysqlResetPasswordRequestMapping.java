@@ -141,7 +141,7 @@ public class MysqlResetPasswordRequestMapping extends MysqlObjectMapping<ResetPa
 				+ "reset_code VARCHAR(255), "
 				+ "reset_code_sent TINYINT(1) NOT NULL DEFAULT 0, "
 				+ "reset_code_used TINYINT(1) NOT NULL DEFAULT 0, "
-				+ "created_at TIMESTAMP NOT NULL DEFAULT '1000-01-01 00:00:00', "
+				+ "created_at TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:01', "
 				+ "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
 				+ "PRIMARY KEY(id), "
 				+ "INDEX ind_rpr_user_id (user_id), "

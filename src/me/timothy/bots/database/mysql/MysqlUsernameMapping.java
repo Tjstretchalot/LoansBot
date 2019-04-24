@@ -162,7 +162,7 @@ public class MysqlUsernameMapping extends MysqlObjectMapping<Username> implement
 				+ "id int NOT NULL AUTO_INCREMENT, "
 				+ "user_id int, "
 				+ "username varchar(255), "
-				+ "created_at timestamp NOT NULL DEFAULT '1000-01-01 00:00:00', "
+				+ "created_at timestamp NOT NULL DEFAULT '1970-01-01 00:00:01', "
 				+ "updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
 				+ "PRIMARY KEY(id), "
 				+ "INDEX ind_uname_user_id (user_id), "

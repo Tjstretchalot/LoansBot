@@ -170,7 +170,7 @@ public class MysqlAdminUpdateMapping extends MysqlObjectMapping<AdminUpdate> imp
 				+ "new_unpaid TINYINT(1) NOT NULL DEFAULT 0, "
 				+ "new_deleted TINYINT(1) NOT NULL DEFAULT 0, "
 				+ "new_deleted_reason TEXT, "
-				+ "created_at TIMESTAMP NOT NULL DEFAULT '1000-01-01 00:00:00', "
+				+ "created_at TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:01', "
 				+ "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
 				+ "PRIMARY KEY (id), "
 				+ "INDEX ind_admupd_loan_id (loan_id), "

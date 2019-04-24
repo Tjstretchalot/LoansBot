@@ -130,7 +130,7 @@ public class MysqlRedFlagQueueSpotMapping extends MysqlObjectWithIDMapping<RedFl
 				+ "id int NOT NULL AUTO_INCREMENT, "
 				+ "report_id int NULL, "
 				+ "username_id int NOT NULL, "
-				+ "created_at timestamp NOT NULL DEFAULT '1000-01-01 00:00:00', "
+				+ "created_at timestamp NOT NULL DEFAULT '1970-01-01 00:00:01', "
 				+ "started_at timestamp NULL DEFAULT NULL, "
 				+ "completed_at timestamp NULL DEFAULT NULL, "
 				+ "PRIMARY KEY(id), "
