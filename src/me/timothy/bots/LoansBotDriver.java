@@ -51,7 +51,7 @@ import me.timothy.jreddit.info.Thing;
 public class LoansBotDriver extends BotDriver {
 	private static final int MAX_RECENTLY_CHECKED = 50;
 	private static final long FORCE_RECHECK_TIME_MS = 1000 * 60 * 60 * 24;
-	private static final boolean TEST_SERVER = true;
+	private static final boolean TEST_SERVER = false;
 	
 	/**
 	 * Describes a very simply mapping of the username and time
@@ -186,6 +186,9 @@ public class LoansBotDriver extends BotDriver {
 		
 		logger.debug("Running the red flags driver...");
 		redFlagsDriver.handleQueue(21);
+		
+		logger.debug("Pruning old failed login attempts...");
+		((LoansDatabase)database).getFailedLoginAttemptMapping().prune();
 		
 		if(!TEST_SERVER) {
 			super.doLoop();

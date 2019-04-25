@@ -35,4 +35,5 @@ public interface MappingDatabase {
 	public RedFlagUserHistorySortMapping getRedFlagUserHistorySortMapping();
 	public PromotionBlacklistMapping getPromotionBlacklistMapping();
 	public DelayedVettingRequestMapping getDelayedVettingRequestMapping();
+	public FailedLoginAttemptMapping getFailedLoginAttemptMapping();
 }
