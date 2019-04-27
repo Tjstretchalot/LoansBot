@@ -1,0 +1,12 @@
+me.timothy.bots
+me.timothy.bots.currencies
+me.timothy.bots.database
+me.timothy.bots.database.mysql
+me.timothy.bots.diagnostics
+me.timothy.bots.models
+me.timothy.bots.responses
+me.timothy.bots.summon
+me.timothy.tests.bots.responses
+me.timothy.tests.bots.summon
+me.timothy.tests.database
+me.timothy.tests.database.mysql
