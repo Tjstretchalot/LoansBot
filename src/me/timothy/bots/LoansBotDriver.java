@@ -725,10 +725,12 @@ public class LoansBotDriver extends BotDriver {
 			return;
 		}
 		
+		/*
 		if(!db.getBannedUserMapping().containsUserID(userToUnbanUsername.userId)) {
 			logger.info(String.format("Tried to unban %s but we didn't ban them.", userToUnban));
 			return;
 		}
+		*/
 		
 		super.handleUnbanUserOnAllSubreddits(userToUnban);
 	}
