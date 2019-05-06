@@ -231,6 +231,7 @@ public class PaidSummon implements CommentSummon {
 			boolean unbanUser = false;
 			String userToUnban = null;
 			
+			List<PMResponse> pmResponses = new ArrayList<>();
 			if(hadAnyUnpaid) {
 				borrowerLoans = database.getLoanMapping().fetchWithBorrowerAndOrLender(user1User.id, user1User.id, false);
 				boolean haveAnyUnpaid = false;
@@ -247,11 +248,19 @@ public class PaidSummon implements CommentSummon {
 				if(!haveAnyUnpaid) {
 					unbanUser = true;
 					userToUnban = user1.toLowerCase();
+					
+					String titleFormat = database.getResponseMapping().fetchByName("repaid_all_modmail_title").responseBody;
+					String bodyFormat = database.getResponseMapping().fetchByName("repaid_all_modmail_body").responseBody;
+					
+					String title = new ResponseFormatter(titleFormat, respInfo).getFormattedResponse(config, database);
+					String body = new ResponseFormatter(bodyFormat, respInfo).getFormattedResponse(config, database);
+					
+					pmResponses.add(new PMResponse("/r/borrow", title, body));
 				}
 			}
 			
 			ResponseFormatter formatter = new ResponseFormatter(response, respInfo);
-			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, database), null, null, null, false,
+			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, database), null, pmResponses, null, false,
 					null, null, null, null, unbanUser, userToUnban);
 		}
 		return null;
