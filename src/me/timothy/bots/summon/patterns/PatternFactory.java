@@ -23,11 +23,12 @@ public class PatternFactory {
 	 * 
 	 * @param id the id to check if this was there, null is allowed but won't know if there
 	 * @param literal the string literal you want
-	 * @Param optional if the literal is optional. you will need to check the id to know if it was there
+	 * @param optional if the literal is optional. you will need to check the id to know if it was there
+	 * @param caseInsensitive True if this token is case insensitive, false otherwise
 	 * @return this
 	 */
-	public PatternFactory addLiteral(String id, String literal, boolean optional) {
-		tokens.add(new StringLiteralToken(id, literal, optional));
+	public PatternFactory addLiteral(String id, String literal, boolean optional, boolean caseInsensitive) {
+		tokens.add(new StringLiteralToken(id, literal, optional, caseInsensitive));
 		return this;
 	}
 	
@@ -38,7 +39,17 @@ public class PatternFactory {
 	 * @return this
 	 */
 	public PatternFactory addLiteral(String literal) {
-		return addLiteral(null, literal, false);
+		return addLiteral(null, literal, false, false);
+	}
+	
+	/**
+	 * Adds a non-optional case-insenstive literal without an id
+	 * 
+	 * @param literal the literal to add
+	 * @return this
+	 */
+	public PatternFactory addCaseInsensLiteral(String literal) {
+		return addLiteral(null, literal, false, true);
 	}
 	
 	/**

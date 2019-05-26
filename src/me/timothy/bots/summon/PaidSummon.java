@@ -46,7 +46,7 @@ public class PaidSummon implements CommentSummon {
 	 * $paid /u/fdaa 5 USD
 	 */
 	private static final SummonPattern PAID_PATTERN = new PatternFactory()
-			.addLiteral("$paid")
+			.addCaseInsensLiteral("$paid")
 			.addUsername("user1")
 			.addMoney("money1")
 			.addCurrency("convert_from", true)

@@ -43,7 +43,7 @@ public class LoanSummon implements CommentSummon {
 	 * $loan 50 USD
 	 */
 	private static final SummonPattern LOAN_PATTERN = new PatternFactory()
-			.addLiteral("$loan")
+			.addCaseInsensLiteral("$loan")
 			.addMoney("money1")
 			.addCurrency("convert_from", true)
 			.build();

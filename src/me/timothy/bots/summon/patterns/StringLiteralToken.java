@@ -10,6 +10,7 @@ import me.timothy.bots.responses.FormattableObject;
 public class StringLiteralToken implements ISummonToken {
 	private String id;
 	private boolean optional;
+	private boolean caseInsensitive;
 	
 	private String literal;
 	
@@ -25,9 +26,13 @@ public class StringLiteralToken implements ISummonToken {
 	 * @param id the id for this token, used to determine if it was there
 	 * @param literal the text that this token matches
 	 * @param optional if this token is optional
+	 * @param caseInsensitive true if this token is insensitive to case, false otherwise
 	 */
-	public StringLiteralToken(String id, String literal, boolean optional) {
+	public StringLiteralToken(String id, String literal, boolean optional, boolean caseInsensitive) {
+		this.id = id;
 		this.literal = literal;
+		this.optional = optional;
+		this.caseInsensitive = caseInsensitive;
 	}
 	
 	@Override
@@ -39,6 +44,12 @@ public class StringLiteralToken implements ISummonToken {
 	public boolean isOptional() {
 		return optional;
 	}
+	
+	private boolean charMatch(char a, char b) {
+		if(caseInsensitive)
+			return Character.toLowerCase(a) == Character.toLowerCase(b);
+		return a == b;
+	}
 
 	@Override
 	public boolean start(char c) {
@@ -46,7 +57,7 @@ public class StringLiteralToken implements ISummonToken {
 		if(literal.length() == 0)
 			return false;
 		
-		if(c == literal.charAt(0)) {
+		if(charMatch(c, literal.charAt(0))) {
 			currentIndex = 1;
 			return true;
 		}
@@ -55,7 +66,7 @@ public class StringLiteralToken implements ISummonToken {
 
 	@Override
 	public boolean next(char c) {
-		if(currentIndex < literal.length() && literal.charAt(currentIndex) == c) {
+		if(currentIndex < literal.length() && charMatch(literal.charAt(currentIndex), c)) {
 			currentIndex++;
 			return true;
 		}

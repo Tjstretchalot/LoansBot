@@ -37,7 +37,7 @@ public class UnpaidSummon implements CommentSummon {
 	 * $unpaid /u/Asdf_Jkl
 	 */
 	private static final SummonPattern UNPAID_PATTERN = new PatternFactory()
-			.addLiteral("$unpaid")
+			.addCaseInsensLiteral("$unpaid")
 			.addUsername("user1")
 			.build();
 	

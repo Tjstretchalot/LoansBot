@@ -29,7 +29,7 @@ public class CheckSummon implements CommentSummon, LinkSummon {
 	 * 
 	 * $check /u/John $check /u/Asdf_Jkl
 	 */
-	private static final SummonPattern CHECK_PATTERN = new PatternFactory().addLiteral("$check").addUsername("user1").build();
+	private static final SummonPattern CHECK_PATTERN = new PatternFactory().addCaseInsensLiteral("$check").addUsername("user1").build();
 
 	private Logger logger;
 

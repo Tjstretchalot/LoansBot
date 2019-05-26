@@ -27,26 +27,26 @@ import me.timothy.jreddit.info.Message;
  */
 public class VettedSummon implements PMSummon {
 	private static final SummonPattern SUBJECT_PATTERN = new PatternFactory()
-			.addLiteral(null, "re:", true)
+			.addLiteral(null, "re:", true, false)
 			.addLiteral("Vetting")
 			.addLiteral("Required:")
 			.addUsername("user")
 			.build();
 	
 	private static final SummonPattern IS_VETTED_PATTERN = new PatternFactory()
-			.addLiteral("$vetted")
-			.addLiteral("success")
+			.addCaseInsensLiteral("$vetted")
+			.addCaseInsensLiteral("success")
 			.build();
 	
 	private static final SummonPattern IS_NOT_VETTED_PATTERN = new PatternFactory()
-			.addLiteral("$vetted")
-			.addLiteral("failure")
+			.addCaseInsensLiteral("$vetted")
+			.addCaseInsensLiteral("failure")
 			.addQuotedString("reason")
 			.build();
 	
 	private static final SummonPattern REVISIT_PATTERN = new PatternFactory()
-			.addLiteral("$vetted")
-			.addLiteral("revisit")
+			.addCaseInsensLiteral("$vetted")
+			.addCaseInsensLiteral("revisit")
 			.addQuotedString("reason")
 			.addInteger("number_loans")
 			.build();

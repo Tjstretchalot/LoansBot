@@ -34,7 +34,7 @@ public class ConfirmSummon implements CommentSummon {
 	 * $confirm /u/John $10 USD
 	 */
 	private static final SummonPattern CONFIRM_PATTERN = new PatternFactory()
-			.addLiteral("$confirm")
+			.addCaseInsensLiteral("$confirm")
 			.addUsername("user1")
 			.addMoney("money1")
 			.addCurrency("convert_from", true)

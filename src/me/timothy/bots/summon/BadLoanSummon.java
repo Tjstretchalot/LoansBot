@@ -15,7 +15,7 @@ import me.timothy.jreddit.info.Comment;
  *
  */
 public class BadLoanSummon implements CommentSummon {
-	private static final SummonPattern BAD_LOAN_PATTERN = new PatternFactory().addLiteral("$loan").addUsername("user1").addMoney("money1").build();
+	private static final SummonPattern BAD_LOAN_PATTERN = new PatternFactory().addCaseInsensLiteral("$loan").addUsername("user1").addMoney("money1").build();
 
 
 	@Override
