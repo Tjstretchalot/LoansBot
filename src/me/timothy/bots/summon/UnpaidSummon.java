@@ -73,7 +73,10 @@ public class UnpaidSummon implements CommentSummon {
 			
 			List<Loan> relevantLoans = new ArrayList<Loan>();
 			if(authorUsername != null && user1Username != null) {
+				responseInfo.addTemporaryString("user1 id", Integer.toString(user1Username.userId));
 				relevantLoans = database.getLoanMapping().fetchWithBorrowerAndOrLender(user1Username.userId, authorUsername.userId, true);
+			}else {
+				responseInfo.addTemporaryString("user1 id", Integer.toString(-1));
 			}
 			List<Loan> changed = new ArrayList<>();
 			

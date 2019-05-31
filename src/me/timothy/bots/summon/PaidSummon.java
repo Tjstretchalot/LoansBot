@@ -184,6 +184,8 @@ public class PaidSummon implements CommentSummon {
 				ResponseFormatter formatter = new ResponseFormatter(database.getResponseMapping().fetchByName("no_loans_to_repay").responseBody, respInfo);
 				return new SummonResponse(SummonResponse.ResponseType.INVALID, formatter.getFormattedResponse(config, database));//.replace("<borrower>", doneTo).replace("<author>", doer));
 			}
+
+			respInfo.addTemporaryString("user1 id", Integer.toString(user1Username.userId));
 			
 			User authorUser = database.getUserMapping().fetchById(authorUsername.userId);
 			User user1User = database.getUserMapping().fetchById(user1Username.userId);
