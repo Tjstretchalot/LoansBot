@@ -35,6 +35,7 @@ import me.timothy.bots.database.RepaymentMapping;
 import me.timothy.bots.database.ResetPasswordRequestMapping;
 import me.timothy.bots.database.ResponseHistoryMapping;
 import me.timothy.bots.database.ResponseMapping;
+import me.timothy.bots.database.ResponseOptOutMapping;
 import me.timothy.bots.database.SavedQueryMapping;
 import me.timothy.bots.database.SavedQueryParamMapping;
 import me.timothy.bots.database.SavedQueryUserMapping;
@@ -66,6 +67,7 @@ import me.timothy.bots.database.mysql.MysqlRepaymentMapping;
 import me.timothy.bots.database.mysql.MysqlResetPasswordRequestMapping;
 import me.timothy.bots.database.mysql.MysqlResponseHistoryMapping;
 import me.timothy.bots.database.mysql.MysqlResponseMapping;
+import me.timothy.bots.database.mysql.MysqlResponseOptOutMapping;
 import me.timothy.bots.database.mysql.MysqlSavedQueryMapping;
 import me.timothy.bots.database.mysql.MysqlSavedQueryParamMapping;
 import me.timothy.bots.database.mysql.MysqlSavedQueryUserMapping;
@@ -96,6 +98,7 @@ import me.timothy.bots.models.Repayment;
 import me.timothy.bots.models.ResetPasswordRequest;
 import me.timothy.bots.models.Response;
 import me.timothy.bots.models.ResponseHistory;
+import me.timothy.bots.models.ResponseOptOut;
 import me.timothy.bots.models.SavedQuery;
 import me.timothy.bots.models.SavedQueryParam;
 import me.timothy.bots.models.SavedQueryUser;
@@ -175,6 +178,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		addMapping(PromotionBlacklist.class, new MysqlPromotionBlacklistMapping(this, connection));
 		addMapping(DelayedVettingRequest.class, new MysqlDelayedVettingRequestMapping(this, connection));
 		addMapping(FailedLoginAttempt.class, new MysqlFailedLoginAttemptMapping(this, connection));
+		addMapping(ResponseOptOut.class, new MysqlResponseOptOutMapping(this, connection));
 	}
 	
 	private <A> void addMapping(Class<A> cl, ObjectMapping<A> mapping) {
@@ -311,6 +315,9 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	}
 	public FailedLoginAttemptMapping getFailedLoginAttemptMapping() {
 		return (FailedLoginAttemptMapping) mappingsDict.get(FailedLoginAttempt.class);
+	}
+	public ResponseOptOutMapping getResponseOptOutMapping() {
+		return (ResponseOptOutMapping) mappingsDict.get(ResponseOptOut.class);
 	}
 	
 	/*

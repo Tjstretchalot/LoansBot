@@ -30,7 +30,8 @@ import org.junit.runners.Suite.SuiteClasses;
 			MysqlRedFlagUserHistoryLinkMappingTest.class,
 			MysqlRedFlagUserHistorySortMappingTest.class,
 			MysqlPromotionBlacklistMappingTest.class,
-			MysqlDelayedVettingRequestMappingTest.class
+			MysqlDelayedVettingRequestMappingTest.class,
+			MysqlResponseOptOutMappingTest.class
 		})
 public class MysqlDatabaseTests {
 

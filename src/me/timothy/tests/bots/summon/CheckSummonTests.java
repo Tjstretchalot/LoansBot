@@ -13,6 +13,7 @@ import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.LoansFileConfiguration;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.Response;
+import me.timothy.bots.models.ResponseOptOut;
 import me.timothy.bots.models.User;
 import me.timothy.bots.summon.CheckSummon;
 import me.timothy.bots.summon.SummonResponse;
@@ -66,6 +67,26 @@ public class CheckSummonTests {
 	public void testDoesntRespondToMetaLinks() {
 		Link link = SummonTestUtils.createLinkByTitle("[META] LoansBot update queued");
 		
+		assertFalse(summon.mightInteractWith(link, database, config));
+	}
+	
+	@Test
+	public void testIgnoresOptOutForReqs() {
+		database.getResponseMapping().save(new Response(-1, "check", "test check body", now, now));
+		User john = database.getUserMapping().fetchOrCreateByName("john");
+		database.getResponseOptOutMapping().save(new ResponseOptOut(-1, john.id, new Timestamp(System.currentTimeMillis())));
+		Link link = SummonTestUtils.createLinkByTitleAndAuthor("[REQ] $100 for gas Maine, US", "john");
+
+		SummonResponse response = summon.handleLink(link, database, config);
+		assertNotNull(response);
+	}
+	
+	@Test
+	public void testRespectsOptOut() {
+		User john = database.getUserMapping().fetchOrCreateByName("john");
+		database.getResponseOptOutMapping().save(new ResponseOptOut(-1, john.id, new Timestamp(System.currentTimeMillis())));
+		Link link = SummonTestUtils.createLinkByTitleAndAuthor("[PAID] $100 from paul", "john");
+
 		assertFalse(summon.mightInteractWith(link, database, config));
 	}
 	

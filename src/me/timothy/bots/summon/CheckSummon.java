@@ -8,6 +8,7 @@ import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.models.User;
+import me.timothy.bots.models.Username;
 import me.timothy.bots.responses.GenericFormattableObject;
 import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
@@ -40,7 +41,17 @@ public class CheckSummon implements CommentSummon, LinkSummon {
 	@Override
 	public boolean mightInteractWith(Link link, Database db, FileConfiguration config) {
 		String title = link.title();
-		return !title.toUpperCase().startsWith("[META]");
+		if(title.toUpperCase().startsWith("[META]"))
+			return false;
+		if(title.toUpperCase().startsWith("[REQ]"))
+			return true;
+		
+		LoansDatabase database = (LoansDatabase)db;
+		Username authorUname = database.getUsernameMapping().fetchByUsername(link.author());
+		if(authorUname == null)
+			return true;
+		
+		return !database.getResponseOptOutMapping().contains(authorUname.userId);
 	}
 	
 	@Override

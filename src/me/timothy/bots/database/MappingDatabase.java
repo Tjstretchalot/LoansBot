@@ -36,4 +36,5 @@ public interface MappingDatabase {
 	public PromotionBlacklistMapping getPromotionBlacklistMapping();
 	public DelayedVettingRequestMapping getDelayedVettingRequestMapping();
 	public FailedLoginAttemptMapping getFailedLoginAttemptMapping();
+	public ResponseOptOutMapping getResponseOptOutMapping();
 }
