@@ -165,7 +165,16 @@ public class PaidSummon implements CommentSummon {
 			String convertFrom = respInfo.getObject("convert_from") != null ? respInfo.getObject("convert_from").toString() : null;
 			boolean hasConversion = convertFrom != null;
 			if(hasConversion) {
-				double conversionRate = CurrencyHandler.getInstance().getConversionRate(convertFrom, "USD");
+				CurrencyHandler inst = CurrencyHandler.getInstance();
+				double conversionRate = inst.getConversionRate(convertFrom, "USD");
+				if(inst.exceededSubscriptionPlanUntil != null) {
+					logger.warn("Unable to service currency conversion for " + author + " - exceeded subscription plan");
+					respInfo.addTemporaryString("exceeded_until", inst.exceededSubscriptionPlanUntil.getTime().toString());
+					String exPlanResp = database.getResponseMapping().fetchByName("currency_conv_exceeded_plan").responseBody;
+					return new SummonResponse(SummonResponse.ResponseType.INVALID,
+							new ResponseFormatter(exPlanResp, respInfo).getFormattedResponse(config, database));
+				}
+				
 				logger.debug("Converting from " + convertFrom + " to USD using rate " + conversionRate);
 				respInfo.addTemporaryString("convert_from", convertFrom);
 				respInfo.addTemporaryString("conversion_rate", Double.toString(conversionRate));
