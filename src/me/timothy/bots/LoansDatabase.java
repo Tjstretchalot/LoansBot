@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 
 import me.timothy.bots.database.AdminUpdateMapping;
 import me.timothy.bots.database.BannedUserMapping;
+import me.timothy.bots.database.BorrowerReqPMOptOutMapping;
 import me.timothy.bots.database.CreationInfoMapping;
 import me.timothy.bots.database.DelayedVettingRequestMapping;
 import me.timothy.bots.database.FailedLoginAttemptMapping;
@@ -47,6 +48,7 @@ import me.timothy.bots.database.UsernameMapping;
 import me.timothy.bots.database.WarningMapping;
 import me.timothy.bots.database.mysql.MysqlAdminUpdateMapping;
 import me.timothy.bots.database.mysql.MysqlBannedUserMapping;
+import me.timothy.bots.database.mysql.MysqlBorrowerReqPMOptOutMapping;
 import me.timothy.bots.database.mysql.MysqlCreationInfoMapping;
 import me.timothy.bots.database.mysql.MysqlDelayedVettingRequestMapping;
 import me.timothy.bots.database.mysql.MysqlFailedLoginAttemptMapping;
@@ -78,6 +80,7 @@ import me.timothy.bots.database.mysql.MysqlUsernameMapping;
 import me.timothy.bots.database.mysql.MysqlWarningMapping;
 import me.timothy.bots.models.AdminUpdate;
 import me.timothy.bots.models.BannedUser;
+import me.timothy.bots.models.BorrowerReqPMOptOut;
 import me.timothy.bots.models.CreationInfo;
 import me.timothy.bots.models.DelayedVettingRequest;
 import me.timothy.bots.models.FailedLoginAttempt;
@@ -179,6 +182,7 @@ public class LoansDatabase extends Database implements MappingDatabase {
 		addMapping(DelayedVettingRequest.class, new MysqlDelayedVettingRequestMapping(this, connection));
 		addMapping(FailedLoginAttempt.class, new MysqlFailedLoginAttemptMapping(this, connection));
 		addMapping(ResponseOptOut.class, new MysqlResponseOptOutMapping(this, connection));
+		addMapping(BorrowerReqPMOptOut.class, new MysqlBorrowerReqPMOptOutMapping(this, connection));
 	}
 	
 	private <A> void addMapping(Class<A> cl, ObjectMapping<A> mapping) {
@@ -318,6 +322,9 @@ public class LoansDatabase extends Database implements MappingDatabase {
 	}
 	public ResponseOptOutMapping getResponseOptOutMapping() {
 		return (ResponseOptOutMapping) mappingsDict.get(ResponseOptOut.class);
+	}
+	public BorrowerReqPMOptOutMapping getBorrowerReqPMOptOutMapping() {
+		return (BorrowerReqPMOptOutMapping) mappingsDict.get(BorrowerReqPMOptOut.class);
 	}
 	
 	/*

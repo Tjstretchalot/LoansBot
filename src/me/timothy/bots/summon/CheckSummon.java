@@ -1,5 +1,10 @@
 package me.timothy.bots.summon;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -7,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
 import me.timothy.bots.LoansDatabase;
+import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.User;
 import me.timothy.bots.models.Username;
 import me.timothy.bots.responses.GenericFormattableObject;
@@ -72,8 +78,63 @@ public class CheckSummon implements CommentSummon, LinkSummon {
 		respInfo.addTemporaryObject("user1", new GenericFormattableObject(checked));
 		
 		ResponseFormatter formatter = new ResponseFormatter(database.getResponseMapping().fetchByName("check").responseBody, respInfo);
+
+		List<PMResponse> pmResponses = new ArrayList<>();
+		List<Loan> loansAsBorrower = database.getLoanMapping().fetchWithBorrowerAndOrLender(checkedUser.id, -1, false);
+		Set<Integer> uniqueLenders = new HashSet<>();
+		for(Loan loan : loansAsBorrower) {
+			if(loan.borrowerId != checkedUser.id)
+				continue;
+			if(loan.principalCents == loan.principalRepaymentCents)
+				continue;
+			if(loan.lenderId == checkedUser.id)
+				continue;
+			if(loan.deleted || loan.unpaid)
+				continue;
+			
+			uniqueLenders.add(loan.lenderId);
+		}
+		
+		if(uniqueLenders.size() > 0) {
+			String pmTitleFmt = database.getResponseMapping().fetchByName("borrower_req_pm_title").responseBody;
+			String pmBodyFmt = database.getResponseMapping().fetchByName("borrower_req_pm_body").responseBody;
+			
+			ResponseInfo pmRespInfo = new ResponseInfo(ResponseInfoFactory.base);
+			pmRespInfo.addLongtermString("borrower", checked);
+			pmRespInfo.addLongtermString("borrower id", Integer.toString(checkedUser.id));
+			pmRespInfo.addLongtermString("thread", submission.permalink());
+			
+			for(Integer lenderId : uniqueLenders) {
+				Username lenderUname = database.getUsernameMapping().fetchByUserId(lenderId).get(0);
+				if(database.getBorrowerReqPMOptOutMapping().contains(lenderId.intValue())) {
+					logger.printf(Level.DEBUG, "Notification for %s due to %s making a request thread suppressed - opt out",
+								  lenderUname.username, checked);
+					continue;
+				}
+				
+				User lender = database.getUserMapping().fetchById(lenderId);
+				
+				pmRespInfo.addTemporaryString("lender", lenderUname.username);
+				pmRespInfo.addTemporaryString("lender id", Integer.toString(lender.id));
+				
+				String pmTitle = new ResponseFormatter(pmTitleFmt, pmRespInfo).getFormattedResponse(config, db);
+				String pmBody = new ResponseFormatter(pmBodyFmt, pmRespInfo).getFormattedResponse(config, db);
+				
+				logger.printf(Level.DEBUG, "Notifying %s due to %s making a request thread", lenderUname.username, checked);
+				pmResponses.add(new PMResponse(lenderUname.username, pmTitle, pmBody));
+				
+				pmRespInfo.clearTemporary();
+			}
+		}
+		
+		
 		logger.printf(Level.DEBUG, "%s posted a non-meta submission and recieved a check", respInfo.getObject("author").toString());
-		return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, (LoansDatabase) db));
+		return new SummonResponse(
+				SummonResponse.ResponseType.VALID, 
+				formatter.getFormattedResponse(config, (LoansDatabase) db),
+				null,
+				pmResponses
+				);
 	}
 
 	@Override

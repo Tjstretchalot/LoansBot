@@ -37,4 +37,5 @@ public interface MappingDatabase {
 	public DelayedVettingRequestMapping getDelayedVettingRequestMapping();
 	public FailedLoginAttemptMapping getFailedLoginAttemptMapping();
 	public ResponseOptOutMapping getResponseOptOutMapping();
+	public BorrowerReqPMOptOutMapping getBorrowerReqPMOptOutMapping();
 }
