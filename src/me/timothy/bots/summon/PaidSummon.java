@@ -51,7 +51,13 @@ public class PaidSummon implements CommentSummon {
 			.addMoney("money1")
 			.addCurrency("convert_from", true)
 			.build();
-
+	
+	/**
+	 * Constant for determining if repaying all loans should trigger being repaid
+	 * on /r/borrow
+	 */
+	public static final boolean UNBAN_ON_BORROW_WHEN_REPAID = true;
+	
 	private Logger logger;
 	
 	public PaidSummon() {
@@ -244,29 +250,15 @@ public class PaidSummon implements CommentSummon {
 			
 			List<PMResponse> pmResponses = new ArrayList<>();
 			if(hadAnyUnpaid) {
-				borrowerLoans = database.getLoanMapping().fetchWithBorrowerAndOrLender(user1User.id, user1User.id, false);
-				boolean haveAnyUnpaid = false;
-				
-				for(int i = borrowerLoans.size() - 1; i >= 0; i--) {
-					Loan loan = borrowerLoans.get(i);
-					if(loan.borrowerId == user1User.id && loan.unpaid)
-					{
-						haveAnyUnpaid = true;
-						break;
-					}
-				}
+				boolean haveAnyUnpaid = hasUnpaidLoans(database, user1User.id);
 				
 				if(!haveAnyUnpaid) {
-					unbanUser = true;
-					userToUnban = user1.toLowerCase();
+					if(UNBAN_ON_BORROW_WHEN_REPAID) {
+						unbanUser = true;
+						userToUnban = user1.toLowerCase();
+					}
 					
-					String titleFormat = database.getResponseMapping().fetchByName("repaid_all_modmail_title").responseBody;
-					String bodyFormat = database.getResponseMapping().fetchByName("repaid_all_modmail_body").responseBody;
-					
-					String title = new ResponseFormatter(titleFormat, respInfo).getFormattedResponse(config, database);
-					String body = new ResponseFormatter(bodyFormat, respInfo).getFormattedResponse(config, database);
-					
-					pmResponses.add(new PMResponse("/r/borrow", title, body));
+					pmResponses.add(getPostRepayUnpaidModmail(database, config, respInfo));
 				}
 			}
 			
@@ -275,6 +267,28 @@ public class PaidSummon implements CommentSummon {
 					null, null, null, null, unbanUser, userToUnban);
 		}
 		return null;
+	}
+	
+	public static boolean hasUnpaidLoans(LoansDatabase database, int borrowerId) {
+		List<Loan> borrowerLoans = database.getLoanMapping().fetchWithBorrowerAndOrLender(borrowerId, borrowerId, false);
+		for(int i = borrowerLoans.size() - 1; i >= 0; i--) {
+			Loan loan = borrowerLoans.get(i);
+			if(loan.borrowerId == borrowerId && loan.unpaid)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public static PMResponse getPostRepayUnpaidModmail(LoansDatabase database, FileConfiguration config, ResponseInfo respInfo) {
+		String titleFormat = database.getResponseMapping().fetchByName("repaid_all_modmail_title").responseBody;
+		String bodyFormat = database.getResponseMapping().fetchByName("repaid_all_modmail_body").responseBody;
+		
+		String title = new ResponseFormatter(titleFormat, respInfo).getFormattedResponse(config, database);
+		String body = new ResponseFormatter(bodyFormat, respInfo).getFormattedResponse(config, database);
+		
+		return new PMResponse("/r/borrow", title, body);
 	}
 
 }

@@ -120,7 +120,10 @@ public class CurrencyHandler {
 		JSONObject result = retryable.run();
 		boolean success = (Boolean) result.get("success");
 		if(!success) {
-			LogManager.getLogger().warn("Unknown conversion " + convId + ", assuming 1.00");
+			Logger logger = LogManager.getLogger();
+			logger.warn("Got unsuccessul result for " + convId + ", assuming 1.00");
+			logger.debug("Raw result dumped: " + result.toJSONString());
+			
 			return 1;
 		}
 		

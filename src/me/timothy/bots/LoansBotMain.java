@@ -16,6 +16,7 @@ import me.timothy.bots.summon.LinkSummon;
 import me.timothy.bots.summon.LoanSummon;
 import me.timothy.bots.summon.PMSummon;
 import me.timothy.bots.summon.PaidSummon;
+import me.timothy.bots.summon.PaidWithIDSummon;
 import me.timothy.bots.summon.RecentPostSummon;
 import me.timothy.bots.summon.RedFlagSummon;
 import me.timothy.bots.summon.SuicideSummon;
@@ -66,7 +67,7 @@ public class LoansBotMain {
 		
 		logger.debug("Running loans bot driver");
 		BotDriver driver = new LoansBotDriver(database, config, loansBot,
-				new CommentSummon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon(), new SuicideSummon(), new BadLoanSummon() }, 
+				new CommentSummon[] { new CheckSummon(), new LoanSummon(), new PaidSummon(), new ConfirmSummon(), new UnpaidSummon(), new SuicideSummon(), new BadLoanSummon(), new PaidWithIDSummon() }, 
 				new PMSummon[] { new VettedSummon() },
 				new LinkSummon[] { new CheckSummon(), new SuicideSummon(), new RecentPostSummon(), new RedFlagSummon() });
 		

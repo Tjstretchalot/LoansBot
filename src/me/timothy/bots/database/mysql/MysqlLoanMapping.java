@@ -17,7 +17,7 @@ import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.database.LoanMapping;
 import me.timothy.bots.models.Loan;
 
-public class MysqlLoanMapping extends MysqlObjectMapping<Loan> implements LoanMapping {
+public class MysqlLoanMapping extends MysqlObjectWithIDMapping<Loan> implements LoanMapping {
 	private static Logger logger = LogManager.getLogger();
 	
 	public MysqlLoanMapping(LoansDatabase database, Connection connection) {

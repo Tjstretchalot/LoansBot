@@ -12,6 +12,15 @@ import me.timothy.bots.models.Loan;
  */
 public interface LoanMapping extends ObjectMapping<Loan> {
 	/**
+	 * Fetch the loan with the given id in the database if it exists, otherwise
+	 * returns null.
+	 * 
+	 * @param id the database identifier for the desired loan
+	 * @return the loan with the given identifier if it exists, null otherwise
+	 */
+	public Loan fetchByID(int id);
+	
+	/**
 	 * Fetches all user ids that have had a new loan since the specified timestamp
 	 * @param timestamp the timestamp to check since
 	 * @return user ids with a loan since the specified timestamp as lender
