@@ -236,7 +236,7 @@ public class PaidSummon implements CommentSummon {
 			respInfo.addTemporaryObject("interest", new MoneyFormattableObject(interest));
 			respInfo.addTemporaryObject("changed loans", new GenericFormattableObject(LoansBotUtils.getLoansString(relevantLoans, database, author, config)));
 			logger.printf(Level.INFO, "%s has repaid %s by $%s with %s interest over %d loans", user1, author,
-					BotUtils.getCostString(amountRepaid), respInfo.getObject("interest").toFormattedString(respInfo, "interest", config, database), relevantLoans.size());
+					BotUtils.getCostString(amountRepaid / 100.), respInfo.getObject("interest").toFormattedString(respInfo, "interest", config, database), relevantLoans.size());
 			String response = null;
 			
 			if(hasConversion) {
