@@ -1,6 +1,7 @@
 package me.timothy.bots.summon;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.logging.log4j.Level;
@@ -10,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import me.timothy.bots.BotUtils;
 import me.timothy.bots.Database;
 import me.timothy.bots.FileConfiguration;
+import me.timothy.bots.LoansBotUtils;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.currencies.CurrencyHandler;
 import me.timothy.bots.models.CreationInfo;
@@ -106,6 +108,16 @@ public class LoanSummon implements CommentSummon {
 			User doneToU = database.getUserMapping().fetchOrCreateByName(linkAuthor);
 			long now = Math.round(comment.createdUTC() * 1000);
 			
+			List<PMResponse> pmResponses = new ArrayList<>();
+			int numStartedAsLender = database.getLoanMapping().fetchNumberOfLoansCompletedWithUserAsLender(doerU.id)[0];
+			if(numStartedAsLender < 1) {
+				String pmTitleFmt = database.getResponseMapping().fetchByName("new_lender_modmail_pm_title").responseBody;
+				String pmBodyFmt = database.getResponseMapping().fetchByName("new_lender_modmail_pm_body").responseBody;
+				
+				String pmTitle = new ResponseFormatter(pmTitleFmt, respInfo).getFormattedResponse(config, database);
+				String pmBody = new ResponseFormatter(pmBodyFmt, respInfo).getFormattedResponse(config, database);
+				pmResponses.add(new PMResponse("/r/" + LoansBotUtils.PRIMARY_SUBREDDIT, pmTitle, pmBody));
+			}
 			
 			
 			Loan loan = new Loan(-1, doerU.id, doneToU.id, amountPennies, 0, false, false, null, new Timestamp(now), new Timestamp(now), null);
@@ -132,7 +144,11 @@ public class LoanSummon implements CommentSummon {
 			}else {
 				resp = database.getResponseMapping().fetchByName("successful_loan").responseBody;
 			}
-			return new SummonResponse(SummonResponse.ResponseType.VALID, new ResponseFormatter(resp, respInfo).getFormattedResponse(config, database), "991c8042-3ecc-11e4-8052-12313d05258a");
+			return new SummonResponse(
+					SummonResponse.ResponseType.VALID, 
+					new ResponseFormatter(resp, respInfo).getFormattedResponse(config, database), 
+					"991c8042-3ecc-11e4-8052-12313d05258a",
+					pmResponses);
 		}
 		return null;
 	}

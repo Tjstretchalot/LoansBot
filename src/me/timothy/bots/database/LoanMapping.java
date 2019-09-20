@@ -60,4 +60,14 @@ public interface LoanMapping extends ObjectMapping<Loan> {
 	 * @return [loans by that lender, loans completed by that lender]
 	 */
 	public int[] fetchNumberOfLoansCompletedWithUserAsLender(int lenderId);
+	
+	/**
+	 * Fetches the number of milliseconds that have elapsed since the oldest repayment
+	 * for the given lender. Returns long max value if there are no loans repaid by
+	 * the lender.
+	 * 
+	 * @param lenderId the id of the lender
+	 * @return the number of milliseconds since the oldest $paid by that lender
+	 */
+	public long fetchTimeSinceEarliestRepaidLoan(int lenderId);
 }

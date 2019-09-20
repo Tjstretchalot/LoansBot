@@ -190,6 +190,30 @@ public class MysqlLoanMapping extends MysqlObjectWithIDMapping<Loan> implements 
 	}
 
 	@Override
+	public long fetchTimeSinceEarliestRepaidLoan(int lenderId) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT MIN(repayments.created_at) FROM loans JOIN repayments ON loans.id = repayments.loan_id WHERE loans.principal_cents = loans.principal_repayment_cents AND loans.lender_id = ? AND loans.deleted = 0");
+			statement.setInt(1, lenderId);
+			
+			ResultSet results = statement.executeQuery();
+			Timestamp oldest = null;
+			if(results.next()) {
+				oldest = results.getTimestamp(1);
+			}
+			results.close();
+			
+			statement.close();
+			
+			if(oldest == null)
+				return Long.MAX_VALUE;
+			return System.currentTimeMillis() - oldest.getTime();
+		}catch(SQLException ex) {
+			logger.throwing(ex);
+			throw new RuntimeException(ex);
+		}
+	}
+
+	@Override
 	public List<Loan> fetchAll() {
 		try {
 			PreparedStatement statement = connection.prepareStatement("SELECT * FROM loans");

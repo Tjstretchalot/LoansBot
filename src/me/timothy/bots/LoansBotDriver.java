@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -465,6 +466,12 @@ public class LoansBotDriver extends BotDriver {
 		String bodyFormatStd = ldb.getResponseMapping().fetchByName("vet_user_initial_pm_body").responseBody;
 		String bodyFormatDvr = ldb.getResponseMapping().fetchByName("vet_user_delayed_pm_body").responseBody;
 		
+		DateFormat dateFmt = DateFormat.getDateTimeInstance();
+		
+		int reqNumComplAsLender = Integer.parseInt(config.getProperty("lenders_camp.num_completed_as_lender"));
+		int reqNumStartedAsLender = Integer.parseInt(config.getProperty("lenders_camp.num_started_as_lender"));
+		int reqMSSinceOldestPaid = Integer.parseInt(config.getProperty("lenders_camp.ms_since_oldest_paid"));
+		
 		// can't be bot since bot is this.bot
 		User _bot = ldb.getUserMapping().fetchOrCreateByName(config.getProperty("user.username"));
 		
@@ -475,6 +482,7 @@ public class LoansBotDriver extends BotDriver {
 			
 			List<Username> usernames = ldb.getUsernameMapping().fetchByUserId(userToCheck.id);
 			int[] numLoansInfo = ldb.getLoanMapping().fetchNumberOfLoansCompletedWithUserAsLender(userToCheck.id);
+			long timeSinceOldest = ldb.getLoanMapping().fetchTimeSinceEarliestRepaidLoan(userToCheck.id);
 			int numberOfLoansAsLender = numLoansInfo[0];
 			int numberCompletedAsLender = numLoansInfo[1];
 			
@@ -485,8 +493,12 @@ public class LoansBotDriver extends BotDriver {
 					continue;
 			}
 			
-			if(numberCompletedAsLender >= 2 && numberOfLoansAsLender >= 7 && !ldb.getLccMapping().contains(userToCheck.id) && (dvr != null || !ldb.getPromotionBlacklistMapping().contains(userToCheck.id))) {
-				logger.info(String.format("Asking mods to vet user %d (%s) (%d loans as lender, %d completed)", userToCheck.id, usernames.get(0).username, numberOfLoansAsLender, numberCompletedAsLender));
+			if(numberCompletedAsLender >= reqNumComplAsLender && 
+					numberOfLoansAsLender >= reqNumStartedAsLender &&
+					timeSinceOldest > reqMSSinceOldestPaid &&
+					!ldb.getLccMapping().contains(userToCheck.id) && 
+					(dvr != null || !ldb.getPromotionBlacklistMapping().contains(userToCheck.id))) {
+				logger.info(String.format("Asking mods to vet user %d (%s) (%d loans as lender, %d completed, %s ms since oldest $paid)", userToCheck.id, usernames.get(0).username, numberOfLoansAsLender, numberCompletedAsLender, timeSinceOldest));
 				if(dvr != null) {
 					dvr.rerequestedAt = new Timestamp(System.currentTimeMillis());
 					ldb.getDelayedVettingRequestMapping().save(dvr);
@@ -495,10 +507,13 @@ public class LoansBotDriver extends BotDriver {
 							new Timestamp(System.currentTimeMillis()), null));
 				}
 				for(final Username username : usernames) {
+					Timestamp timeOfOldest = new Timestamp(System.currentTimeMillis() - timeSinceOldest);
+					
 					ResponseInfo respInfo = new ResponseInfo(ResponseInfoFactory.base);
 					respInfo.addTemporaryString("username", username.username);
 					respInfo.addTemporaryString("num completed as lender", Integer.toString(numberOfLoansAsLender));
 					respInfo.addTemporaryString("num actually completed as lender", Integer.toString(numberCompletedAsLender));
+					respInfo.addTemporaryString("date of oldest paid", dateFmt.format(timeOfOldest));
 					String body = null;
 					if(dvr == null) {
 						body = new ResponseFormatter(bodyFormatStd, respInfo).getFormattedResponse(config, ldb);
