@@ -264,7 +264,7 @@ public class PaidSummon implements CommentSummon {
 			
 			ResponseFormatter formatter = new ResponseFormatter(response, respInfo);
 			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, database), null, pmResponses, null, false,
-					null, null, null, null, unbanUser, userToUnban);
+					null, null, null, null, unbanUser, userToUnban, null);
 		}
 		return null;
 	}

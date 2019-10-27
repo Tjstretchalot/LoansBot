@@ -95,6 +95,20 @@ public class MysqlLCCMapping extends MysqlObjectMapping<LendersCampContributor> 
 			throw new RuntimeException(ex);
 		}
 	}
+	
+	@Override
+	public void delete(int userId) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("DELETE FROM " + table + " WHERE user_id=?");
+			statement.setInt(1, userId);
+			
+			statement.executeUpdate();
+			statement.close();
+		}catch(SQLException ex) {
+			logger.throwing(ex);
+			throw new RuntimeException(ex);
+		}
+	}
 
 	@Override
 	public List<LendersCampContributor> fetchAll() {

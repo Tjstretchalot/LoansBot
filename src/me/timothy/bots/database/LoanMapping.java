@@ -43,7 +43,7 @@ public interface LoanMapping extends ObjectMapping<Loan> {
 	
 	/**
 	 * Fetches the number of loans with the specified user as the lender. Does <i>not</i>
-	 * count deleted loans
+	 * count deleted loans. This does not require that the loans were completed.
 	 * 
 	 * @param lenderId the lender id
 	 * @return the number of loans with the specified user as the lender
@@ -56,7 +56,7 @@ public interface LoanMapping extends ObjectMapping<Loan> {
 	 * loans with the specified user as the lender which have a principal repayment equal
 	 * to the original principal, not counting deleted loans.
 	 * 
-	 * @param lenderId the id of the lender oyu are interested in
+	 * @param lenderId the id of the lender you are interested in
 	 * @return [loans by that lender, loans completed by that lender]
 	 */
 	public int[] fetchNumberOfLoansCompletedWithUserAsLender(int lenderId);
@@ -70,4 +70,13 @@ public interface LoanMapping extends ObjectMapping<Loan> {
 	 * @return the number of milliseconds since the oldest $paid by that lender
 	 */
 	public long fetchTimeSinceEarliestRepaidLoan(int lenderId);
+
+	/**
+	 * Fetches the number of loans with the specified user as the borrower. Does <i>not</i>
+	 * count deleted loans. This does not require that the loans were completed.
+	 * 
+	 * @param borrowerId the borrower id
+	 * @return the number of undeleted loans with the given borrower
+	 */
+	public int fetchNumberOfLoansWithUserAsBorrower(int borrowerId);
 }

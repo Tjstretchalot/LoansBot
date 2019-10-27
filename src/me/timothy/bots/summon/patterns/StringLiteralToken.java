@@ -1,16 +1,28 @@
 package me.timothy.bots.summon.patterns;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import me.timothy.bots.responses.FormattableObject;
 
 /**
- * This token is looking for a specific string literal.
+ * This token is looking for a specific string literal. This will ignore escape
+ * characters before markup-meaningful characters (`, *, _, {, }, [, ], (, and )).
+ * The escape character itself is assumed never to be escaped.
  * 
  * @author Timothy
  */
 public class StringLiteralToken implements ISummonToken {
+	private static Set<Character> ESCAPABLE_CHARACTERS = new HashSet<Character>(
+			Arrays.asList(new Character[] {
+				'`', '*', '_', '{', '}', '[', ']', '(', ')'
+			}));
 	private String id;
 	private boolean optional;
 	private boolean caseInsensitive;
+	private boolean sawEscape;
+	
 	
 	private String literal;
 	
@@ -54,6 +66,7 @@ public class StringLiteralToken implements ISummonToken {
 	@Override
 	public boolean start(char c) {
 		currentIndex = -1;
+		sawEscape = false;
 		if(literal.length() == 0)
 			return false;
 		
@@ -66,11 +79,19 @@ public class StringLiteralToken implements ISummonToken {
 
 	@Override
 	public boolean next(char c) {
-		if(currentIndex < literal.length() && charMatch(literal.charAt(currentIndex), c)) {
-			currentIndex++;
-			return true;
+		if (currentIndex < literal.length()) {
+			char expected = literal.charAt(currentIndex);
+			if(charMatch(expected, c)) {
+				currentIndex++;
+				sawEscape = false;
+				return true;
+			}
+			
+			if (!sawEscape && c == '\\' && ESCAPABLE_CHARACTERS.contains(expected)) {
+				sawEscape = true;
+				return true;
+			}
 		}
-		
 		currentIndex = -1;
 		return false;
 	}

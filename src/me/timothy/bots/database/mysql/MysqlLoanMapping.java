@@ -163,6 +163,30 @@ public class MysqlLoanMapping extends MysqlObjectWithIDMapping<Loan> implements 
 			throw new RuntimeException(ex);
 		}
 	}
+
+	@Override
+	public int fetchNumberOfLoansWithUserAsBorrower(int borrowerId) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM loans WHERE borrower_id=? AND deleted=0");
+			statement.setInt(1, borrowerId);
+			
+			ResultSet results = statement.executeQuery();
+			int numLoans = 0;
+			if(!results.next()) {
+				results.close();
+				statement.close();
+				throw new RuntimeException("COUNT(*) should always return 1 row, but it didn't");
+			}
+			numLoans = results.getInt(1);
+			results.close();
+			
+			statement.close();
+			return numLoans;
+		}catch(SQLException ex) {
+			logger.throwing(ex);
+			throw new RuntimeException(ex);
+		}
+	}
 	
 	public int[] fetchNumberOfLoansCompletedWithUserAsLender(int lenderId) {
 		try {

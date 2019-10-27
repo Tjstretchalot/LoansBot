@@ -16,4 +16,11 @@ public interface LCCMapping extends ObjectMapping<LendersCampContributor> {
 	 * @return if the user is in the list
 	 */
 	public boolean contains(int userId);
+	
+	/**
+	 * Delete the given user from the lenders camp.
+	 * 
+	 * @param userId the user who should be removed from the lenders camp.
+	 */
+	public void delete(int userId);
 }

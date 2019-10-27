@@ -41,6 +41,7 @@ public class PaidWithIDSummon implements CommentSummon {
 	 * 	$paid_with_id 11057 100
 	 *  $paid_with_id 87123 $25 USD
 	 *  $paid_with_id 4512 75 GBP 	
+	 *  $paid\_with\_id 4512 75 GBP
 	 */
 	private static final SummonPattern PAID_PATTERN = new PatternFactory()
 			.addLiteral("$paid_with_id")
@@ -185,7 +186,7 @@ public class PaidWithIDSummon implements CommentSummon {
 			
 			ResponseFormatter formatter = new ResponseFormatter(response, respInfo);
 			return new SummonResponse(SummonResponse.ResponseType.VALID, formatter.getFormattedResponse(config, database), null, pmResponses, null, false,
-					null, null, null, null, unbanUser, userToUnban);
+					null, null, null, null, unbanUser, userToUnban, null);
 		}
 		return null;
 	}

@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.logging.log4j.Level;
 import org.json.simple.parser.ParseException;
 
 import me.timothy.bots.database.MappingDatabase;
@@ -30,6 +31,7 @@ import me.timothy.bots.redflags.RedFlagsDriver;
 import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
 import me.timothy.bots.responses.ResponseInfoFactory;
+import me.timothy.bots.specresps.RemoveFromLendersCamp;
 import me.timothy.bots.summon.CommentSummon;
 import me.timothy.bots.summon.LinkSummon;
 import me.timothy.bots.summon.PMSummon;
@@ -499,6 +501,7 @@ public class LoansBotDriver extends BotDriver {
 					!ldb.getLccMapping().contains(userToCheck.id) && 
 					(dvr != null || !ldb.getPromotionBlacklistMapping().contains(userToCheck.id))) {
 				logger.info(String.format("Asking mods to vet user %d (%s) (%d loans as lender, %d completed, %s ms since oldest $paid)", userToCheck.id, usernames.get(0).username, numberOfLoansAsLender, numberCompletedAsLender, timeSinceOldest));
+				int numberStartedAsBorrower = ldb.getLoanMapping().fetchNumberOfLoansWithUserAsBorrower(userToCheck.id);
 				if(dvr != null) {
 					dvr.rerequestedAt = new Timestamp(System.currentTimeMillis());
 					ldb.getDelayedVettingRequestMapping().save(dvr);
@@ -513,6 +516,7 @@ public class LoansBotDriver extends BotDriver {
 					respInfo.addTemporaryString("username", username.username);
 					respInfo.addTemporaryString("num completed as lender", Integer.toString(numberOfLoansAsLender));
 					respInfo.addTemporaryString("num actually completed as lender", Integer.toString(numberCompletedAsLender));
+					respInfo.addTemporaryString("num started as borrower", Integer.toString(numberStartedAsBorrower));
 					respInfo.addTemporaryString("date of oldest paid", dateFmt.format(timeOfOldest));
 					String body = null;
 					if(dvr == null) {
@@ -750,5 +754,58 @@ public class LoansBotDriver extends BotDriver {
 		super.handleUnbanUserOnAllSubreddits(userToUnban);
 	}
 	
+	@Override
+	protected void handleSpecial(final String key, final Object val) {
+		switch(key) {
+		case RemoveFromLendersCamp.SPECIAL_KEY:
+			handleRemoveFromLendersCamp((RemoveFromLendersCamp)val);
+			return;
+		default:
+			super.handleSpecial(key, val);
+		}
+	}
+	
+	/**
+	 * Handles processing the summon response which removes a user from the lenders camp.
+	 * 
+	 * @param inf the information regarding the user to remove
+	 */
+	protected void handleRemoveFromLendersCamp(RemoveFromLendersCamp inf) {
+		LoansDatabase db = (LoansDatabase) database;
+		User user = db.getUserMapping().fetchOrCreateByName(inf.getUserToRemove());
+		
+		if (user.auth > 0) {
+			logger.printf(Level.WARN, "Tried to remove privileged user %s from lenderscamp - preventing", inf.getUserToRemove());
+			return;
+		}
+		
+		Boolean succ = new Retryable<Boolean>("remove from lenders camp", maybeLoginAgainRunnable) {
+
+			@Override
+			protected Boolean runImpl() throws Exception {
+				if (isModerator("lenderscamp", inf.getUserToRemove())) {
+					logger.warn("Tried to remove moderator of lenderscamp as contributor - preventing");
+					return false;
+				}
+				sleepFor(BRIEF_PAUSE_MS);
+				
+				if (isModerator(LoansBotUtils.PRIMARY_SUBREDDIT, inf.getUserToRemove())) {
+					logger.warn("Tried to remove moderator of prim sub as contributor to lenderscamp - preventing");
+					return false;
+				}
+				sleepFor(BRIEF_PAUSE_MS);
+				
+				RedditUtils.removeContributor("lenderscamp", inf.getUserToRemove(), bot.getUser());
+				logger.printf(Level.INFO, "Removed /u/%s from lenderscamp", inf.getUserToRemove());
+				sleepFor(BRIEF_PAUSE_MS);
+				return true;
+			}
+			
+		}.run();
+
+		if (succ == Boolean.TRUE) {
+			db.getLccMapping().delete(user.id);
+		}
+	}
 	
 }
