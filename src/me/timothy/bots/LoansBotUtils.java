@@ -1,5 +1,7 @@
 package me.timothy.bots;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -17,6 +19,9 @@ import me.timothy.bots.models.CreationInfo;
 import me.timothy.bots.models.Loan;
 import me.timothy.bots.models.User;
 import me.timothy.bots.models.Username;
+import me.timothy.bots.responses.ResponseFormatter;
+import me.timothy.bots.responses.ResponseInfo;
+import me.timothy.bots.summon.PMResponse;
 
 /**
  * Contains various utility static methods
@@ -179,34 +184,46 @@ public class LoansBotUtils {
 	}
 	
 	/**
-	 * <p>Fetches the username of the specified user and returns them seperated
+	 * <p>Fetches the username of the specified user and returns them separated
 	 * with the specified string.</p>
 	 * 
 	 * <p>Ex. if the user had the username Bob and no other usernames, and this was called
-	 * with the seperator " / ", then the result would be Bob</p>
+	 * with the separator " / ", then the result would be Bob</p>
 	 * 
 	 * <p>Ex. if the username had the usernames Bob and Alice and no other usernames, and this
-	 * was called with the seperator " / ", then the result would be Bob / Alice</p>
+	 * was called with the separator " / ", then the result would be Bob / Alice</p>
 	 * @param user the user to fetch usernames of
 	 * @param db the database to use to fetch the usernames
-	 * @param seperator the seperator between usernames
-	 * @return the usernames seperated with the specified seperator
+	 * @param separator the separator between usernames
+	 * @return the usernames separated with the specified separator
 	 */
-	public static String getUsernamesSeperatedWith(User user, LoansDatabase db, String seperator) {
+	public static String getUsernamesSeperatedWith(User user, LoansDatabase db, String separator) {
 		List<Username> usernames = db.getUsernameMapping().fetchByUserId(user.id);
-		
+		return formatUsernamesSeparatedWith(usernames, separator, false);
+	}
+	
+	/**
+	 * Returns the usernames formatted with the given separator. Optionally the users are formatted
+	 * to create a link in reddit to their account.
+	 * 
+	 * @param usernames The usernames to format
+	 * @param seperator the separator between usernames
+	 * @param link if true, the usernames will be formatted such that they appear as a link on reddit
+	 * @return the formatted usernames
+	 */
+	public static String formatUsernamesSeparatedWith(List<Username> usernames, String seperator, boolean link) {
 		StringBuilder result = new StringBuilder();
-		boolean first = true;
-		for(Username username : usernames) {
-			if(first)
-				first = false;
-			else
+		for(int i = 0, len = usernames.size(); i < len; i++) {
+			if(i > 0)
 				result.append(seperator);
 			
-			result.append(username.username);
+			if(link)
+				result.append("/u/");
+			result.append(usernames.get(i).username);
 		}
 		return result.toString();
 	}
+	
 	/**
 	 * Searches a big list of loans and selectively grabs the loans where
 	 * {@code borrower} is the borrower
@@ -296,5 +313,51 @@ public class LoansBotUtils {
 			total += l.principalCents;
 		}
 		return total;
+	}
+	
+	/**
+	 * Convenience function to construct a pm response to the given user using
+	 * the given format and response info.
+	 * 
+	 * @param to Who is receiving the pm
+	 * @param titleFmt the format for the title
+	 * @param bodyFmt the format for the body
+	 * @param db the loans database
+	 * @param cfg the file configuration
+	 * @param respInfo contains valid substitutions within the format
+	 * @return the formatted pm response
+	 */
+	public static PMResponse createPMFromFormat(
+			String to, String titleFmt, String bodyFmt, LoansDatabase db,
+			FileConfiguration cfg, ResponseInfo respInfo) {
+		String pmTitleFmt = db.getResponseMapping().fetchByName(titleFmt).responseBody;
+		String pmBodyFmt = db.getResponseMapping().fetchByName(bodyFmt).responseBody;
+		
+		String pmTitle = new ResponseFormatter(pmTitleFmt, respInfo).getFormattedResponse(cfg, db);
+		String pmBody = new ResponseFormatter(pmBodyFmt, respInfo).getFormattedResponse(cfg, db);
+		return new PMResponse(to, pmTitle, pmBody);
+	}
+	
+	/**
+	 * Returns the pm that should be sent when an exception occurs in a portion
+	 * of code which is not essential to the loansbot operations, such as 
+	 * formatting a response.
+	 * 
+	 * @param source a short identifying string about what we were trying to do
+	 * @param e the exception that was thrown
+	 * @return the pm response to notify the moderators
+	 */
+	public static PMResponse exceptionPM(String source, Throwable e) {
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw);
+		e.printStackTrace(pw);
+		
+		return new PMResponse(
+				"/r/" + PRIMARY_SUBREDDIT,
+				"LoansBot - " + source + " - Non-critical Error",
+				"An exception was raised in a noncritical portion of code. "
+				+ "Since the location was noncritical the bot will continue "
+				+ "to function as normal.\n\n```\n" + sw.toString() + "\n```"
+				);
 	}
 }

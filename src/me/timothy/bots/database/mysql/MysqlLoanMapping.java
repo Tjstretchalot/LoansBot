@@ -214,6 +214,29 @@ public class MysqlLoanMapping extends MysqlObjectWithIDMapping<Loan> implements 
 	}
 
 	@Override
+	public int fetchNumberOfOutstandingLoansWithUserAsBorrower(int borrowerId) {
+		try {
+			PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) as cnt FROM loans WHERE principal_repayment_cents < principal_cents AND deleted=0 AND unpaid=0 AND borrower_id=?");
+			statement.setInt(1, borrowerId);
+			
+			ResultSet results = statement.executeQuery();
+			int cnt = 0;
+			if(!results.next()) {
+				results.close();
+				statement.close();
+				throw new RuntimeException("COUNT(*) should always return 1 row but it didn't");
+			}
+			cnt = results.getInt(1);
+			results.close();
+			statement.close();
+			return cnt;
+		}catch(SQLException ex) {
+			logger.throwing(ex);
+			throw new RuntimeException(ex);
+		}
+	}
+
+	@Override
 	public long fetchTimeSinceEarliestRepaidLoan(int lenderId) {
 		try {
 			PreparedStatement statement = connection.prepareStatement("SELECT MIN(repayments.created_at) FROM loans JOIN repayments ON loans.id = repayments.loan_id WHERE loans.principal_cents = loans.principal_repayment_cents AND loans.lender_id = ? AND loans.deleted = 0");

@@ -1,4 +1,4 @@
-package me.timothy.bots.summon;
+package me.timothy.bots.summon.loan;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -17,13 +17,14 @@ import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.currencies.CurrencyHandler;
 import me.timothy.bots.models.CreationInfo;
 import me.timothy.bots.models.Loan;
-import me.timothy.bots.models.PromotionBlacklist;
 import me.timothy.bots.models.User;
 import me.timothy.bots.responses.MoneyFormattableObject;
 import me.timothy.bots.responses.ResponseFormatter;
 import me.timothy.bots.responses.ResponseInfo;
 import me.timothy.bots.responses.ResponseInfoFactory;
-import me.timothy.bots.specresps.RemoveFromLendersCamp;
+import me.timothy.bots.summon.CommentSummon;
+import me.timothy.bots.summon.PMResponse;
+import me.timothy.bots.summon.SummonResponse;
 import me.timothy.bots.summon.patterns.PatternFactory;
 import me.timothy.bots.summon.patterns.SummonMatcher;
 import me.timothy.bots.summon.patterns.SummonPattern;
@@ -31,7 +32,19 @@ import me.timothy.jreddit.info.Comment;
 
 /**
  * For creating a loan where the user the loan is being made out to can be
- * easily and consistently guessed, such as in comments.
+ * easily and consistently guessed, such as in comments. 
+ * 
+ * The actual core logic for these loans is fairly straightforward, but there
+ * is a lot of business logic associated with new loans. For example, if a 
+ * borrower makes a loan then the moderators should be messaged. If a new
+ * lender makes a loan a different message should be sent to the moderators,
+ * with its own specific variables, etc.
+ * 
+ * To split this up we create a "LoanSummonContext" which contains the local
+ * variables in the handleComment function. If you prefer to think of this
+ * as an event system, the loan summon context corresponds to the "loan 
+ * created" event arguments. Then we pass this along to a specified list of
+ * handlers (aka listeners if you prefer).
  * 
  * @author Timothy
  */
@@ -44,6 +57,12 @@ public class LoanSummon implements CommentSummon {
 	 */
 	private static final SummonPattern LOAN_PATTERN = new PatternFactory().addCaseInsensLiteral("$loan")
 			.addMoney("money1").addCurrency("convert_from", true).build();
+	
+	private static final LoanTrigger[] TRIGGERS = new LoanTrigger[] {
+			new NewLenderTrigger(),
+			new LenderReceivedLoanTrigger(),
+			new BorrowerGaveLoanTrigger()
+	};
 
 	private Logger logger;
 
@@ -104,50 +123,25 @@ public class LoanSummon implements CommentSummon {
 			long now = Math.round(comment.createdUTC() * 1000);
 			
 			List<PMResponse> pmResponses = new ArrayList<>();
-			HashMap<String, Object> specialResponses = new HashMap<>();
-			int numLenderStartedAsLender = database.getLoanMapping().fetchNumberOfLoansCompletedWithUserAsLender(doerU.id)[0];
-			if(numLenderStartedAsLender < 1) {
-				String pmTitleFmt = database.getResponseMapping().fetchByName("new_lender_modmail_pm_title").responseBody;
-				String pmBodyFmt = database.getResponseMapping().fetchByName("new_lender_modmail_pm_body").responseBody;
-				
-				String pmTitle = new ResponseFormatter(pmTitleFmt, respInfo).getFormattedResponse(config, database);
-				String pmBody = new ResponseFormatter(pmBodyFmt, respInfo).getFormattedResponse(config, database);
-				pmResponses.add(new PMResponse("/r/" + LoansBotUtils.PRIMARY_SUBREDDIT, pmTitle, pmBody));
-			}
-
-			int numBorrowerStartedAsLender = database.getLoanMapping().fetchNumberOfLoansWithUserAsLender(doneToU.id);
-			if(numBorrowerStartedAsLender > 0 && doneToU.auth < 1) {
-				PromotionBlacklist blacklist = database.getPromotionBlacklistMapping().fetchByUserId(doneToU.id);
-				if(blacklist == null) {
-					// Alert modmail
-					ResponseInfo newLenderRespInfo = new ResponseInfo(ResponseInfoFactory.base);
-					newLenderRespInfo.addLongtermString("borrower", linkAuthor);
-					newLenderRespInfo.addLongtermString("lender", author);
-					newLenderRespInfo.addLongtermString("loan thread", comment.linkURL());
-					
-					String pmTitleFmt = database.getResponseMapping().fetchByName("lender_received_loan_modmail_pm_title").responseBody;
-					String pmBodyFmt = database.getResponseMapping().fetchByName("lender_received_loan_modmail_pm_body").responseBody;
-					
-					String pmTitle = new ResponseFormatter(pmTitleFmt, newLenderRespInfo).getFormattedResponse(config, database);
-					String pmBody = new ResponseFormatter(pmBodyFmt, newLenderRespInfo).getFormattedResponse(config, database);
-					pmResponses.add(new PMResponse("/r/" + LoansBotUtils.PRIMARY_SUBREDDIT, pmTitle, pmBody));
-					
-					// Add to blacklist
-					User loansBot = database.getUserMapping().fetchOrCreateByName(config.getProperty("user.username"));
-					database.getPromotionBlacklistMapping().save(
-							new PromotionBlacklist(
-									-1, doneToU.id, loansBot.id, "Received loan", 
-									new Timestamp(System.currentTimeMillis()),
-									new Timestamp(System.currentTimeMillis()))
-							);
-					
-					// Remove from lenderscamp
-					specialResponses.put(RemoveFromLendersCamp.SPECIAL_KEY, new RemoveFromLendersCamp(linkAuthor));
+			HashMap<String, List<Object>> specialResponses = new HashMap<>();
+			
+			LoanSummonContext ctx = new LoanSummonContext(
+					database, config, doerU, doneToU, 
+					database.getUsernameMapping().fetchByUserId(doerU.id), 
+					database.getUsernameMapping().fetchByUserId(doneToU.id), 
+					url, amountPennies, pmResponses, specialResponses);
+			for(LoanTrigger trigger : TRIGGERS) {
+				try {
+					trigger.onNewLoan(ctx);
+				}catch(Exception e) {
+					if(trigger.essential()) {
+						throw e;
+					}else {
+						logger.catching(e);
+						ctx.addPMResponse(LoansBotUtils.exceptionPM(trigger.getClass().getCanonicalName(), e));
+					}
 				}
 			}
-			
-			
-			
 			
 			Loan loan = new Loan(-1, doerU.id, doneToU.id, amountPennies, 0, false, false, null, new Timestamp(now), new Timestamp(now), null);
 			CreationInfo cInfoRetro = attemptRetroactiveLoan(database, loan); // this may set the loan id, which will cause it to be updated rather than added

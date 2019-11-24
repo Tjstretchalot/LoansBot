@@ -79,4 +79,14 @@ public interface LoanMapping extends ObjectMapping<Loan> {
 	 * @return the number of undeleted loans with the given borrower
 	 */
 	public int fetchNumberOfLoansWithUserAsBorrower(int borrowerId);
+
+	/**
+	 * Fetches the number of outstanding loans with the specified user as the borrower. Does
+	 * <i>not</i> count deleted loans. An outstanding loan is one which is not marked unpaid
+	 * and has a principal repayment below the principal.
+	 * 
+	 * @param borrowerId the borrower id
+	 * @return the number of outstanding loans with that user as a borrower
+	 */
+	public int fetchNumberOfOutstandingLoansWithUserAsBorrower(int borrowerId);
 }

@@ -13,8 +13,8 @@ import me.timothy.bots.BotUtils;
 import me.timothy.bots.LoansDatabase;
 import me.timothy.bots.LoansFileConfiguration;
 import me.timothy.bots.models.Response;
-import me.timothy.bots.summon.LoanSummon;
 import me.timothy.bots.summon.SummonResponse;
+import me.timothy.bots.summon.loan.LoanSummon;
 import me.timothy.jreddit.info.Comment;
 
 /**

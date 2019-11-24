@@ -13,7 +13,6 @@ import me.timothy.bots.summon.CheckSummon;
 import me.timothy.bots.summon.CommentSummon;
 import me.timothy.bots.summon.ConfirmSummon;
 import me.timothy.bots.summon.LinkSummon;
-import me.timothy.bots.summon.LoanSummon;
 import me.timothy.bots.summon.PMSummon;
 import me.timothy.bots.summon.PaidSummon;
 import me.timothy.bots.summon.PaidWithIDSummon;
@@ -22,6 +21,7 @@ import me.timothy.bots.summon.RedFlagSummon;
 import me.timothy.bots.summon.SuicideSummon;
 import me.timothy.bots.summon.UnpaidSummon;
 import me.timothy.bots.summon.VettedSummon;
+import me.timothy.bots.summon.loan.LoanSummon;
 import me.timothy.jreddit.requests.Utils;
 
 /**
