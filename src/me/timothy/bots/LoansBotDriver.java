@@ -176,9 +176,14 @@ public class LoansBotDriver extends BotDriver {
 		sleepFor(BRIEF_PAUSE_MS);
 		
 		if(!TEST_SERVER) {
-			logger.debug("Scanning for new lenders camp contributors..");
-			handleLendersCampContributors();
-			sleepFor(BRIEF_PAUSE_MS);
+			logger.debug("Checking for non-bot additions to lenders camp..");
+			updateLendersCampContributors();
+			
+			logger.debug("Sending vetting requests..");
+			requestAddsToLendersCampContributors();
+			
+			logger.debug("Removing promo blacklist lenders camp contributors..");
+			handleRemovalsFromLendersCampContributors();
 		}
 		
 		logger.debug("Performing self-assessment...");
@@ -426,11 +431,16 @@ public class LoansBotDriver extends BotDriver {
 	}
 	
 	/**
-	 * Handles lenders camp contributors
+	 * Handles sending the modmail messages about users who have reached a certain threshold in the
+	 * number of loans lent that implies we may want to give them additional privileges. This
+	 * scans users who have recently created loans. If these users are not on the promotion
+	 * blacklist and have never been put on it, it adds them to that list and messages the 
+	 * moderators to either remove them from the blacklist (implicitly granting them additional
+	 * privileges and also automatically inviting them to the subreddit /r/lenderscamp), or
+	 * updating the reason for why they are not on the blacklist.
 	 */
-	private void handleLendersCampContributors() {
+	private void requestAddsToLendersCampContributors() {
 		final long UTC_TO_GMT_MILLIS = -8 * 60 * 60 * 1000; 
-		updateLendersCampContributors();
 		
 		LoansDatabase ldb = (LoansDatabase) database;
 		// This can take an extremely long time to catch up - lets make sure it doesn't lose its
@@ -549,6 +559,72 @@ public class LoansBotDriver extends BotDriver {
 		}
 	}
 	
+	/**
+	 * Users which are added to the promotion blacklist have their lenderscamp contributor access
+	 * revoked. Although they may not actually be able to get to a state where they have lenderscamp
+	 * access but not promotion access through direct interaction with the loansbot, it is possible 
+	 * through the website.
+	 */
+	private void handleRemovalsFromLendersCampContributors() {
+		final long MAX_TIME_MS = 30000;
+		
+		LoansDatabase ldb = (LoansDatabase) database;
+		
+		// Explicit pagination through the added at timestamp
+		Properties defaultProps = new Properties();
+		defaultProps.setProperty("max_added_at", "-1");
+		Properties remProgProps = new Properties(defaultProps);
+		File checkFile = new File("lcc_removals_progress.properties");
+		if(checkFile.exists()) {
+			try(FileReader fr = new FileReader(checkFile)) {
+				remProgProps.load(fr);
+			}catch(IOException ex) {
+				logger.catching(ex);
+			}
+		}
+		
+		long maxAddedAt = Long.valueOf(remProgProps.getProperty("max_added_at"));
+		long startSearchTime = System.currentTimeMillis();
+		long endSearchTime = startSearchTime + MAX_TIME_MS;
+		
+		int toCheckInd = 0;
+		List<PromotionBlacklist> toCheck = ldb.getPromotionBlacklistMapping().fetchUndeletedAndAddedAfter(
+				maxAddedAt < 0 ? null : new Timestamp(maxAddedAt), 20);
+		
+		// we don't process super recent max added at to avoid missing rows during pagination
+		long mostRecentAllowed = System.currentTimeMillis() - 10000;
+		
+		while (System.currentTimeMillis() < endSearchTime && !toCheck.isEmpty() && maxAddedAt < mostRecentAllowed) {
+			if (toCheckInd >= toCheck.size()) {
+				toCheck = ldb.getPromotionBlacklistMapping().fetchUndeletedAndAddedAfter(
+						maxAddedAt < 0 ? null : new Timestamp(maxAddedAt), 20);
+				toCheckInd = 0;
+				continue;
+			}
+			
+			PromotionBlacklist item = toCheck.get(toCheckInd);
+			toCheckInd++;
+			
+			if (item.addedAt.getTime() >= mostRecentAllowed)
+				break;
+			
+			if(ldb.getLccMapping().contains(item.userId)) {
+				List<Username> unames = ldb.getUsernameMapping().fetchByUserId(item.userId);
+				for(Username uname : unames) {
+					logger.printf(Level.INFO, "Removing /u/%s from lenderscamp (on promo blacklist)", uname.username);
+					handleRemoveFromLendersCamp(new RemoveFromLendersCamp(uname.username));
+				}
+			}
+			
+			maxAddedAt = item.addedAt.getTime();
+			remProgProps.setProperty("max_added_at", Long.toString(maxAddedAt));
+			try(BufferedWriter fw = new BufferedWriter(new FileWriter(checkFile))) {
+				remProgProps.store(fw, "Lenders Camp Contributors Removal Progress Information");
+			}catch(IOException ex) {
+				logger.catching(ex);
+			}
+		}
+	}
 	
 	/**
 	 * Handles diagnosing the diagnostics 
@@ -779,10 +855,27 @@ public class LoansBotDriver extends BotDriver {
 			return;
 		}
 		
-		Boolean succ = new Retryable<Boolean>("remove from lenders camp", maybeLoginAgainRunnable) {
+		Boolean succ = new Retryable<Boolean>("remove " + inf.getUserToRemove() + " from lenders camp", maybeLoginAgainRunnable) {
 
 			@Override
 			protected Boolean runImpl() throws Exception {
+				ContributorsListing cl = RedditUtils.getContributorsForSubredditByName(
+						"lenderscamp", inf.getUserToRemove(), bot.getUser());
+				sleepFor(BRIEF_PAUSE_MS);
+				
+				boolean found = false;
+				for(int i = 0, len = cl.numChildren(); i < len; i++) {
+					if(cl.getContributor(i).name().equalsIgnoreCase(inf.getUserToRemove())) {
+						found = true;
+						break;
+					}
+				}
+				
+				if (!found) {
+					logger.printf(Level.INFO, "/u/%s was already not a contributor to lenderscamp", inf.getUserToRemove());
+					return true;
+				}
+				
 				if (isModerator("lenderscamp", inf.getUserToRemove())) {
 					logger.warn("Tried to remove moderator of lenderscamp as contributor - preventing");
 					return false;

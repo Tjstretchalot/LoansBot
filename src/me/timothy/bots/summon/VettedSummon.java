@@ -259,7 +259,7 @@ public class VettedSummon implements PMSummon {
 		
 		String body = new ResponseFormatter(bodyFormat, respInfo).getFormattedResponse(config, ldb);
 		
-		return new SummonResponse(ResponseType.INVALID, body);
+		return new SummonResponse(ResponseType.VALID, body);
 	}
 	
 	/**
@@ -287,7 +287,7 @@ public class VettedSummon implements PMSummon {
 		
 		String body = new ResponseFormatter(bodyFormat, respInfo).getFormattedResponse(config, ldb);
 		
-		return new SummonResponse(ResponseType.INVALID, body);
+		return new SummonResponse(ResponseType.VALID, body);
 	}
 	
 	private SummonResponse validAndDelayed(Message message, LoansDatabase ldb, FileConfiguration config, String user, String reason, int numberLoans) {
@@ -306,6 +306,6 @@ public class VettedSummon implements PMSummon {
 		
 		String body = new ResponseFormatter(bodyFormat, respInfo).getFormattedResponse(config, ldb);
 		
-		return new SummonResponse(ResponseType.INVALID, body);
+		return new SummonResponse(ResponseType.VALID, body);
 	}
 }

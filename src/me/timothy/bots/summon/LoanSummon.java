@@ -128,8 +128,8 @@ public class LoanSummon implements CommentSummon {
 					String pmTitleFmt = database.getResponseMapping().fetchByName("lender_received_loan_modmail_pm_title").responseBody;
 					String pmBodyFmt = database.getResponseMapping().fetchByName("lender_received_loan_modmail_pm_body").responseBody;
 					
-					String pmTitle = new ResponseFormatter(pmTitleFmt, respInfo).getFormattedResponse(config, database);
-					String pmBody = new ResponseFormatter(pmBodyFmt, respInfo).getFormattedResponse(config, database);
+					String pmTitle = new ResponseFormatter(pmTitleFmt, newLenderRespInfo).getFormattedResponse(config, database);
+					String pmBody = new ResponseFormatter(pmBodyFmt, newLenderRespInfo).getFormattedResponse(config, database);
 					pmResponses.add(new PMResponse("/r/" + LoansBotUtils.PRIMARY_SUBREDDIT, pmTitle, pmBody));
 					
 					// Add to blacklist

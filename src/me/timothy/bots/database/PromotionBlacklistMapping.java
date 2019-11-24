@@ -1,5 +1,6 @@
 package me.timothy.bots.database;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import me.timothy.bots.models.PromotionBlacklist;
@@ -35,6 +36,18 @@ public interface PromotionBlacklistMapping extends ObjectMapping<PromotionBlackl
 	 * @return all related entries
 	 */
 	public List<PromotionBlacklist> fetchAllById(int userId);
+	
+	/**
+	 * Fetches up to the given limit number of promotion blacklist items which are not 
+	 * deleted and were added after the given time. This is ordered by oldest-to-newest
+	 * added_at, meaning this is suitable for pagination.
+	 * 
+	 * @param time the earliest (excluded) time for loans to occur, or null to be from the
+	 * beginning of time
+	 * @param limit the maximum number of results
+	 * @return up to limit promotion blacklist rows
+	 */
+	public List<PromotionBlacklist> fetchUndeletedAndAddedAfter(Timestamp time, int limit);
 	
 	/**
 	 * Removes the entry corresponding with the given user id. Note that this

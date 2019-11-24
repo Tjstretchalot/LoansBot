@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.List;
 
@@ -97,7 +98,21 @@ public class MysqlPromotionBlacklistMapping extends MysqlObjectWithIDMapping<Pro
 				new PreparedStatementSetVarsUnsafe(new MysqlTypeValueTuple(Types.INTEGER, userId)),
 				fetchListFromSetFunction());
 	}
-
+	
+	@Override
+	public List<PromotionBlacklist> fetchUndeletedAndAddedAfter(Timestamp time, int limit) {
+		if (time != null) {
+			return fetchByAction("SELECT * FROM " + table + " WHERE added_at > ? AND removed_at IS NULL ORDER BY added_at ASC LIMIT ?",
+					new PreparedStatementSetVarsUnsafe(new MysqlTypeValueTuple(Types.TIMESTAMP, time),
+							new MysqlTypeValueTuple(Types.INTEGER, limit)),
+					fetchListFromSetFunction());
+		}
+		
+		return fetchByAction("SELECT * FROM " + table + " WHERE removed_at IS NULL ORDER BY added_at ASC LIMIT ?",
+				new PreparedStatementSetVarsUnsafe(new MysqlTypeValueTuple(Types.INTEGER, limit)),
+				fetchListFromSetFunction());
+	}
+	
 	@Override
 	public void remove(int userId) {
 		runStatement("UPDATE " + table + " SET removed_at=NOW() WHERE user_id=? AND removed_at IS NULL LIMIT 1",
